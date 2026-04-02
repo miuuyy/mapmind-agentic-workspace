@@ -1,0 +1,25 @@
+name: Documentation improvement
+description: Report unclear docs or suggest a docs improvement.
+title: "[Docs]: "
+labels:
+  - documentation
+body:
+  - type: textarea
+    id: location
+    attributes:
+      label: Which document or section?
+      placeholder: README quick start, docs/ARCHITECTURE.md, documentation/how-to-use.md...
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What is unclear, missing, or wrong?
+      placeholder: The current section explains the feature, but it does not explain when to use it or what the user should expect...
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested improvement
+      placeholder: Add a short example flow, clarify the distinction between local docs and hosted docs, include one diagram...

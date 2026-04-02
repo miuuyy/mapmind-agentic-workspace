@@ -1,0 +1,44 @@
+name: Feature request
+description: Propose a new feature or a product-level change.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the problem first, not only the solution.
+
+        The strongest feature requests explain why the change belongs in MapMind specifically.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      placeholder: I can expand graphs, but I cannot compare two candidate proposal paths before applying one...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What should change?
+      placeholder: Add a proposal comparison mode that lets the user inspect two alternative expansions side by side...
+    validations:
+      required: true
+  - type: textarea
+    id: fit
+    attributes:
+      label: Why does this fit MapMind?
+      description: Explain why this belongs in a graph-first learning workspace instead of becoming generic product sprawl.
+      placeholder: This keeps the graph as the product and improves reviewability instead of adding unrelated productivity chrome...
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: What should stay out of scope?
+      placeholder: No silent auto-apply, no hidden AI fallback, no unrelated team collaboration surface...
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples or references
+      description: Mockups, screenshots, repos, or product references if they help.

@@ -1,0 +1,73 @@
+name: Bug report
+description: Report a reproducible bug in the local edition or shared product behavior.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+
+        Please focus on reproducible behavior. Good reports help fix the problem quickly.
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      description: Where does this bug happen?
+      options:
+        - Local main branch
+        - Hosted product
+        - Both local and hosted
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the bug in one clear paragraph.
+      placeholder: The graph overlay overlaps the chat when the window becomes narrow...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Give exact steps.
+      placeholder: |
+        1. Open the starter graph
+        2. Open the assistant pane
+        3. Resize the window to ...
+        4. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: The top overlay should move into a second row and remain readable.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs, screenshots, or traces
+      description: Paste error text, attach screenshots, or include relevant debug output.
+      placeholder: Stack traces, request errors, logs, screenshots...
+  - type: input
+    id: commit
+    attributes:
+      label: Commit or branch
+      description: If this is local, what commit or branch are you on?
+      placeholder: main @ abc123
+  - type: dropdown
+    id: regression
+    attributes:
+      label: Regression?
+      options:
+        - Yes
+        - No
+        - Unsure
+    validations:
+      required: true

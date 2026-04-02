@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knowledge-graph.local/contracts/graph_patch.schema.json",
+  "title": "GraphProposal",
+  "type": "object",
+  "required": ["graph_id", "user_prompt", "summary", "assistant_message", "operations"],
+  "properties": {
+    "graph_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "user_prompt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "assistant_message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["op"],
+        "properties": {
+          "op": {
+            "type": "string",
+            "enum": [
+              "upsert_topic",
+              "remove_topic",
+              "upsert_edge",
+              "remove_edge",
+              "upsert_zone",
+              "set_mastery"
+            ]
+          },
+          "topic_id": { "type": "string" },
+          "edge_id": { "type": "string" },
+          "zone_id": { "type": "string" },
+          "state": {
+            "type": "string",
+            "enum": [
+              "not_started",
+              "learning",
+              "shaky",
+              "solid",
+              "mastered",
+              "needs_review"
+            ]
+          },
+          "topic": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "slug": { "type": "string" },
+              "description": { "type": "string" },
+              "difficulty": { "type": "number" },
+              "estimated_minutes": { "type": "integer", "minimum": 0 },
+              "level": { "type": "integer", "minimum": 0 },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "not_started",
+                  "learning",
+                  "shaky",
+                  "solid",
+                  "mastered",
+                  "needs_review"
+                ]
+              },
+              "zones": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "resources": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["label", "url"],
+                  "properties": {
+                    "label": { "type": "string" },
+                    "url": { "type": "string" }
+                  }
+                }
+              }
+            },
+            "required": ["id", "title", "slug"]
+          },
+          "edge": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "source_topic_id": { "type": "string" },
+              "target_topic_id": { "type": "string" },
+              "relation": {
+                "type": "string",
+                "enum": ["requires", "supports", "bridges", "extends", "reviews"]
+              },
+              "rationale": { "type": "string" }
+            },
+            "required": ["id", "source_topic_id", "target_topic_id", "relation"]
+          },
+          "zone": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "kind": { "type": "string" },
+              "color": { "type": "string" },
+              "intensity": { "type": "number", "minimum": 0, "maximum": 1 },
+              "topic_ids": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "required": ["id", "title", "kind", "color", "topic_ids"]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Product or workflow question
+    url: https://github.com/miuuyy/mapmind-agentic-workspace/discussions
+    about: Use discussions for broader product questions, workflow ideas, or open-ended feedback.
