@@ -6,6 +6,10 @@
   <a href="https://mapmind.space/how-to-use"><img alt="Docs" src="https://img.shields.io/badge/docs-live-111111?style=flat-square"></a>
   <a href="https://app.mapmind.space"><img alt="Demo" src="https://img.shields.io/badge/demo-live-111111?style=flat-square"></a>
   <img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-111111?style=flat-square">
+  <img alt="Agentic Workspace" src="https://img.shields.io/badge/Agentic-Workspace-111111?style=flat-square">
+  <img alt="Obsidian-like" src="https://img.shields.io/badge/Obsidian-like-111111?style=flat-square">
+  <img alt="Knowledge Graph" src="https://img.shields.io/badge/Knowledge-Graph-111111?style=flat-square">
+  <img alt="AI powered" src="https://img.shields.io/badge/AI-powered-111111?style=flat-square">
 </p>
 
 **MapMind is Obsidian for knowledge paths**: a graph-first agentic workspace for learning subjects with real dependency structure.
