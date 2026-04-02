@@ -37,7 +37,6 @@ Current repo-local skills:
 
 - `mapmind-product-guard`: protects graph-first product and UX decisions
 - `mapmind-agent-boundaries`: protects model primacy, proposal review, and explicit validation boundaries
-- `mapmind-docs-packaging`: keeps the public repo readable, honest, and well-layered
 
 Each skill is intentionally compact and may point to local `references/` files for deeper checklists so contributors can extend the guidance without turning the main skill file into a wall of text.
 
