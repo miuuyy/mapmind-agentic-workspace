@@ -11,8 +11,8 @@
   <img alt="Knowledge Graph" src="https://img.shields.io/badge/Knowledge-Graph-111111?style=flat-square">
   <img alt="AI powered" src="https://img.shields.io/badge/AI-powered-111111?style=flat-square">
 </p>
-
-**MapMind is Obsidian for knowledge paths**: a graph-first agentic workspace for learning subjects with real dependency structure.
+**MapMind** turns messy topics into a structured learning graph you can actually follow.
+A graph-first agentic workspace for learning subjects with real dependency structure (ideologically similar to Obsidian)
 
 ![MapMind walkthrough](.github/readme-assets/walkthrough.gif)
 
@@ -22,7 +22,7 @@ This repository is the local, hackable, agent-native edition of MapMind. If you 
 
 ## Quick look
 
-- `Try the hosted product first`: [mapmind.space](https://mapmind.space)
+- `You can try the hosted product first`: [mapmind.space](https://mapmind.space)
 - `See the docs before cloning`: [mapmind.space/how-to-use](https://mapmind.space/how-to-use)
 - `Run locally if you want full control`: clone this repo and use your own provider keys
 
