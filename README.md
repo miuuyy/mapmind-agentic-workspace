@@ -16,10 +16,9 @@ Most AI learning tools collapse into chat. MapMind keeps the dependency graph as
 
 This repository is the local, hackable, agent-native edition of MapMind. If you want the fastest first look, try [mapmind.space](https://mapmind.space). If you want full control over providers, state, and graph packs, run this repo locally.
 
-## Start here
+## Quick look
 
 - `Try the hosted product first`: [mapmind.space](https://mapmind.space)
-- `Open the app directly`: [app.mapmind.space](https://app.mapmind.space)
 - `See the docs before cloning`: [mapmind.space/how-to-use](https://mapmind.space/how-to-use)
 - `Run locally if you want full control`: clone this repo and use your own provider keys
 
