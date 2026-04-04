@@ -278,7 +278,107 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     themeMode,
     setThemeMode,
   } = props;
-  const graphCanvasBackgroundFill = themeMode === "light" ? null : "#000000";
+
+  const showMobileOverlay = isMobileViewport && !isSettingsOpen;
+  const showCompactDesktopOverlay = topOverlayCompact && !isMobileViewport && !isSettingsOpen;
+  const showInlineDesktopOverlay = !topOverlayCompact && !isMobileViewport && !isSettingsOpen;
+
+  const renderGraphStatItems = (): React.JSX.Element => (
+    <>
+      {activeGraph ? <span className="pageStat" style={{ fontWeight: 700, letterSpacing: "0.04em" }}>{activeGraph.language.toUpperCase()}</span> : null}
+      <span className="pageStat">
+        <strong>{graphSummary.topicCount}</strong>
+        {copy.graphStats.topics}
+      </span>
+      <span className="pageStat pageStatComplete">
+        <strong>{graphSummary.completedPercent}%</strong>
+        {copy.graphStats.complete}
+      </span>
+      <span className="pageStat">
+        <strong>{graphSummary.completedCount}</strong>
+        {copy.graphStats.closed}
+      </span>
+      {graphSummary.reviewCount > 0 ? (
+        <span className="pageStat pageStatWarn">
+          <strong>{graphSummary.reviewCount}</strong>
+          {copy.graphStats.review}
+        </span>
+      ) : null}
+      {activeAssessmentCards.map((card) => (
+        <span
+          key={card.label}
+          className={`pageStat pageStatAssessment ${card.tone === "good" ? "pageStatGood" : card.tone === "warn" ? "pageStatWarn" : ""}`}
+          title={card.rationale}
+        >
+          <strong>{card.label}</strong>
+          {card.value}
+        </span>
+      ))}
+      {data ? <span className="badge badge-gray">{copy.graphStats.snapshot(data.snapshot.id)}</span> : null}
+      {assessmentError ? <span className="badge badge-red">{assessmentError}</span> : null}
+      {configSaving ? <span className="badge badge-yellow">{copy.graphStats.saving}</span> : null}
+      {error ? <span className="badge badge-red">{error}</span> : null}
+      {graphLayoutEditing && !topOverlayCompact && !isMobileViewport ? <span className="pageStat pageStatHint">{copy.graphStats.mayJitterWhileDragging}</span> : null}
+    </>
+  );
+
+  const renderOverlayControls = (): React.JSX.Element => (
+    <>
+      {activeGraph ? (
+        <button
+          className={`floatingStatusButton ${themeMode === "light" ? "floatingStatusButtonActive" : ""}`}
+          onClick={() => setThemeMode((current) => current === "light" ? "dark" : "light")}
+          type="button"
+          title={themeMode === "light" ? "Switch to dark theme" : "Switch to light theme"}
+          aria-pressed={themeMode === "light"}
+        >
+          {themeMode === "light" ? <Moon size={15} weight="bold" /> : <SunDim size={15} weight="bold" />}
+        </button>
+      ) : null}
+      {activeGraph ? (
+        <button
+          className={`floatingStatusButton ${viewportCenteredZoom ? "floatingStatusButtonActive" : ""}`}
+          onClick={() => setViewportCenteredZoom((value: boolean) => !value)}
+          type="button"
+          title={viewportCenteredZoom ? "Viewport-centered zoom enabled" : "Pointer-follow zoom enabled"}
+          aria-pressed={viewportCenteredZoom}
+        >
+          {viewportCenteredZoom ? <LockSimple size={15} weight="bold" /> : <LockSimpleOpen size={15} weight="bold" />}
+        </button>
+      ) : null}
+      {activeGraph ? (
+        <button
+          className={`pageStat pageStatControl ${graphLayoutEditing ? "pageStatControlActive" : ""}`}
+          onClick={() => {
+            if (graphLayoutEditing) {
+              void saveGraphLayout();
+              return;
+            }
+            startGraphLayoutEdit();
+          }}
+          type="button"
+          disabled={graphLayoutSaving}
+          title={graphLayoutEditing ? copy.graphStats.saveLayout : copy.graphStats.editGraphLayout}
+        >
+          {graphLayoutEditing ? copy.graphStats.saveLayout : <PencilSimple size={13} weight="bold" />}
+        </button>
+      ) : null}
+      {graphLayoutEditing ? (
+        <button
+          className="pageStat layoutCancelBtn"
+          onClick={() => {
+            setGraphLayoutEditing(false);
+            setGraphLayoutDraft(null);
+          }}
+          type="button"
+          title={copy.graphStats.cancelLayoutEdit}
+        >
+          ✕
+        </button>
+      ) : null}
+    </>
+  );
+  const graphCanvasBackgroundFill = themeMode === "light" ? "#f7f7f4" : "#000000";
   const [topicAssetDialog, setTopicAssetDialog] = React.useState<{
     kind: "resource" | "artifact";
     topicId: string;
@@ -549,7 +649,35 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
           </div>
         ) : null}
 
-        {topOverlayCompact && !(isMobileViewport && isSettingsOpen) ? (
+        {showMobileOverlay ? (
+          <div
+            className="topOverlayStack topOverlayStackMobile"
+            style={{
+              left: "12px",
+              right: "12px",
+              top: "calc(75px + env(safe-area-inset-top, 0px))",
+            }}
+          >
+            <div
+              ref={floatingStatsRef}
+              className="floatingStatsContainer floatingStatsContainerStacked"
+              onWheel={(event) => {
+                const strip = floatingStatsRef.current;
+                if (!strip) return;
+                if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+                strip.scrollLeft += event.deltaY;
+                event.preventDefault();
+              }}
+            >
+              {renderGraphStatItems()}
+            </div>
+            <div className="floatingStatusContainer floatingStatusContainerCompact">
+              {renderOverlayControls()}
+            </div>
+          </div>
+        ) : null}
+
+        {showCompactDesktopOverlay ? (
           <div
             className="topOverlayStack"
             style={{
@@ -569,214 +697,39 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                 event.preventDefault();
               }}
             >
-              {activeGraph ? <span className="pageStat" style={{ fontWeight: 700, letterSpacing: "0.04em" }}>{activeGraph.language.toUpperCase()}</span> : null}
-              <span className="pageStat">
-                <strong>{graphSummary.topicCount}</strong>
-                {copy.graphStats.topics}
-              </span>
-              <span className="pageStat pageStatComplete">
-                <strong>{graphSummary.completedPercent}%</strong>
-                {copy.graphStats.complete}
-              </span>
-              <span className="pageStat">
-                <strong>{graphSummary.completedCount}</strong>
-                {copy.graphStats.closed}
-              </span>
-              {graphSummary.reviewCount > 0 ? (
-                <span className="pageStat pageStatWarn">
-                  <strong>{graphSummary.reviewCount}</strong>
-                  {copy.graphStats.review}
-                </span>
-              ) : null}
-              {activeAssessmentCards.map((card) => (
-                <span
-                  key={card.label}
-                  className={`pageStat pageStatAssessment ${card.tone === "good" ? "pageStatGood" : card.tone === "warn" ? "pageStatWarn" : ""}`}
-                  title={card.rationale}
-                >
-                  <strong>{card.label}</strong>
-                  {card.value}
-                </span>
-              ))}
+              {renderGraphStatItems()}
             </div>
             <div className="floatingStatusContainer floatingStatusContainerCompact">
-              {activeGraph ? (
-                <button
-                  className={`floatingStatusButton ${themeMode === "light" ? "floatingStatusButtonActive" : ""}`}
-                  onClick={() => setThemeMode((current) => current === "light" ? "dark" : "light")}
-                  type="button"
-                  title={themeMode === "light" ? "Switch to dark theme" : "Switch to light theme"}
-                  aria-pressed={themeMode === "light"}
-                >
-                  {themeMode === "light" ? <Moon size={15} weight="bold" /> : <SunDim size={15} weight="bold" />}
-                </button>
-              ) : null}
-              {activeGraph ? (
-                <button
-                  className={`floatingStatusButton ${viewportCenteredZoom ? "floatingStatusButtonActive" : ""}`}
-                  onClick={() => setViewportCenteredZoom((value: boolean) => !value)}
-                  type="button"
-                  title={viewportCenteredZoom ? "Viewport-centered zoom enabled" : "Pointer-follow zoom enabled"}
-                  aria-pressed={viewportCenteredZoom}
-                >
-                  {viewportCenteredZoom ? <LockSimple size={15} weight="bold" /> : <LockSimpleOpen size={15} weight="bold" />}
-                </button>
-              ) : null}
-              {activeGraph ? (
-                <button
-                  className={`pageStat pageStatControl ${graphLayoutEditing ? "pageStatControlActive" : ""}`}
-                  onClick={() => {
-                    if (graphLayoutEditing) {
-                      void saveGraphLayout();
-                      return;
-                    }
-                    startGraphLayoutEdit();
-                  }}
-                  type="button"
-                  disabled={graphLayoutSaving}
-                  title={graphLayoutEditing ? copy.graphStats.saveLayout : copy.graphStats.editGraphLayout}
-                >
-                  {graphLayoutEditing ? copy.graphStats.saveLayout : <PencilSimple size={13} weight="bold" />}
-                </button>
-              ) : null}
-              {graphLayoutEditing ? (
-                <button
-                  className="pageStat layoutCancelBtn"
-                  onClick={() => {
-                    setGraphLayoutEditing(false);
-                    setGraphLayoutDraft(null);
-                  }}
-                  type="button"
-                  title={copy.graphStats.cancelLayoutEdit}
-                >
-                  ✕
-                </button>
-              ) : null}
-              {data ? <span className="badge badge-gray">{copy.graphStats.snapshot(data.snapshot.id)}</span> : null}
-              {assessmentError ? <span className="badge badge-red">{assessmentError}</span> : null}
-              {configSaving ? <span className="badge badge-yellow">{copy.graphStats.saving}</span> : null}
-              {error ? <span className="badge badge-red">{error}</span> : null}
+              {renderOverlayControls()}
             </div>
           </div>
         ) : null}
 
-        {!topOverlayCompact && !(isMobileViewport && isSettingsOpen) ? (
+        {showInlineDesktopOverlay ? (
           <div
-            className="floatingStatusContainer"
+            className="topOverlayInline"
             style={{
+              left: `${overlayLeftOffset}px`,
               right: `${overlayRightOffset}px`,
               top: "20px",
             }}
           >
-            {activeGraph ? (
-              <button
-                className={`floatingStatusButton ${themeMode === "light" ? "floatingStatusButtonActive" : ""}`}
-                onClick={() => setThemeMode((current) => current === "light" ? "dark" : "light")}
-                type="button"
-                title={themeMode === "light" ? "Switch to dark theme" : "Switch to light theme"}
-                aria-pressed={themeMode === "light"}
-              >
-                {themeMode === "light" ? <Moon size={15} weight="bold" /> : <SunDim size={15} weight="bold" />}
-              </button>
-            ) : null}
-            {activeGraph ? (
-              <button
-                className={`floatingStatusButton ${viewportCenteredZoom ? "floatingStatusButtonActive" : ""}`}
-                onClick={() => setViewportCenteredZoom((value: boolean) => !value)}
-                type="button"
-                title={viewportCenteredZoom ? "Viewport-centered zoom enabled" : "Pointer-follow zoom enabled"}
-                aria-pressed={viewportCenteredZoom}
-              >
-                {viewportCenteredZoom ? <LockSimple size={15} weight="bold" /> : <LockSimpleOpen size={15} weight="bold" />}
-              </button>
-            ) : null}
-            {data ? <span className="badge badge-gray">{copy.graphStats.snapshot(data.snapshot.id)}</span> : null}
-            {assessmentError ? <span className="badge badge-red">{assessmentError}</span> : null}
-            {configSaving ? <span className="badge badge-yellow">{copy.graphStats.saving}</span> : null}
-            {error ? <span className="badge badge-red">{error}</span> : null}
-          </div>
-        ) : null}
-
-        {!topOverlayCompact && !(isMobileViewport && isSettingsOpen) ? (
-          <div
-            ref={floatingStatsRef}
-            className="floatingStatsContainer"
-            style={{
-              left: `${overlayLeftOffset}px`,
-              right: `${overlayRightOffset}px`,
-            }}
-            onWheel={(event) => {
-              const strip = floatingStatsRef.current;
-              if (!strip) return;
-              if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-              strip.scrollLeft += event.deltaY;
-              event.preventDefault();
-            }}
-          >
-            {activeGraph ? <span className="pageStat" style={{ fontWeight: 700, letterSpacing: "0.04em" }}>{activeGraph.language.toUpperCase()}</span> : null}
-            <span className="pageStat">
-              <strong>{graphSummary.topicCount}</strong>
-              {copy.graphStats.topics}
-            </span>
-            <span className="pageStat pageStatComplete">
-              <strong>{graphSummary.completedPercent}%</strong>
-              {copy.graphStats.complete}
-            </span>
-            <span className="pageStat">
-              <strong>{graphSummary.completedCount}</strong>
-              {copy.graphStats.closed}
-            </span>
-            {graphSummary.reviewCount > 0 ? (
-              <span className="pageStat pageStatWarn">
-                <strong>{graphSummary.reviewCount}</strong>
-                {copy.graphStats.review}
-              </span>
-            ) : null}
-            {activeAssessmentCards.map((card) => (
-              <span
-                key={card.label}
-                className={`pageStat pageStatAssessment ${card.tone === "good" ? "pageStatGood" : card.tone === "warn" ? "pageStatWarn" : ""}`}
-                title={card.rationale}
-              >
-                <strong>{card.label}</strong>
-                {card.value}
-              </span>
-            ))}
-            {activeGraph && !topOverlayCompact ? (
-              <button
-                className={`pageStat pageStatControl ${graphLayoutEditing ? "pageStatControlActive" : ""}`}
-                onClick={() => {
-                  if (graphLayoutEditing) {
-                    void saveGraphLayout();
-                    return;
-                  }
-                  startGraphLayoutEdit();
-                }}
-                type="button"
-                disabled={graphLayoutSaving}
-                title={graphLayoutEditing ? copy.graphStats.saveLayout : copy.graphStats.editGraphLayout}
-              >
-                {graphLayoutEditing ? copy.graphStats.saveLayout : <PencilSimple size={13} weight="bold" />}
-              </button>
-            ) : null}
-            {graphLayoutEditing && !topOverlayCompact ? (
-              <>
-                <span className="pageStat pageStatHint">
-                  {copy.graphStats.mayJitterWhileDragging}
-                </span>
-                <button
-                  className="pageStat layoutCancelBtn"
-                  onClick={() => {
-                    setGraphLayoutEditing(false);
-                    setGraphLayoutDraft(null);
-                  }}
-                  type="button"
-                  title={copy.graphStats.cancelLayoutEdit}
-                >
-                  ✕
-                </button>
-              </>
-            ) : null}
+            <div
+              ref={floatingStatsRef}
+              className="floatingStatsContainer floatingStatsContainerStacked"
+              onWheel={(event) => {
+                const strip = floatingStatsRef.current;
+                if (!strip) return;
+                if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+                strip.scrollLeft += event.deltaY;
+                event.preventDefault();
+              }}
+            >
+              {renderGraphStatItems()}
+            </div>
+            <div className="floatingStatusContainer floatingStatusContainerCompact">
+              {renderOverlayControls()}
+            </div>
           </div>
         ) : null}
 
@@ -811,6 +764,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                     onSelectTopic={handleSelectTopic}
                     onSelectedTopicAnchorChange={handleSelectedTopicAnchorChange}
                     graphCacheKey={`graph:${activeGraph.graph_id}`}
+                    initialZoom={0.45}
                     nodePositions={graphLayoutEditing ? graphLayoutDraft : activeGraphManualLayout}
                     layoutEditMode={graphLayoutEditing}
                     onNodePositionsChange={setGraphLayoutDraft}

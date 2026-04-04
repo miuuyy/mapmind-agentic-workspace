@@ -335,7 +335,7 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
               <label className="field">
                 <span className="fieldLabel">{copy.dialogs.description}</span>
                 <textarea
-                  className="textarea textareaCompact"
+                  className="textarea textareaCompact textareaPersona"
                   value={createGraphDraft.description}
                   onChange={(event) => patchCreateGraphDraft({ description: event.target.value })}
                   placeholder={copy.dialogs.descriptionPlaceholder}

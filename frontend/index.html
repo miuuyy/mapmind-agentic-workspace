@@ -26,6 +26,47 @@
   <link rel="apple-touch-icon" href="/smalllogo.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <title>MapMind | Graph-first learning</title>
+  <style>
+    html, body, #root {
+      margin: 0;
+      background: #000000;
+    }
+    html[data-theme="light"], html[data-theme="light"] body, html[data-theme="light"] #root {
+      background: #ffffff;
+    }
+    html[data-theme="light"] #root .app,
+    html[data-theme="light"] #root .main,
+    html[data-theme="light"] #root .workspaceShell,
+    html[data-theme="light"] #root .workspaceMain,
+    html[data-theme="light"] #root .neuroGraphShell,
+    html[data-theme="light"] #root .neuroGraphSurface,
+    html[data-theme="light"] #root .neuroGraphCanvas {
+      background: #ffffff;
+    }
+    html[data-theme="dark"] #root .app,
+    html[data-theme="dark"] #root .main,
+    html[data-theme="dark"] #root .workspaceShell,
+    html[data-theme="dark"] #root .workspaceMain,
+    html[data-theme="dark"] #root .neuroGraphShell,
+    html[data-theme="dark"] #root .neuroGraphSurface,
+    html[data-theme="dark"] #root .neuroGraphCanvas {
+      background: #000000;
+    }
+  </style>
+  <script>
+    (() => {
+      try {
+        const theme = localStorage.getItem("knowledge_graph_theme_mode_v1") === "light" ? "light" : "dark";
+        const root = document.documentElement;
+        root.dataset.theme = theme;
+        root.style.backgroundColor = theme === "light" ? "#ffffff" : "#000000";
+        const metaTheme = document.querySelector('meta[name="theme-color"]');
+        if (metaTheme) metaTheme.setAttribute("content", theme === "light" ? "#ffffff" : "#050505");
+        const metaScheme = document.querySelector('meta[name="color-scheme"]');
+        if (metaScheme) metaScheme.setAttribute("content", theme === "light" ? "light" : "dark");
+      } catch {}
+    })();
+  </script>
 </head>
 
 <body>

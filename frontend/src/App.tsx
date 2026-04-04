@@ -74,6 +74,7 @@ const VIEWPORT_CENTERED_ZOOM_STORAGE_KEY = "knowledge_graph_viewport_centered_zo
 const COMPACT_TOP_OVERLAY_THRESHOLD = 960;
 const ACTIVE_CHAT_SESSION_STORAGE_KEY = "knowledge_graph_active_chat_session_v1";
 const THEME_MODE_STORAGE_KEY = "knowledge_graph_theme_mode_v1";
+const MOBILE_LAYOUT_BREAKPOINT = 1180;
 
 function activeChatSessionStorageKey(graphId: string): string {
   return `${ACTIVE_CHAT_SESSION_STORAGE_KEY}:${graphId}`;
@@ -119,6 +120,13 @@ function readStoredThemeMode(): ThemeMode {
   } catch {
     return "dark";
   }
+}
+
+function readInitialThemeMode(): ThemeMode {
+  if (typeof window === "undefined") return "dark";
+  const mode = readStoredThemeMode();
+  document.documentElement.dataset.theme = mode;
+  return mode;
 }
 
 export default function App(): React.JSX.Element {
@@ -223,7 +231,7 @@ export default function App(): React.JSX.Element {
   const [debugLogsError, setDebugLogsError] = useState<string | null>(null);
   const [composerUseGrounding, setComposerUseGrounding] = useState(true);
   const [viewportCenteredZoom, setViewportCenteredZoom] = useState(false);
-  const [themeModeDraft, setThemeModeDraft] = useState<ThemeMode>(() => (typeof window === "undefined" ? "dark" : readStoredThemeMode()));
+  const [themeModeDraft, setThemeModeDraft] = useState<ThemeMode>(readInitialThemeMode);
   const graphShellRef = useRef<HTMLDivElement | null>(null);
   const topicPopoverRef = useRef<HTMLDivElement | null>(null);
   const deleteGraphModalRef = useRef<HTMLDivElement | null>(null);
@@ -378,7 +386,7 @@ export default function App(): React.JSX.Element {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const media = window.matchMedia("(max-width: 900px) and (orientation: portrait)");
+    const media = window.matchMedia(`(max-width: ${MOBILE_LAYOUT_BREAKPOINT}px)`);
     const sync = () => {
       setIsMobileViewport(media.matches);
       setViewportWidth(window.innerWidth);

@@ -31,6 +31,10 @@ type ZoneGeometry = {
   contour: Array<{ x: number; y: number }>;
 };
 
+const ZONE_REVEAL_STAGGER_FRAMES = 5;
+const ZONE_REVEAL_DURATION_FRAMES = 24;
+const ZONE_GEOMETRY_REFRESH_FRAMES = 160;
+
 type NodeAnchor = {
   x: number;
   y: number;
@@ -121,7 +125,7 @@ function graphCanvasPalette(themeMode: GraphCanvasThemeMode): GraphCanvasPalette
     return {
       gridStroke: "rgba(17,24,39,0.06)",
       edgeRgb: "17,24,39",
-      nodeBaseFill: "rgba(255,255,255,0.98)",
+      nodeBaseFill: "rgba(247,247,244,0.98)",
       nodeSelectedFill: "rgba(56,67,84,0.88)",
       nodePathFill: "rgba(84,96,115,0.84)",
       nodeStableFill: "rgba(96,108,126,0.78)",
@@ -526,7 +530,11 @@ function GraphCanvasComponent({
   const pinchGestureRef = useRef<{ distance: number; centerX: number; centerY: number } | null>(null);
   const gestureConsumedRef = useRef<boolean>(false);
   const zoneGeometryRef = useRef<Map<string, ZoneGeometry>>(new Map());
+  const zoneRevealStartFrameRef = useRef<number>(0);
+  const themeModeRef = useRef<GraphCanvasThemeMode>(themeMode);
+  const viewportSignatureRef = useRef<string>("");
   paletteRef.current = graphCanvasPalette(themeMode);
+  themeModeRef.current = themeMode;
 
   // Smoothly animate zoom towards targetZoom
   useEffect(() => {
@@ -750,12 +758,42 @@ function GraphCanvasComponent({
       const dpr = window.devicePixelRatio || 1;
       const nextW = Math.max(1, Math.floor(latestWidth * dpr));
       const nextH = Math.max(1, Math.floor(latestHeight * dpr));
+      const viewportSignature = `${Math.round(latestWidth)}x${Math.round(latestHeight)}@${Math.round(dpr * 100)}`;
+      const viewportChanged = viewportSignatureRef.current !== viewportSignature;
       if (canvasEl.width !== nextW || canvasEl.height !== nextH) {
         canvasEl.width = nextW;
         canvasEl.height = nextH;
         canvasEl.style.width = `${latestWidth}px`;
         canvasEl.style.height = `${latestHeight}px`;
         ctx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      if (viewportChanged) {
+        viewportSignatureRef.current = viewportSignature;
+        structureActivityFrameRef.current = frameCount;
+        idleFrozenRef.current = false;
+        idleSettleFramesRef.current = 0;
+        lastEmittedAnchorRef.current = null;
+        labelPlacementRef.current.clear();
+        zoneGeometryRef.current.clear();
+        zoneRevealStartFrameRef.current = frameCount + (staticLayout ? 4 : Math.max(8, cascadeStepFramesRef.current));
+        const hasManualLayout = Boolean(manualPositionsRef.current && Object.keys(manualPositionsRef.current).length > 0);
+        if (!staticLayout && !layoutEditModeRef.current && !hasManualLayout) {
+          for (const node of nodesDataRef.current) {
+            nodesRef.current.delete(node.id);
+            positionCache.delete(cacheEntryKey(graphCacheKey, node.id));
+          }
+        }
+        if (!staticLayout) {
+          scheduleCascade();
+        } else {
+          litFrameRef.current.clear();
+          for (const node of nodesDataRef.current) {
+            litFrameRef.current.set(node.id, frameCount);
+          }
+          for (const edge of edgesDataRef.current) {
+            litFrameRef.current.set(`e:${edge.id}`, frameCount);
+          }
+        }
       }
     }
 
@@ -862,8 +900,16 @@ function GraphCanvasComponent({
 
     function drawZoneBackgrounds(width: number, height: number, anchors: Map<string, NodeAnchor>): void {
       const positions = nodesRef.current;
-      const shouldRefreshZoneGeometry = layoutEditModeRef.current || draggedNodeRef.current !== null || zoneGeometryRef.current.size === 0;
-      for (const zone of zonesDataRef.current) {
+      const structureAnimatingZones =
+        !staticLayout &&
+        !idleFrozenRef.current &&
+        frameCount - structureActivityFrameRef.current <= ZONE_GEOMETRY_REFRESH_FRAMES;
+      const shouldRefreshZoneGeometry =
+        layoutEditModeRef.current ||
+        draggedNodeRef.current !== null ||
+        structureAnimatingZones ||
+        zoneGeometryRef.current.size === 0;
+      for (const [zoneIndex, zone] of zonesDataRef.current.entries()) {
         let geometry = zoneGeometryRef.current.get(zone.id);
         if (shouldRefreshZoneGeometry || !geometry) {
           const zonePoints = zone.topic_ids
@@ -884,12 +930,17 @@ function GraphCanvasComponent({
         if (!geometry) continue;
         const { center, spread, contour } = geometry;
         const rgb = hexToRgb(zone.color) ?? { r: 255, g: 214, b: 10 };
-        const gradient = ctx2.createRadialGradient(center.x, center.y, 0, center.x, center.y, spread);
+        const zoneRevealAge = frameCount - zoneRevealStartFrameRef.current - zoneIndex * ZONE_REVEAL_STAGGER_FRAMES;
+        const zoneRevealProgress = clamp(zoneRevealAge / ZONE_REVEAL_DURATION_FRAMES, 0, 1);
+        const easedZoneReveal = 1 - Math.pow(1 - zoneRevealProgress, 2);
+        if (easedZoneReveal <= 0.001) continue;
         const zoneOpacityMultiplier = paletteRef.current.zoneOpacityMultiplier;
-        gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.09 * zoneOpacityMultiplier})`);
-        gradient.addColorStop(0.48, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.045 * zoneOpacityMultiplier})`);
-        gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
-        ctx2.fillStyle = gradient;
+        const gradientProgress = easedZoneReveal;
+        const gradientFill = ctx2.createRadialGradient(center.x, center.y, 0, center.x, center.y, spread);
+        gradientFill.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.09 * zoneOpacityMultiplier * gradientProgress})`);
+        gradientFill.addColorStop(0.48, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.045 * zoneOpacityMultiplier * gradientProgress})`);
+        gradientFill.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+        ctx2.fillStyle = gradientFill;
         ctx2.beginPath();
         ctx2.arc(center.x, center.y, spread, 0, Math.PI * 2);
         ctx2.fill();
@@ -897,8 +948,8 @@ function GraphCanvasComponent({
           ctx2.save();
           ctx2.setLineDash([10, 8]);
           ctx2.lineWidth = paletteRef.current.zoneOutlineWidth;
-          ctx2.strokeStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${paletteRef.current.zoneOutlineAlpha})`;
-          ctx2.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${paletteRef.current.zoneOutlineAlpha * 0.14})`;
+          ctx2.strokeStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${paletteRef.current.zoneOutlineAlpha * easedZoneReveal})`;
+          ctx2.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${paletteRef.current.zoneOutlineAlpha * 0.14 * easedZoneReveal})`;
           ctx2.beginPath();
           ctx2.moveTo(contour[0].x, contour[0].y);
           for (let index = 1; index < contour.length; index += 1) {
@@ -972,14 +1023,19 @@ function GraphCanvasComponent({
       const currentEdges = edgesDataRef.current;
       const positions = nodesRef.current;
       const anchors = buildAnchorMap(currentNodes, currentEdges, width, height);
-        const graphSignature = `${graphCacheKey}::${currentNodes.map((node) => node.id).sort().join("|")}::${currentEdges
+      const zoneSignature = zonesDataRef.current
+        .map((zone) => `${zone.id}:${zone.color}:${zone.intensity}:${[...zone.topic_ids].sort().join(",")}`)
+        .sort()
+        .join("|");
+      const graphSignature = `${graphCacheKey}::${currentNodes.map((node) => node.id).sort().join("|")}::${currentEdges
         .map((edge) => edge.id)
         .sort()
-        .join("|")}`;
+        .join("|")}::${zoneSignature}`;
 
       if (graphSignatureRef.current !== graphSignature) {
         graphSignatureRef.current = graphSignature;
         structureActivityFrameRef.current = frameCount;
+        zoneRevealStartFrameRef.current = frameCount + (staticLayout ? 6 : Math.max(12, cascadeStepFramesRef.current * 2));
         idleFrozenRef.current = false;
         idleSettleFramesRef.current = 0;
         labelPlacementRef.current.clear();
@@ -1100,6 +1156,7 @@ function GraphCanvasComponent({
           const aNode = currentNodes[i];
           const a = positions.get(aNode.id);
           if (!a) continue;
+          const aPinned = pinnedPositions[aNode.id];
           if (aNode.id === draggedNodeId) {
             a.vx = 0;
             a.vy = 0;
@@ -1111,11 +1168,13 @@ function GraphCanvasComponent({
             const bNode = currentNodes[j];
             const b = positions.get(bNode.id);
             if (!b) continue;
+            const bPinned = pinnedPositions[bNode.id];
             if (bNode.id === draggedNodeId) {
               b.vx = 0;
               b.vy = 0;
               continue;
             }
+            if (aPinned && bPinned) continue;
             const bAnchor = anchors.get(bNode.id);
             const aZone = nodeZoneId.get(aNode.id);
             const bZone = nodeZoneId.get(bNode.id);
@@ -1133,10 +1192,14 @@ function GraphCanvasComponent({
             const force = (repulsion * branchMultiplier * sameZoneBoost * forceScale) / d2;
             const fx = (dx / dist) * force;
             const fy = (dy / dist) * force;
-            a.vx += fx;
-            a.vy += fy;
-            b.vx -= fx;
-            b.vy -= fy;
+            if (!aPinned) {
+              a.vx += fx;
+              a.vy += fy;
+            }
+            if (!bPinned) {
+              b.vx -= fx;
+              b.vy -= fy;
+            }
           }
         }
 
@@ -1145,6 +1208,9 @@ function GraphCanvasComponent({
           const to = positions.get(edge.target_topic_id);
           if (!from || !to) continue;
           if (edge.source_topic_id === draggedNodeId || edge.target_topic_id === draggedNodeId) continue;
+          const sourcePinned = pinnedPositions[edge.source_topic_id];
+          const targetPinned = pinnedPositions[edge.target_topic_id];
+          if (sourcePinned && targetPinned) continue;
           const dx = to.x - from.x;
           const dy = to.y - from.y;
           const dist = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -1168,10 +1234,14 @@ function GraphCanvasComponent({
           const k = spring * (dist - restLength) * edgeScale;
           const fx = (dx / dist) * k;
           const fy = (dy / dist) * k;
-          from.vx += fx;
-          from.vy += fy;
-          to.vx -= fx;
-          to.vy -= fy;
+          if (!sourcePinned) {
+            from.vx += fx;
+            from.vy += fy;
+          }
+          if (!targetPinned) {
+            to.vx -= fx;
+            to.vy -= fy;
+          }
         }
 
         const zoneData = zonesDataRef.current;
@@ -1202,11 +1272,11 @@ function GraphCanvasComponent({
               const zb = zoneData.find((z) => z.id === zoneIds[j])!;
               for (const tid of za.topic_ids) {
                 const p = positions.get(tid);
-                if (p) { p.vx += fx / ca.count; p.vy += fy / ca.count; }
+                if (p && !pinnedPositions[tid]) { p.vx += fx / ca.count; p.vy += fy / ca.count; }
               }
               for (const tid of zb.topic_ids) {
                 const p = positions.get(tid);
-                if (p) { p.vx -= fx / cb.count; p.vy -= fy / cb.count; }
+                if (p && !pinnedPositions[tid]) { p.vx -= fx / cb.count; p.vy -= fy / cb.count; }
               }
             }
           }
@@ -1216,7 +1286,7 @@ function GraphCanvasComponent({
             const cohesionStrength = 0.012 / Math.max(1, Math.sqrt(c.count / 4));
             for (const tid of zone.topic_ids) {
               const p = positions.get(tid);
-              if (!p) continue;
+              if (!p || pinnedPositions[tid]) continue;
               p.vx += (c.x - p.x) * cohesionStrength;
               p.vy += (c.y - p.y) * cohesionStrength;
             }
@@ -1241,17 +1311,10 @@ function GraphCanvasComponent({
           const age = litFrame === undefined ? 0 : Math.max(0, frameCount - litFrame);
           const ramp = Math.min(1, age / 32);
           if (pinned) {
-            if (layoutEditModeRef.current) {
-              position.x = pinned.x;
-              position.y = pinned.y;
-              position.vx = 0;
-              position.vy = 0;
-              continue;
-            }
-            const anchorDx = pinned.x - position.x;
-            const anchorDy = pinned.y - position.y;
-            position.vx += anchorDx * 0.04;
-            position.vy += anchorDy * 0.04;
+            position.x = pinned.x;
+            position.y = pinned.y;
+            position.vx = 0;
+            position.vy = 0;
             continue;
           }
             position.vx += (stable.x - position.x) * levelPull;
@@ -1287,26 +1350,12 @@ function GraphCanvasComponent({
           position.x += position.vx;
           position.y += position.vy;
           if (pinned) {
-            if (layoutEditModeRef.current) {
-              position.x = pinned.x;
-              position.y = pinned.y;
-              position.vx = 0;
-              position.vy = 0;
-              positionCache.set(cacheEntryKey(graphCacheKey, node.id), { x: position.x, y: position.y });
-              continue;
-            }
-            const overshootDx = pinned.x - position.x;
-            const overshootDy = pinned.y - position.y;
-            const overshootDistance = Math.hypot(overshootDx, overshootDy);
-            if (overshootDistance > 10) {
-              position.x += overshootDx * 0.34;
-              position.y += overshootDy * 0.34;
-            } else if (overshootDistance < 1.5) {
-              position.x = pinned.x;
-              position.y = pinned.y;
-              position.vx = 0;
-              position.vy = 0;
-            }
+            position.x = pinned.x;
+            position.y = pinned.y;
+            position.vx = 0;
+            position.vy = 0;
+            positionCache.set(cacheEntryKey(graphCacheKey, node.id), { x: position.x, y: position.y });
+            continue;
           }
           const softBound = Math.max(width, height) * 1.5;
           position.x = Math.max(-softBound, Math.min(softBound, position.x));
@@ -1335,7 +1384,7 @@ function GraphCanvasComponent({
       drawZoneBackgrounds(width, height, anchors);
 
       const selectedPrimaryZoneId = primaryZoneIdForTopic(zonesDataRef.current, selectedTopicIdRef.current);
-      const selectedZoneIds = themeMode === "light"
+      const selectedZoneIds = themeModeRef.current === "light"
         ? highlightedZoneIdsForSelection(zonesDataRef.current, selectedTopicIdRef.current, pathNodeIdsRef.current)
         : selectedPrimaryZoneId
           ? new Set([selectedPrimaryZoneId])
@@ -1365,7 +1414,7 @@ function GraphCanvasComponent({
         ctx2.moveTo(from.x, from.y);
         ctx2.lineTo(targetX, targetY);
         if (onPath) {
-          if (themeMode === "light" && (highlightedSourceZone || highlightedTargetZone)) {
+          if (themeModeRef.current === "light" && (highlightedSourceZone || highlightedTargetZone)) {
             const startRgb = hexToRgb(highlightedSourceZone?.color ?? highlightedTargetZone?.color ?? "#64748b") ?? { r: 100, g: 116, b: 139 };
             const endRgb = hexToRgb(highlightedTargetZone?.color ?? highlightedSourceZone?.color ?? "#64748b") ?? { r: 100, g: 116, b: 139 };
             if (highlightedSourceZone && highlightedTargetZone && highlightedSourceZone.id !== highlightedTargetZone.id) {
@@ -1419,7 +1468,7 @@ function GraphCanvasComponent({
           .filter((point): point is NodePosition => Boolean(point));
 
         if (brightness > 0.06 && (selected || onPath)) {
-          if (themeMode === "light" && highlightedZoneRgb) {
+          if (themeModeRef.current === "light" && highlightedZoneRgb) {
             ctx2.strokeStyle = rgbaString(highlightedZoneRgb, selected ? Math.max(0.72, haloPulse * brightness) : Math.max(0.52, 0.62 * brightness));
           } else {
             ctx2.strokeStyle = selected
@@ -1462,7 +1511,7 @@ function GraphCanvasComponent({
           ctx2.arc(position.x, position.y, r + 8, 0, Math.PI * 2);
           ctx2.stroke();
           ctx2.setLineDash([]);
-        } else if (brightness > 0.06 && themeMode === "light" && highlightedZoneRgb) {
+        } else if (brightness > 0.06 && themeModeRef.current === "light" && highlightedZoneRgb) {
           ctx2.strokeStyle = rgbaString(highlightedZoneRgb, selected ? 0.9 : onPath ? 0.72 : 0.52);
           ctx2.lineWidth = selected ? 1.8 : 1.35;
           ctx2.beginPath();
@@ -1483,7 +1532,7 @@ function GraphCanvasComponent({
           : onPath
             ? paletteRef.current.shadowPath
             : paletteRef.current.shadowContext;
-        if (themeMode === "light" && highlightedZoneRgb) {
+        if (themeModeRef.current === "light" && highlightedZoneRgb) {
           const zoneTint = selected ? 0.78 : onPath ? 0.62 : 0.46;
           ctx2.fillStyle = rgbaString(highlightedZoneRgb, zoneTint);
         } else {
@@ -1566,7 +1615,7 @@ function GraphCanvasComponent({
         }
 
         labelPlacementRef.current.set(node.id, chosenIndex);
-        if (themeMode === "light" && (selected || onPath)) {
+        if (themeModeRef.current === "light" && (selected || onPath)) {
           chosen = { ...chosen, y: chosen.y - 2 };
           chosenBox = {
             left: chosenBox.left,
@@ -1582,7 +1631,7 @@ function GraphCanvasComponent({
           ? zoneById.get(effectiveZoneId) ?? null
           : null;
         const highlightedZoneRgb = highlightedZone ? hexToRgb(highlightedZone.color) : null;
-        if (themeMode === "light" && highlightedZoneRgb && (selected || onPath)) {
+        if (themeModeRef.current === "light" && highlightedZoneRgb && (selected || onPath)) {
           const labelBg = mixRgb(highlightedZoneRgb, { r: 255, g: 255, b: 255 }, 0.08);
           ctx2.fillStyle = rgbaString(labelBg, Math.min(0.96, 0.72 + alpha * 0.3));
           ctx2.beginPath();
@@ -1906,7 +1955,7 @@ function GraphCanvasComponent({
       <canvas
         ref={canvasRef}
         className="neuroGraphCanvas"
-        style={{ cursor: layoutEditMode ? "crosshair" : "grab", touchAction: "none" }}
+        style={{ cursor: layoutEditMode ? "crosshair" : "grab", touchAction: "none", background: backgroundFill ?? "transparent" }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
