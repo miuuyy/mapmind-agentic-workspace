@@ -44,6 +44,12 @@
   --shadow-strong: rgba(34, 38, 48, 0.12);
   --grid-line: rgba(17, 24, 39, 0.05);
   --text-secondary: rgba(17, 24, 39, 0.72);
+  --mm-accent-green: #34a853;
+  --mm-accent-green-hover: #2c9148;
+  --mm-accent-green-text: #f7fff9;
+  --mm-accent-green-soft-bg: rgba(52, 168, 83, 0.12);
+  --mm-accent-green-soft-border: rgba(52, 168, 83, 0.34);
+  --mm-accent-green-soft-text: rgba(39, 112, 59, 0.96);
 }
 
 * {
@@ -4571,9 +4577,9 @@ select.input {
 }
 
 :root[data-theme="light"] .settingsSwitchActive {
-  background: #3db35a;
-  border-color: rgba(61, 179, 90, 0.72);
-  box-shadow: inset 0 0 0 1px rgba(31, 110, 52, 0.18);
+  background: var(--mm-accent-green);
+  border-color: color-mix(in srgb, var(--mm-accent-green) 72%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mm-accent-green) 28%, rgba(31, 110, 52, 0.18));
 }
 
 :root[data-theme="light"] .settingsSwitchKnob {
@@ -4584,7 +4590,7 @@ select.input {
 
 :root[data-theme="light"] .settingsSwitchActive .settingsSwitchKnob {
   background: #ffffff;
-  border-color: rgba(32, 174, 104, 0.24);
+  border-color: color-mix(in srgb, var(--mm-accent-green) 24%, transparent);
 }
 
 :root[data-theme="light"] .sidebarDivider,
@@ -4685,6 +4691,9 @@ select.input {
 }
 
 :root[data-theme="light"] .pageStatControlActive {
+  background: var(--mm-accent-green-soft-bg);
+  border-color: var(--mm-accent-green-soft-border);
+  color: var(--mm-accent-green-soft-text);
   width: auto;
   min-width: max-content;
   padding: 6px 12px;
@@ -4743,9 +4752,9 @@ select.input {
 
 :root[data-theme="light"] .pageStatComplete,
 :root[data-theme="light"] .pageStatGood {
-  background: rgba(32, 174, 104, 0.12);
-  border-color: rgba(32, 174, 104, 0.24);
-  color: #2f6c4b;
+  background: var(--mm-accent-green-soft-bg);
+  border-color: color-mix(in srgb, var(--mm-accent-green) 72%, transparent);
+  color: var(--mm-accent-green-soft-text);
 }
 
 :root[data-theme="light"] .pageStatControl svg {
@@ -4884,12 +4893,15 @@ select.input {
 }
 
 :root[data-theme="light"] .proposalAddButton[title="Applied"] {
-  border-color: rgba(61, 179, 90, 0.34);
-  background: rgba(61, 179, 90, 0.12);
-  color: rgba(43, 118, 61, 0.96);
+  border-color: var(--mm-accent-green-soft-border);
+  background: var(--mm-accent-green-soft-bg);
+  color: var(--mm-accent-green-soft-text);
 }
 
 :root[data-theme="light"] .proposalMiniItem {
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.96);
   border-color: rgba(203, 213, 225, 0.82);
   color: rgba(51, 65, 85, 0.86);
@@ -4920,6 +4932,9 @@ select.input {
 }
 
 :root[data-theme="light"] .previewStatCard {
+  padding: 8px 10px;
+  gap: 2px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.96);
   border-color: rgba(203, 213, 225, 0.82);
   color: rgba(71, 85, 105, 0.82);
@@ -4927,6 +4942,11 @@ select.input {
 
 :root[data-theme="light"] .previewStatCard strong {
   color: rgba(30, 41, 59, 0.9);
+}
+
+:root[data-theme="light"] .previewStatGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
 }
 
 :root[data-theme="light"] .assistantInput {
@@ -5200,8 +5220,8 @@ select.input {
 
 :root[data-theme="light"] .assistantSendButton,
 :root[data-theme="light"] .emptyStateAction {
-  background: #3db35a;
-  color: #f7fff9;
+  background: var(--mm-accent-green);
+  color: var(--mm-accent-green-text);
   border: 1px solid transparent;
   box-shadow: none;
 }
@@ -5215,7 +5235,7 @@ select.input {
 
 :root[data-theme="light"] .assistantSendButton:hover,
 :root[data-theme="light"] .emptyStateAction:hover {
-  background: #349a4d;
+  background: var(--mm-accent-green-hover);
   border-color: transparent;
   color: #ffffff;
 }

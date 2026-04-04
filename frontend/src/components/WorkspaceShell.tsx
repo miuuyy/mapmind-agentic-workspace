@@ -278,7 +278,6 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     themeMode,
     setThemeMode,
   } = props;
-
   const showMobileOverlay = isMobileViewport && !isSettingsOpen;
   const showCompactDesktopOverlay = topOverlayCompact && !isMobileViewport && !isSettingsOpen;
   const showInlineDesktopOverlay = !topOverlayCompact && !isMobileViewport && !isSettingsOpen;
@@ -390,7 +389,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const [topicArtifactTitleDraft, setTopicArtifactTitleDraft] = React.useState("");
   const [topicArtifactBodyDraft, setTopicArtifactBodyDraft] = React.useState("");
   const topicAssetModalRef = React.useRef<HTMLDivElement | null>(null);
-  const topicAssetPrimaryInputRef = React.useRef<HTMLInputElement | null>(null);
+  const topicAssetPrimaryInputRef = React.useRef<HTMLElement | null>(null);
   const closeTopicAssetModal = React.useCallback(() => {
     setTopicAssetDialog(null);
     setTopicAssetSaving(false);
@@ -433,7 +432,11 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     setTopicAssetError(null);
     try {
       if (topicAssetDialog.kind === "resource") {
-        await addTopicResource(topicAssetDialog.topicId, topicResourceUrlDraft);
+        const safeUrl = safeExternalUrl(topicResourceUrlDraft);
+        if (!safeUrl) {
+          throw new Error("A valid link is required.");
+        }
+        await addTopicResource(topicAssetDialog.topicId, safeUrl);
       } else {
         await addTopicArtifact(topicAssetDialog.topicId, topicArtifactTitleDraft, topicArtifactBodyDraft);
       }
@@ -912,26 +915,15 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                       </div>
                       {selectedResourceLinks.length > 0 ? (
                         <div className="topicPopoverList">
-                          {selectedResourceLinks.map((resource) => {
-                            const safeUrl = safeExternalUrl(resource.url);
-                            if (!safeUrl) {
-                              return (
-                                <div key={resource.id} className="topicPopoverArtifact">
-                                  <div className="topicPopoverArtifactTitle">
-                                    <span>{resource.label}</span>
-                                    <span className="topicPopoverArtifactKind">{copy.topic.blocked}</span>
-                                  </div>
-                                  <div className="mutedSmall">{copy.topic.blockedResource}</div>
-                                </div>
-                              );
-                            }
-                            return (
+                          {selectedResourceLinks
+                            .map((resource) => ({ resource, safeUrl: safeExternalUrl(resource.url) }))
+                            .filter((item): item is { resource: typeof selectedResourceLinks[number]; safeUrl: string } => Boolean(item.safeUrl))
+                            .map(({ resource, safeUrl }) => (
                               <a key={resource.id} className="topicPopoverLink" href={safeUrl} rel="noopener noreferrer nofollow" target="_blank">
                                 <span>{resource.label}</span>
                                 <span className="topicPopoverLinkKind">{resource.kind}</span>
                               </a>
-                            );
-                          })}
+                            ))}
                         </div>
                       ) : (
                         <div className="mutedSmall">{copy.topic.noResources}</div>
@@ -1477,9 +1469,11 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
               {topicAssetDialog.kind === "resource" ? (
                 <label className="field">
                   <span className="fieldLabel">{copy.dialogs.resourceUrl}</span>
-                  <input
-                    ref={topicAssetPrimaryInputRef}
-                    className="input"
+                  <textarea
+                    ref={(node) => {
+                      topicAssetPrimaryInputRef.current = node;
+                    }}
+                    className="textarea textareaCompact textareaPersona"
                     value={topicResourceUrlDraft}
                     onChange={(event) => setTopicResourceUrlDraft(event.target.value)}
                     placeholder={copy.dialogs.resourceUrlPlaceholder}
@@ -1490,7 +1484,9 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   <label className="field">
                     <span className="fieldLabel">{copy.dialogs.artifactTitle}</span>
                     <input
-                      ref={topicAssetPrimaryInputRef}
+                      ref={(node) => {
+                        topicAssetPrimaryInputRef.current = node;
+                      }}
                       className="input"
                       value={topicArtifactTitleDraft}
                       onChange={(event) => setTopicArtifactTitleDraft(event.target.value)}
@@ -1500,7 +1496,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   <label className="field">
                     <span className="fieldLabel">{copy.dialogs.artifactBodyLabel}</span>
                     <textarea
-                      className="textarea textareaCompact"
+                      className="textarea textareaCompact textareaPersona"
                       value={topicArtifactBodyDraft}
                       onChange={(event) => setTopicArtifactBodyDraft(event.target.value)}
                       placeholder={copy.dialogs.artifactBodyPlaceholder}

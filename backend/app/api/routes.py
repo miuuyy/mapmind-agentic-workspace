@@ -137,6 +137,21 @@ def _resource_label_from_url(url: str) -> str:
     return url.strip()
 
 
+def _normalize_resource_url(raw: str) -> str:
+    value = raw.strip()
+    if not value:
+        return ""
+    parsed = urlparse(value)
+    if not parsed.scheme:
+        value = f"https://{value}"
+        parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"}:
+        return ""
+    if not parsed.netloc:
+        return ""
+    return value
+
+
 @router.get("/healthz")
 def healthz(settings: Settings = Depends(get_settings)) -> dict:
     return {
@@ -269,7 +284,7 @@ def append_topic_resource(
     repository: GraphRepository = Depends(get_repository),
     settings: Settings = Depends(get_settings),
 ) -> dict:
-    normalized_url = body.url.strip()
+    normalized_url = _normalize_resource_url(body.url)
     if not normalized_url:
         raise HTTPException(status_code=400, detail="resource url is required")
     resource = ResourceLink(
@@ -301,7 +316,13 @@ def append_topic_artifact(
         raise HTTPException(status_code=400, detail="artifact title is required")
     if not normalized_body:
         raise HTTPException(status_code=400, detail="artifact body is required")
-    artifact = Artifact(title=normalized_title, kind="note", body=normalized_body)
+    artifact_id_source = f"{graph_id}:{topic_id}:{normalized_title}:{normalized_body}"
+    artifact = Artifact(
+        id=f"artifact-{sha1(artifact_id_source.encode('utf-8')).hexdigest()[:12]}",
+        title=normalized_title,
+        kind="note",
+        body=normalized_body,
+    )
     try:
         workspace = repository.append_topic_artifact(graph_id, topic_id, artifact)
     except ValueError as exc:

@@ -139,7 +139,12 @@ export function renderDisplayText(value: string): React.ReactNode {
 export function safeExternalUrl(raw: string | null | undefined): string | null {
   if (!raw) return null;
   try {
-    const parsed = new URL(raw);
+    const trimmed = raw.trim();
+    const candidate =
+      /^https?:\/\//i.test(trimmed) || /^[a-z][a-z0-9+\-.]*:/i.test(trimmed)
+        ? trimmed
+        : `https://${trimmed}`;
+    const parsed = new URL(candidate);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
       return null;
     }
@@ -148,6 +153,7 @@ export function safeExternalUrl(raw: string | null | undefined): string | null {
     return null;
   }
 }
+
 
 export async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   const payload = (await response.json().catch(() => null)) as ApiErrorPayload | null;
