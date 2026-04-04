@@ -1,7 +1,7 @@
 import React from "react";
-import { BookBookmark, BugBeetle, CaretDown, CaretLeft, CaretRight, CrosshairSimple, DownloadSimple, GearSix, LockSimple, LockSimpleOpen, PencilSimple } from "@phosphor-icons/react";
+import { BookBookmark, BugBeetle, CaretDown, CaretLeft, CaretRight, CrosshairSimple, DownloadSimple, GearSix, LockSimple, LockSimpleOpen, Moon, PencilSimple, SunDim } from "@phosphor-icons/react";
 
-import { APP_LOGO_SRC, ASSISTANT_MIN_WIDTH, type AuthSessionPayload, type GraphChatState, type WorkspaceSurfacePayload } from "../lib/appContracts";
+import { APP_LOGO_SRC, ASSISTANT_MIN_WIDTH, type AuthSessionPayload, type GraphChatState, type ThemeMode, type WorkspaceSurfacePayload } from "../lib/appContracts";
 import { API_BASE } from "../lib/api";
 import { renderDisplayText, safeExternalUrl, userInitials, type ManualLayoutPositions, type PopoverPosition, type apiFetch } from "../lib/appUiHelpers";
 import type { AppCopy } from "../lib/appCopy";
@@ -158,6 +158,8 @@ type WorkspaceShellProps = {
   sessionUser: AuthSessionPayload["user"];
   isSettingsOpen: boolean;
   debugModeEnabled: boolean;
+  themeMode: ThemeMode;
+  setThemeMode: StateSetter<ThemeMode>;
 };
 
 export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
@@ -273,7 +275,10 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     sessionUser,
     isSettingsOpen,
     debugModeEnabled,
+    themeMode,
+    setThemeMode,
   } = props;
+  const graphCanvasBackgroundFill = themeMode === "light" ? null : "#000000";
   const [topicAssetDialog, setTopicAssetDialog] = React.useState<{
     kind: "resource" | "artifact";
     topicId: string;
@@ -597,6 +602,17 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
             <div className="floatingStatusContainer floatingStatusContainerCompact">
               {activeGraph ? (
                 <button
+                  className={`floatingStatusButton ${themeMode === "light" ? "floatingStatusButtonActive" : ""}`}
+                  onClick={() => setThemeMode((current) => current === "light" ? "dark" : "light")}
+                  type="button"
+                  title={themeMode === "light" ? "Switch to dark theme" : "Switch to light theme"}
+                  aria-pressed={themeMode === "light"}
+                >
+                  {themeMode === "light" ? <Moon size={15} weight="bold" /> : <SunDim size={15} weight="bold" />}
+                </button>
+              ) : null}
+              {activeGraph ? (
+                <button
                   className={`floatingStatusButton ${viewportCenteredZoom ? "floatingStatusButtonActive" : ""}`}
                   onClick={() => setViewportCenteredZoom((value: boolean) => !value)}
                   type="button"
@@ -652,6 +668,17 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
               top: "20px",
             }}
           >
+            {activeGraph ? (
+              <button
+                className={`floatingStatusButton ${themeMode === "light" ? "floatingStatusButtonActive" : ""}`}
+                onClick={() => setThemeMode((current) => current === "light" ? "dark" : "light")}
+                type="button"
+                title={themeMode === "light" ? "Switch to dark theme" : "Switch to light theme"}
+                aria-pressed={themeMode === "light"}
+              >
+                {themeMode === "light" ? <Moon size={15} weight="bold" /> : <SunDim size={15} weight="bold" />}
+              </button>
+            ) : null}
             {activeGraph ? (
               <button
                 className={`floatingStatusButton ${viewportCenteredZoom ? "floatingStatusButtonActive" : ""}`}
@@ -789,6 +816,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                     onNodePositionsChange={setGraphLayoutDraft}
                     disableIdleAnimations={liveDisableIdleAnimations}
                     viewportCenteredWheelZoom={viewportCenteredZoom}
+                    themeMode={themeMode}
+                    backgroundFill={graphCanvasBackgroundFill}
                   />
                 ) : showGraphLoadingState ? (
                   <div className="emptyStateShell">
@@ -811,6 +840,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                         graphCacheKey="graph:loading"
                         disableIdleAnimations
                         viewportCenteredWheelZoom={viewportCenteredZoom}
+                        themeMode={themeMode}
+                        backgroundFill={graphCanvasBackgroundFill}
                       />
                     </div>
                   </div>
@@ -834,6 +865,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                         centerOnNodeId={null}
                         graphCacheKey="graph:empty"
                         viewportCenteredWheelZoom={viewportCenteredZoom}
+                        themeMode={themeMode}
+                        backgroundFill={graphCanvasBackgroundFill}
                       />
                     </div>
                     <div className="emptyStateContent">

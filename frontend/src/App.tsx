@@ -18,6 +18,7 @@ import {
   type AuthSessionPayload,
   type GraphChatState,
   type MemoryMode,
+  type ThemeMode,
   type ThinkingMode,
   type WorkspaceSurfacePayload,
 } from "./lib/appContracts";
@@ -72,6 +73,7 @@ import type {
 const VIEWPORT_CENTERED_ZOOM_STORAGE_KEY = "knowledge_graph_viewport_centered_zoom_v1";
 const COMPACT_TOP_OVERLAY_THRESHOLD = 960;
 const ACTIVE_CHAT_SESSION_STORAGE_KEY = "knowledge_graph_active_chat_session_v1";
+const THEME_MODE_STORAGE_KEY = "knowledge_graph_theme_mode_v1";
 
 function activeChatSessionStorageKey(graphId: string): string {
   return `${ACTIVE_CHAT_SESSION_STORAGE_KEY}:${graphId}`;
@@ -108,6 +110,15 @@ function reconcileThreadMessages(serverMessages: ChatMessage[], localMessages: C
   if (serverMessages.length === 0) return localMessages;
   if (serverThreadIsStaleSubset(serverMessages, localMessages)) return localMessages;
   return serverMessages;
+}
+
+function readStoredThemeMode(): ThemeMode {
+  try {
+    const raw = localStorage.getItem(THEME_MODE_STORAGE_KEY);
+    return raw === "light" ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
 }
 
 export default function App(): React.JSX.Element {
@@ -212,6 +223,7 @@ export default function App(): React.JSX.Element {
   const [debugLogsError, setDebugLogsError] = useState<string | null>(null);
   const [composerUseGrounding, setComposerUseGrounding] = useState(true);
   const [viewportCenteredZoom, setViewportCenteredZoom] = useState(false);
+  const [themeModeDraft, setThemeModeDraft] = useState<ThemeMode>(() => (typeof window === "undefined" ? "dark" : readStoredThemeMode()));
   const graphShellRef = useRef<HTMLDivElement | null>(null);
   const topicPopoverRef = useRef<HTMLDivElement | null>(null);
   const deleteGraphModalRef = useRef<HTMLDivElement | null>(null);
@@ -406,6 +418,15 @@ export default function App(): React.JSX.Element {
       // Ignore localStorage write failures.
     }
   }, [viewportCenteredZoom]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(THEME_MODE_STORAGE_KEY, themeModeDraft);
+    } catch {
+      // Ignore localStorage write failures.
+    }
+    document.documentElement.dataset.theme = themeModeDraft;
+  }, [themeModeDraft]);
 
   const availableGraphs = useMemo(() => data?.workspace.graphs ?? [], [data]);
   const activeGraph = useMemo(
@@ -1597,7 +1618,7 @@ export default function App(): React.JSX.Element {
   const sidebarVisible = leftSidebarOpen || leftSidebarClosing;
 
   return (
-    <div className="app">
+    <div className="app" data-theme={themeModeDraft}>
       <div className="ambient-glow" />
       <WorkspaceShell
         copy={copy}
@@ -1711,6 +1732,8 @@ export default function App(): React.JSX.Element {
         sessionUser={sessionUser}
         isSettingsOpen={isSettingsOpen}
         debugModeEnabled={debugModeEnabled}
+        themeMode={themeModeDraft}
+        setThemeMode={setThemeModeDraft}
       />
 
       <SettingsModal
@@ -1781,6 +1804,8 @@ export default function App(): React.JSX.Element {
         setEnableClosureTestsDraft={setEnableClosureTestsDraft}
         debugModeEnabledDraft={debugModeEnabledDraft}
         setDebugModeEnabledDraft={setDebugModeEnabledDraft}
+        themeModeDraft={themeModeDraft}
+        setThemeModeDraft={setThemeModeDraft}
         quizQuestionCountDraft={quizQuestionCountDraft}
         setQuizQuestionCountDraft={setQuizQuestionCountDraft}
         quizPassCountDraft={quizPassCountDraft}

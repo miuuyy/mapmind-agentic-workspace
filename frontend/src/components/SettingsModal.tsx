@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Card } from "./Card";
-import { MEMORY_MODE_OPTIONS, THINKING_MODE_OPTIONS, type MemoryMode, type ThinkingMode } from "../lib/appContracts";
+import { MEMORY_MODE_OPTIONS, THINKING_MODE_OPTIONS, type MemoryMode, type ThemeMode, type ThinkingMode } from "../lib/appContracts";
 import type { AppCopy } from "../lib/appCopy";
 import type { GraphEnvelope, SnapshotRecord, WorkspaceConfig, WorkspaceEnvelope } from "../lib/types";
 
@@ -88,6 +88,8 @@ type SettingsModalProps = {
   setEnableClosureTestsDraft: StateSetter<boolean>;
   debugModeEnabledDraft: boolean;
   setDebugModeEnabledDraft: StateSetter<boolean>;
+  themeModeDraft: ThemeMode;
+  setThemeModeDraft: StateSetter<ThemeMode>;
   quizQuestionCountDraft: number;
   setQuizQuestionCountDraft: StateSetter<number>;
   quizPassCountDraft: number;
@@ -166,6 +168,8 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
     setEnableClosureTestsDraft,
     debugModeEnabledDraft,
     setDebugModeEnabledDraft,
+    themeModeDraft,
+    setThemeModeDraft,
     quizQuestionCountDraft,
     setQuizQuestionCountDraft,
     quizPassCountDraft,
@@ -306,7 +310,7 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                                 appearance: "none",
                                 border: 0,
                                 background: "transparent",
-                                color: "rgba(255,255,255,0.62)",
+                                color: themeModeDraft === "light" ? "rgba(17,24,39,0.62)" : "rgba(255,255,255,0.62)",
                                 padding: 0,
                                 font: "inherit",
                                 cursor: "pointer",

@@ -5,6 +5,17 @@
   --border: rgba(255, 255, 255, 0.08);
   --text: #ffffff;
   --muted: #888888;
+  --surface-0: rgba(14, 14, 15, 0.92);
+  --surface-1: rgba(255, 255, 255, 0.04);
+  --surface-2: rgba(255, 255, 255, 0.08);
+  --surface-3: rgba(255, 255, 255, 0.12);
+  --field-bg: rgba(255, 255, 255, 0.02);
+  --field-bg-focus: rgba(255, 255, 255, 0.05);
+  --field-border: rgba(255, 255, 255, 0.08);
+  --shadow-soft: rgba(0, 0, 0, 0.2);
+  --shadow-strong: rgba(0, 0, 0, 0.48);
+  --grid-line: rgba(255, 255, 255, 0.03);
+  --text-secondary: rgba(255, 255, 255, 0.72);
   --system-fonts: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --sans: "Manrope", var(--system-fonts);
   --heading: var(--sans);
@@ -13,6 +24,26 @@
   --yellow: #ffd60a;
   --red: #ff453a;
   --gray: #8e8e93;
+}
+
+:root[data-theme="light"] {
+  --bg: #f7f7f4;
+  --panel: rgba(255, 255, 255, 0.82);
+  --panel2: #fcfcfa;
+  --border: rgba(17, 24, 39, 0.1);
+  --text: #141821;
+  --muted: #5f6572;
+  --surface-0: rgba(255, 255, 255, 0.92);
+  --surface-1: rgba(255, 255, 255, 0.72);
+  --surface-2: rgba(17, 24, 39, 0.07);
+  --surface-3: rgba(17, 24, 39, 0.12);
+  --field-bg: rgba(255, 255, 255, 0.9);
+  --field-bg-focus: rgba(255, 255, 255, 0.98);
+  --field-border: rgba(17, 24, 39, 0.12);
+  --shadow-soft: rgba(34, 38, 48, 0.08);
+  --shadow-strong: rgba(34, 38, 48, 0.12);
+  --grid-line: rgba(17, 24, 39, 0.05);
+  --text-secondary: rgba(17, 24, 39, 0.72);
 }
 
 * {
@@ -33,6 +64,11 @@ body {
   color: var(--text);
   font-family: var(--sans);
   overflow: hidden;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] body {
+  color-scheme: light;
 }
 
 .appLaunchScreen {
@@ -1160,13 +1196,23 @@ body {
 .mainLibrarySurface {
   position: relative;
   background:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    radial-gradient(circle at 50% 8%, rgba(255, 255, 255, 0.07), transparent 40%),
-    radial-gradient(circle at 28% 72%, rgba(255, 255, 255, 0.045), transparent 45%),
-    radial-gradient(circle at 76% 64%, rgba(255, 255, 255, 0.04), transparent 43%),
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    radial-gradient(circle at 50% 8%, color-mix(in srgb, var(--text) 7%, transparent), transparent 40%),
+    radial-gradient(circle at 28% 72%, color-mix(in srgb, var(--text) 4.5%, transparent), transparent 45%),
+    radial-gradient(circle at 76% 64%, color-mix(in srgb, var(--text) 4%, transparent), transparent 43%),
     linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(9, 9, 9, 0.98) 52%, rgba(8, 8, 8, 0.98) 100%);
   background-size: 52px 52px, 52px 52px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+}
+
+:root[data-theme="light"] .mainLibrarySurface {
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(rgba(17, 24, 39, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 24, 39, 0.015) 1px, transparent 1px),
+    linear-gradient(180deg, #fafaf8 0%, #f7f7f4 52%, #f4f4f1 100%);
+  background-size: 52px 52px, 52px 52px, 260px 260px, 260px 260px, 100% 100%;
 }
 .graphTabsRail {
   display: flex;
@@ -2265,7 +2311,11 @@ body {
 
 .pageStatControlActive {
   width: auto;
+  min-width: max-content;
   padding: 6px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .pageStatControl:disabled {
@@ -2430,7 +2480,7 @@ body {
 }
 
 .fieldLabel {
-  color: rgba(255, 255, 255, 0.6);
+  color: color-mix(in srgb, var(--text) 60%, transparent);
   font-size: 13px;
   font-weight: 500;
   margin-bottom: 4px;
@@ -2447,16 +2497,16 @@ body {
 select.input,
 .textarea {
   width: 100%;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
   border-radius: 10px;
-  color: #fff;
+  color: var(--text);
   padding: 12px 16px;
   outline: none;
   font-size: 14px;
   font-family: var(--sans);
   transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: inset 0 2px 4px var(--shadow-soft);
 }
 
 .inputSelectCompact {
@@ -2488,9 +2538,9 @@ select.input,
 .input:focus,
 select.input:focus,
 .textarea:focus {
-  background-color: rgba(255, 255, 255, 0.05); /* Fix: use background-color instead of background to preserve background-image (chevron) */
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 2px rgba(255, 255, 255, 0.05);
+  background-color: var(--field-bg-focus);
+  border-color: color-mix(in srgb, var(--text) 18%, transparent);
+  box-shadow: inset 0 2px 4px var(--shadow-soft), 0 0 0 2px color-mix(in srgb, var(--text) 6%, transparent);
 }
 
 .inputNoSpin::-webkit-outer-spin-button,
@@ -2515,22 +2565,26 @@ select.input {
   background-size: 12px 8px;
 }
 
+:root[data-theme="light"] select.input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='rgba(17,24,39,0.52)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
 .btn {
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: #fff;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  background: var(--surface-1);
+  color: var(--text);
   padding: 8px 16px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
   transition: all 0.2s ease;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 3%, transparent);
 }
 
 .btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--surface-2);
+  border-color: color-mix(in srgb, var(--text) 18%, transparent);
 }
 
 .btn:disabled {
@@ -2589,10 +2643,10 @@ select.input {
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 11px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
   font-weight: 600;
   font-family: var(--mono);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-1);
 }
 
 .badge-blue {
@@ -2614,9 +2668,9 @@ select.input {
 }
 
 .badge-gray {
-  background: rgba(142, 142, 147, 0.08);
-  border-color: rgba(142, 142, 147, 0.18);
-  color: rgba(255, 255, 255, 0.72);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  border-color: color-mix(in srgb, var(--text) 12%, transparent);
+  color: var(--text-secondary);
 }
 
 .toggle {
@@ -4263,4 +4317,782 @@ select.input {
     color: #000;
     box-shadow: 0 10px 22px rgba(255, 255, 255, 0.18);
   }
+}
+
+:root[data-theme="light"] .ambient-glow {
+  background: none;
+  opacity: 0;
+}
+
+:root[data-theme="light"] .leftSidebar,
+:root[data-theme="light"] .assistantDock,
+:root[data-theme="light"] .topicPopover,
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .settingsModal,
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .mobileDock {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(17, 24, 39, 0.09);
+  box-shadow: 0 18px 40px rgba(34, 38, 48, 0.08);
+}
+
+:root[data-theme="light"] .leftSidebar,
+:root[data-theme="light"] .assistantDockHeader,
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .settingsContentHeader {
+  background: rgba(255, 255, 255, 0.985);
+}
+
+:root[data-theme="light"] .topicPopover::after {
+  background: rgba(255, 255, 255, 0.96);
+  border-top-color: rgba(255, 255, 255, 0.95);
+}
+
+:root[data-theme="light"] .topicPopover-left::after {
+  border-right-color: rgba(255, 255, 255, 0.95);
+}
+
+:root[data-theme="light"] .topicPopover-right::after {
+  border-left-color: rgba(255, 255, 255, 0.95);
+}
+
+:root[data-theme="light"] .settingsPanelHeader,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .assistantDockHeader,
+:root[data-theme="light"] .topicPopoverHeader,
+:root[data-theme="light"] .leftSidebar,
+:root[data-theme="light"] .subbar {
+  border-color: rgba(17, 24, 39, 0.08);
+}
+
+:root[data-theme="light"] .topicPopoverHeader {
+  background: linear-gradient(180deg, rgba(252, 253, 255, 0.99), rgba(252, 253, 255, 0.97) 65%, rgba(252, 253, 255, 0.78) 86%, rgba(252, 253, 255, 0) 100%);
+}
+
+:root[data-theme="light"] .settingsLead,
+:root[data-theme="light"] .settingsInlineNotice,
+:root[data-theme="light"] .mutedSmall,
+:root[data-theme="light"] .topicPopoverCopy,
+:root[data-theme="light"] .topicPopoverPath,
+:root[data-theme="light"] .assistantDockSubtle,
+:root[data-theme="light"] .graphTabChipMeta {
+  color: rgba(17, 24, 39, 0.64);
+}
+
+:root[data-theme="light"] .settingsPanelEyebrow,
+:root[data-theme="light"] .thinkingModeChipLabel,
+:root[data-theme="light"] .topicPopoverEyebrow,
+:root[data-theme="light"] .settingsSidebarTitle {
+  color: rgba(17, 24, 39, 0.42);
+}
+
+:root[data-theme="light"] .settingsPanelTitle,
+:root[data-theme="light"] .thinkingModeChipTitle,
+:root[data-theme="light"] .topicPopoverTitle,
+:root[data-theme="light"] .cardTitle,
+:root[data-theme="light"] .assistantDockTitle,
+:root[data-theme="light"] .listTitle,
+:root[data-theme="light"] .big,
+:root[data-theme="light"] .settingsContentHeader h2 {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .settingsInlineNotice,
+:root[data-theme="light"] .thinkingModeChip,
+:root[data-theme="light"] .listItem,
+:root[data-theme="light"] .graphTabChip,
+:root[data-theme="light"] .workspaceUtilityButton,
+:root[data-theme="light"] .topicPopoverLink,
+:root[data-theme="light"] .topicPopoverArtifact,
+:root[data-theme="light"] .quizQuestion,
+:root[data-theme="light"] .quizChoice {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(17, 24, 39, 0.09);
+  color: color-mix(in srgb, var(--text) 84%, transparent);
+}
+
+:root[data-theme="light"] .thinkingModeChip:hover,
+:root[data-theme="light"] .graphTabChip:hover,
+:root[data-theme="light"] .workspaceUtilityButton:hover,
+:root[data-theme="light"] .listItem:hover,
+:root[data-theme="light"] .quizChoice:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(17, 24, 39, 0.14);
+}
+
+:root[data-theme="light"] .thinkingModeChipActive,
+:root[data-theme="light"] .settingsTabActive,
+:root[data-theme="light"] .graphTabChipActive,
+:root[data-theme="light"] .workspaceUtilityButtonActive {
+  background: rgba(255, 214, 102, 0.22) !important;
+  border-color: rgba(176, 134, 24, 0.22);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .settingsTab,
+:root[data-theme="light"] .settingsTab .sidebarIcon,
+:root[data-theme="light"] .topicPopoverClose,
+:root[data-theme="light"] .mobileDockItem {
+  color: rgba(17, 24, 39, 0.7);
+}
+
+:root[data-theme="light"] .settingsTab:hover,
+:root[data-theme="light"] .topicPopoverInlineAddButton:hover,
+:root[data-theme="light"] .topicPopoverInlineAddButton:focus-visible,
+:root[data-theme="light"] .mobileDockItemActive {
+  background: rgba(255, 214, 102, 0.18);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .settingsSwitch {
+  background: rgba(148, 163, 184, 0.18);
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16);
+}
+
+:root[data-theme="light"] .settingsSwitchActive {
+  background: rgba(45, 102, 72, 0.24);
+  border-color: rgba(45, 102, 72, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(45, 102, 72, 0.18);
+}
+
+:root[data-theme="light"] .settingsSwitchKnob {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+  border: 1px solid rgba(203, 213, 225, 0.8);
+}
+
+:root[data-theme="light"] .settingsSwitchActive .settingsSwitchKnob {
+  background: #ffffff;
+  border-color: rgba(58, 122, 88, 0.2);
+}
+
+:root[data-theme="light"] .sidebarDivider,
+:root[data-theme="light"] .sidebarAccountPopoverDivider {
+  background: rgba(17, 24, 39, 0.08);
+}
+
+:root[data-theme="light"] .sidebarBrandLogo {
+  filter: invert(1) brightness(0.14);
+}
+
+:root[data-theme="light"] .sidebarAvatar {
+  background: rgba(17, 24, 39, 0.08);
+  border-color: rgba(17, 24, 39, 0.08);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .sidebarAccountName,
+:root[data-theme="light"] .sidebarAccountTriggerName,
+:root[data-theme="light"] .sidebarTreeItemActive,
+:root[data-theme="light"] .sidebarSectionHeader:hover,
+:root[data-theme="light"] .sidebarSectionHeaderActive,
+:root[data-theme="light"] .sidebarNewAction:hover,
+:root[data-theme="light"] .sidebarTreeItem:hover,
+:root[data-theme="light"] .sidebarGraphRowActive > .sidebarTreeItem {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .sidebarAccountEmail,
+:root[data-theme="light"] .sidebarAccountTriggerPlan,
+:root[data-theme="light"] .sidebarTreeLabel,
+:root[data-theme="light"] .sidebarSectionHeader,
+:root[data-theme="light"] .sidebarTreeItem,
+:root[data-theme="light"] .sidebarNewAction,
+:root[data-theme="light"] .sidebarToggleBtn,
+:root[data-theme="light"] .sidebarAccountCaret {
+  color: rgba(17, 24, 39, 0.56);
+}
+
+:root[data-theme="light"] .sidebarAccountTrigger:hover,
+:root[data-theme="light"] .sidebarTreeItemGhost:hover,
+:root[data-theme="light"] .sidebarGraphRowEditing,
+:root[data-theme="light"] .sidebarGraphRowActive {
+  background: rgba(17, 24, 39, 0.05);
+}
+
+:root[data-theme="light"] .sidebarTreeItemGhost {
+  color: rgba(17, 24, 39, 0.78);
+}
+
+:root[data-theme="light"] .sidebarAccountPopover,
+:root[data-theme="light"] .mobileMenuSheet {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(17, 24, 39, 0.1);
+  box-shadow: 0 18px 42px rgba(34, 38, 48, 0.12);
+}
+
+:root[data-theme="light"] .sidebarAccountPopoverItem,
+:root[data-theme="light"] .mobileMenuSheetName {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .sidebarAccountPopoverItem:hover,
+:root[data-theme="light"] .mobileMenuCloseButton {
+  background: rgba(17, 24, 39, 0.06);
+  color: rgba(17, 24, 39, 0.82);
+}
+
+:root[data-theme="light"] .sidebarAccountPopoverItem .sidebarIcon,
+:root[data-theme="light"] .mobileMenuSheetEmail,
+:root[data-theme="light"] .sidebarAccountPopoverLink,
+:root[data-theme="light"] .settingsPromoLink {
+  color: rgba(17, 24, 39, 0.58);
+}
+
+:root[data-theme="light"] .neuroGraphShell,
+:root[data-theme="light"] .neuroGraphSurface,
+:root[data-theme="light"] .neuroGraphCanvas {
+  background: #f7f7f4;
+}
+
+:root[data-theme="light"] .pageStat {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: rgba(17, 24, 39, 0.12);
+  color: rgba(17, 24, 39, 0.76);
+  border-radius: 12px;
+  padding: 7px 14px;
+}
+
+:root[data-theme="light"] .pageStatControl {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(17, 24, 39, 0.14);
+  color: rgba(17, 24, 39, 0.74);
+}
+
+:root[data-theme="light"] .pageStatControlActive {
+  width: auto;
+  min-width: max-content;
+  padding: 6px 12px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+:root[data-theme="light"] .floatingStatusButton {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(17, 24, 39, 0.14);
+  color: rgba(17, 24, 39, 0.72);
+}
+
+:root[data-theme="light"] .pageStat strong,
+:root[data-theme="light"] .floatingStatusButton:hover {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .floatingStatusButton:hover {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(17, 24, 39, 0.18);
+}
+
+:root[data-theme="light"] .floatingStatusButton svg,
+:root[data-theme="light"] .pageStatControl svg,
+:root[data-theme="light"] .sidebarIcon,
+:root[data-theme="light"] .mobileDockItem svg {
+  color: currentColor;
+  display: block;
+  flex-shrink: 0;
+}
+
+:root[data-theme="light"] .floatingStatusButtonActive,
+:root[data-theme="light"] .pageStatWarn,
+:root[data-theme="light"] .pageStatHint {
+  background: rgba(255, 214, 102, 0.18);
+  border-color: rgba(176, 134, 24, 0.25);
+  color: #6d5310;
+}
+
+:root[data-theme="light"] .pageStatComplete,
+:root[data-theme="light"] .pageStatGood,
+:root[data-theme="light"] .pageStatControl:hover,
+:root[data-theme="light"] .pageStatControlActive {
+  background: rgba(32, 174, 104, 0.12);
+  border-color: rgba(32, 174, 104, 0.24);
+  color: #2f6c4b;
+}
+
+:root[data-theme="light"] .pageStatControl svg {
+  color: currentColor;
+}
+
+:root[data-theme="light"] .pageStatComplete strong,
+:root[data-theme="light"] .pageStatAssessment strong {
+  color: #2b6244;
+}
+
+:root[data-theme="light"] .layoutCancelBtn {
+  color: #b8443c;
+  border-color: rgba(184, 68, 60, 0.24);
+  background: rgba(184, 68, 60, 0.08);
+}
+
+:root[data-theme="light"] .layoutCancelBtn:hover {
+  color: #fff;
+  background: rgba(184, 68, 60, 0.86);
+  border-color: rgba(184, 68, 60, 0.86);
+}
+
+:root[data-theme="light"] .sessionListWrap,
+:root[data-theme="light"] .assistantThread,
+:root[data-theme="light"] .assistantComposerWrap {
+  background: #ffffff;
+}
+
+:root[data-theme="light"] .sessionListWrap::before {
+  background: linear-gradient(to right, #fcfdff, transparent);
+}
+
+:root[data-theme="light"] .sessionListWrap::after {
+  background: linear-gradient(to left, #fcfdff, transparent);
+}
+
+:root[data-theme="light"] .sessionShadow::after {
+  background: linear-gradient(to bottom,
+      #fcfdff 0%,
+      rgba(252, 253, 255, 0.76) 20%,
+      rgba(252, 253, 255, 0.42) 40%,
+      rgba(252, 253, 255, 0.16) 60%,
+      rgba(252, 253, 255, 0.04) 80%,
+      transparent 100%);
+}
+
+:root[data-theme="light"] .assistantComposerWrap::before {
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(252, 253, 255, 0.04) 20%,
+      rgba(252, 253, 255, 0.16) 40%,
+      rgba(252, 253, 255, 0.42) 60%,
+      rgba(252, 253, 255, 0.76) 80%,
+      #fcfdff 100%);
+}
+
+:root[data-theme="light"] .sessionItem,
+:root[data-theme="light"] .sessionItemGroup,
+:root[data-theme="light"] .groundingToggle,
+:root[data-theme="light"] .assistantTemplate,
+:root[data-theme="light"] .assistantEmpty,
+:root[data-theme="light"] .proposalInlinePending,
+:root[data-theme="light"] .inlineQuizCard {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(17, 24, 39, 0.08);
+  color: rgba(17, 24, 39, 0.66);
+  border-radius: 16px;
+}
+
+:root[data-theme="light"] .sessionItemGroup:hover,
+:root[data-theme="light"] .sessionItem:hover,
+:root[data-theme="light"] .groundingToggle:hover,
+:root[data-theme="light"] .assistantTemplate:hover,
+:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(17, 24, 39, 0.16);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .sessionItemGroupActive,
+:root[data-theme="light"] .sessionItemActive,
+:root[data-theme="light"] .assistantTemplateActive,
+:root[data-theme="light"] .groundingToggleActive,
+:root[data-theme="light"] .webGroundingToggle.active {
+  background: rgba(255, 214, 102, 0.18);
+  border-color: rgba(176, 134, 24, 0.22);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .sessionItemNew,
+:root[data-theme="light"] .sessionDeleteBtn,
+:root[data-theme="light"] .assistantModeCopy,
+:root[data-theme="light"] .assistantComposerHint,
+:root[data-theme="light"] .sidebarSectionTitle {
+  color: rgba(17, 24, 39, 0.46);
+}
+
+:root[data-theme="light"] .assistantHelloTitle,
+:root[data-theme="light"] .chatCopy,
+:root[data-theme="light"] .inlineQuizQuestion,
+:root[data-theme="light"] .proposalInlineTitle,
+:root[data-theme="light"] .chatEmphasis {
+  color: rgba(31, 41, 55, 0.86);
+}
+
+:root[data-theme="light"] .assistantHelloCopy,
+:root[data-theme="light"] .proposalInlinePendingLabel,
+:root[data-theme="light"] .inlineQuizChoice {
+  color: rgba(71, 85, 105, 0.78);
+  background: transparent;
+}
+
+:root[data-theme="light"] .chatTypingDot {
+  background: rgba(71, 85, 105, 0.52);
+}
+
+:root[data-theme="light"] .proposalInlineCard {
+  gap: 12px;
+}
+
+:root[data-theme="light"] .proposalInlineTitle {
+  color: rgba(30, 41, 59, 0.9);
+}
+
+:root[data-theme="light"] .proposalAddButton {
+  border-color: rgba(148, 163, 184, 0.32);
+  background: rgba(255, 255, 255, 0.96);
+  color: rgba(30, 41, 59, 0.84);
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .proposalAddButton:hover {
+  background: rgba(248, 250, 252, 0.98);
+  border-color: rgba(100, 116, 139, 0.34);
+}
+
+:root[data-theme="light"] .proposalAddButton[title="Applied"] {
+  border-color: rgba(45, 102, 72, 0.26);
+  background: rgba(45, 102, 72, 0.08);
+  color: rgba(45, 102, 72, 0.92);
+}
+
+:root[data-theme="light"] .proposalMiniItem {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(203, 213, 225, 0.82);
+  color: rgba(51, 65, 85, 0.86);
+}
+
+:root[data-theme="light"] .proposalMiniItem:hover {
+  background: rgba(248, 250, 252, 0.98);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+:root[data-theme="light"] .proposalInlinePendingDots span {
+  color: rgba(71, 85, 105, 0.72);
+  background: rgba(71, 85, 105, 0.42);
+}
+
+:root[data-theme="light"] .chatBubble {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(203, 213, 225, 0.88);
+  box-shadow: 0 8px 18px rgba(148, 163, 184, 0.08);
+  border-radius: 18px;
+}
+
+:root[data-theme="light"] .chatMessage-user .chatBubble {
+  background: linear-gradient(180deg, rgba(236, 242, 249, 0.98), rgba(230, 237, 245, 0.98));
+  color: rgba(30, 41, 59, 0.92);
+  border-color: rgba(191, 201, 214, 0.9);
+  box-shadow: 0 8px 18px rgba(148, 163, 184, 0.06);
+}
+
+:root[data-theme="light"] .previewStatCard {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(203, 213, 225, 0.82);
+  color: rgba(71, 85, 105, 0.82);
+}
+
+:root[data-theme="light"] .previewStatCard strong {
+  color: rgba(30, 41, 59, 0.9);
+}
+
+:root[data-theme="light"] .assistantInput {
+  background: rgba(255, 255, 255, 0.995);
+  border-color: rgba(203, 213, 225, 0.9);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-radius: 18px;
+}
+
+:root[data-theme="light"] .assistantInput:focus {
+  border-color: rgba(30, 184, 102, 0.72);
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] select.input:focus,
+:root[data-theme="light"] .textarea:focus {
+  border-color: rgba(30, 184, 102, 0.72);
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .btn.btnImport {
+  border-color: rgba(32, 174, 104, 0.28);
+  background: rgba(32, 174, 104, 0.12);
+  color: #235f41;
+}
+
+:root[data-theme="light"] .btn.btnImport:hover {
+  background: rgba(32, 174, 104, 0.18);
+  border-color: rgba(32, 174, 104, 0.38);
+  color: #184831;
+}
+
+:root[data-theme="light"] .badge-blue {
+  background: rgba(255, 214, 102, 0.18);
+  border-color: rgba(176, 134, 24, 0.22);
+  color: #725614;
+  border-radius: 999px;
+}
+
+:root[data-theme="light"] .badge-yellow {
+  background: rgba(255, 214, 102, 0.16);
+  border-color: rgba(196, 154, 32, 0.24);
+  color: #7a5d12;
+  border-radius: 999px;
+}
+
+:root[data-theme="light"] .badge-red {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.22);
+  color: #b42318;
+  border-radius: 999px;
+}
+
+:root[data-theme="light"] .badge-gray {
+  background: rgba(241, 245, 249, 0.96);
+  border-color: rgba(203, 213, 225, 0.86);
+  color: rgba(71, 85, 105, 0.86);
+  padding-inline: 10px;
+  min-height: 24px;
+  border-radius: 999px;
+}
+
+:root[data-theme="light"] .topicPopoverInlineAddButton,
+:root[data-theme="light"] .modalCloseButton {
+  color: rgba(17, 24, 39, 0.66);
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+}
+
+:root[data-theme="light"] .topicPopoverClose {
+  color: rgba(17, 24, 39, 0.6);
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+:root[data-theme="light"] .topicPopoverInlineAddButton:hover,
+:root[data-theme="light"] .topicPopoverInlineAddButton:focus-visible,
+:root[data-theme="light"] .modalCloseButton:hover,
+:root[data-theme="light"] .topicPopoverClose:hover {
+  background: rgba(17, 24, 39, 0.08);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .modalCloseButton:focus-visible,
+:root[data-theme="light"] .topicPopoverInlineAddButton:focus-visible,
+:root[data-theme="light"] .topicPopoverClose:focus-visible {
+  outline-color: rgba(17, 24, 39, 0.26);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .quizOverlay {
+  background: rgba(241, 245, 252, 0.62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+:root[data-theme="light"] .quizModal,
+:root[data-theme="light"] .debugLogColumn {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.985), rgba(246, 249, 255, 0.985));
+  border-color: rgba(17, 24, 39, 0.08);
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .quizModal:focus-visible {
+  outline-color: rgba(17, 24, 39, 0.22);
+}
+
+:root[data-theme="light"] .quizModalHeader {
+  background: linear-gradient(180deg, rgba(252, 253, 255, 0.995), rgba(252, 253, 255, 0.97) 60%, rgba(252, 253, 255, 0.8) 88%, rgba(252, 253, 255, 0) 100%);
+}
+
+:root[data-theme="light"] .settingsFooterBar {
+  background: linear-gradient(180deg, rgba(246, 249, 255, 0), rgba(246, 249, 255, 0.84) 42%, rgba(246, 249, 255, 0.98));
+}
+
+:root[data-theme="light"] .quizModalHeader::after {
+  background: linear-gradient(180deg, rgba(252, 253, 255, 0.46), rgba(252, 253, 255, 0.22) 56%, rgba(252, 253, 255, 0));
+}
+
+:root[data-theme="light"] .debugLogColumnHeader {
+  border-bottom-color: rgba(17, 24, 39, 0.08);
+  color: rgba(17, 24, 39, 0.7);
+}
+
+:root[data-theme="light"] .inlineQuizCard {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(203, 213, 225, 0.84);
+  border-radius: 18px;
+}
+
+:root[data-theme="light"] .inlineQuizQuestion {
+  color: rgba(30, 41, 59, 0.92);
+}
+
+:root[data-theme="light"] .inlineQuizChoice {
+  background: rgba(248, 250, 252, 0.98);
+  border-color: rgba(203, 213, 225, 0.88);
+  color: rgba(51, 65, 85, 0.88);
+  border-radius: 999px;
+}
+
+:root[data-theme="light"] .inlineQuizCorrect {
+  background: rgba(45, 102, 72, 0.1) !important;
+  border-color: rgba(45, 102, 72, 0.24) !important;
+  color: rgba(45, 102, 72, 0.92);
+  border-radius: 999px;
+}
+
+:root[data-theme="light"] .inlineQuizWrong {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  color: rgba(185, 28, 28, 0.92);
+  border-radius: 999px;
+}
+
+:root[data-theme="light"] .debugLogEntry {
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(226, 232, 240, 0.84);
+}
+
+:root[data-theme="light"] .debugLogsModal,
+:root[data-theme="light"] .debugLogsModal .settingsContent,
+:root[data-theme="light"] .debugLogsModal .settingsContentHeader,
+:root[data-theme="light"] .debugLogColumn,
+:root[data-theme="light"] .debugLogColumnHeader,
+:root[data-theme="light"] .debugLogsGrid {
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .debugLogMeta,
+:root[data-theme="light"] .debugLogBody,
+:root[data-theme="light"] .debugLogTitle,
+:root[data-theme="light"] .debugLogDetails,
+:root[data-theme="light"] .debugLogDetails pre {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .inlineNotice,
+:root[data-theme="light"] .settingsToggleRow,
+:root[data-theme="light"] .btnGhost {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(203, 213, 225, 0.85);
+  color: rgba(30, 41, 59, 0.82);
+}
+
+:root[data-theme="light"] .settingsToggleRow {
+  background: rgba(249, 250, 248, 0.96);
+  border-color: rgba(226, 232, 240, 0.92);
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .settingsInlineNotice {
+  background: rgba(250, 251, 249, 0.96);
+  border-color: rgba(226, 232, 240, 0.86);
+  color: rgba(71, 85, 105, 0.82);
+}
+
+:root[data-theme="light"] .inlineNoticeWarn {
+  background: rgba(255, 214, 102, 0.14);
+  border-color: rgba(176, 134, 24, 0.18);
+  color: #7b6115;
+}
+
+:root[data-theme="light"] .inlineNoticeError {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.24);
+  color: #b42318;
+}
+
+:root[data-theme="light"] .inlineNoticeNeutral {
+  background: rgba(17, 24, 39, 0.06);
+  border-color: rgba(17, 24, 39, 0.1);
+  color: rgba(17, 24, 39, 0.78);
+}
+
+:root[data-theme="light"] .inlineNoticeSuccess {
+  background: rgba(30, 184, 102, 0.12);
+  border-color: rgba(30, 184, 102, 0.18);
+  color: #1b6a3b;
+}
+
+:root[data-theme="light"] .btn.btnDanger {
+  border-color: rgba(220, 38, 38, 0.28);
+  background: rgba(220, 38, 38, 0.1);
+  color: #b42318;
+}
+
+:root[data-theme="light"] .btn.btnDanger:hover {
+  background: rgba(220, 38, 38, 0.16);
+  border-color: rgba(220, 38, 38, 0.38);
+  color: #8f1d16;
+}
+
+:root[data-theme="light"] .btnGhost:hover,
+:root[data-theme="light"] .mobileGraphChip:hover,
+:root[data-theme="light"] .mobileGraphCreate:hover {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(17, 24, 39, 0.16) !important;
+  color: var(--text) !important;
+}
+
+:root[data-theme="light"] .settingsSnapshotsCard .listActions {
+  gap: 8px;
+  min-width: 92px;
+  justify-content: flex-end;
+}
+
+:root[data-theme="light"] .settingsSnapshotsCard .listActions .badge,
+:root[data-theme="light"] .settingsSnapshotsCard .listActions .btn {
+  min-width: 84px;
+  justify-content: center;
+}
+
+:root[data-theme="light"] .mobileGraphChip,
+:root[data-theme="light"] .mobileGraphCreate {
+  border-color: rgba(17, 24, 39, 0.16) !important;
+  color: rgba(17, 24, 39, 0.82) !important;
+}
+
+:root[data-theme="light"] .mobileGraphChipActive {
+  background: rgba(255, 214, 102, 0.18) !important;
+  border-color: rgba(176, 134, 24, 0.22) !important;
+  color: var(--text) !important;
+}
+
+:root[data-theme="light"] .assistantSendButton,
+:root[data-theme="light"] .emptyStateAction {
+  background: rgba(255, 255, 255, 0.98);
+  color: #1f5e3a;
+  border: 1px solid rgba(30, 184, 102, 0.26);
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .assistantSendButton:disabled,
+:root[data-theme="light"] .emptyStateAction:disabled {
+  background: rgba(17, 24, 39, 0.08);
+  color: rgba(17, 24, 39, 0.4);
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .assistantSendButton:hover,
+:root[data-theme="light"] .emptyStateAction:hover {
+  background: rgba(240, 252, 245, 0.98);
+  border-color: rgba(30, 184, 102, 0.34);
+  color: #184a2d;
+}
+
+:root[data-theme="light"] .themeModeSwitch {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }

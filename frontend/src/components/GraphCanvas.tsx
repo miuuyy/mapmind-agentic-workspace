@@ -25,6 +25,12 @@ type LabelBox = {
   bottom: number;
 };
 
+type ZoneGeometry = {
+  center: { x: number; y: number };
+  spread: number;
+  contour: Array<{ x: number; y: number }>;
+};
+
 type NodeAnchor = {
   x: number;
   y: number;
@@ -38,6 +44,8 @@ export type TopicAnchorPoint = {
   y: number;
   side: "left" | "right";
 };
+
+export type GraphCanvasThemeMode = "dark" | "light";
 
 const POSITION_CACHE_KEY = "knowledge_graph_pos_v21";
 const positionCache = new Map<string, { x: number; y: number }>();
@@ -70,13 +78,97 @@ function hexToRgb(color: string): { r: number; g: number; b: number } | null {
   };
 }
 
-function nodeFillColor(node: GraphNode, selected: boolean, onPath: boolean): string {
-  if (selected) return "rgba(255,255,255,0.96)";
-  if (onPath) return "rgba(255,255,255,0.86)";
-  if (node.state === "mastered" || node.state === "solid") return "rgba(255,255,255,0.76)";
-  if (node.state === "learning") return "rgba(255,255,255,0.62)";
-  if (node.state === "needs_review" || node.state === "shaky") return "rgba(190,190,190,0.82)";
-  return "rgba(120,120,120,0.76)";
+function rgbaString(rgb: { r: number; g: number; b: number }, alpha: number): string {
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+}
+
+function mixRgb(
+  left: { r: number; g: number; b: number },
+  right: { r: number; g: number; b: number },
+  ratio: number,
+): { r: number; g: number; b: number } {
+  const t = clamp(ratio, 0, 1);
+  return {
+    r: Math.round(left.r * (1 - t) + right.r * t),
+    g: Math.round(left.g * (1 - t) + right.g * t),
+    b: Math.round(left.b * (1 - t) + right.b * t),
+  };
+}
+
+type GraphCanvasPalette = {
+  gridStroke: string;
+  edgeRgb: string;
+  nodeBaseFill: string;
+  nodeSelectedFill: string;
+  nodePathFill: string;
+  nodeStableFill: string;
+  nodeLearningFill: string;
+  nodeReviewFill: string;
+  nodeDefaultFill: string;
+  frontierRgb: string;
+  reviewRingRgb: string;
+  labelRgb: string;
+  shadowSelected: string;
+  shadowPath: string;
+  shadowContext: string;
+  zoneOpacityMultiplier: number;
+  zoneOutlineAlpha: number;
+  zoneOutlineWidth: number;
+};
+
+function graphCanvasPalette(themeMode: GraphCanvasThemeMode): GraphCanvasPalette {
+  if (themeMode === "light") {
+    return {
+      gridStroke: "rgba(17,24,39,0.06)",
+      edgeRgb: "17,24,39",
+      nodeBaseFill: "rgba(255,255,255,0.98)",
+      nodeSelectedFill: "rgba(56,67,84,0.88)",
+      nodePathFill: "rgba(84,96,115,0.84)",
+      nodeStableFill: "rgba(96,108,126,0.78)",
+      nodeLearningFill: "rgba(123,134,149,0.7)",
+      nodeReviewFill: "rgba(178,80,58,0.86)",
+      nodeDefaultFill: "rgba(145,154,166,0.74)",
+      frontierRgb: "176,134,24",
+      reviewRingRgb: "214,82,60",
+      labelRgb: "17,24,39",
+      shadowSelected: "rgba(15,23,42,0.2)",
+      shadowPath: "rgba(15,23,42,0.12)",
+      shadowContext: "rgba(15,23,42,0.06)",
+      zoneOpacityMultiplier: 0.02,
+      zoneOutlineAlpha: 0.2,
+      zoneOutlineWidth: 1.5,
+    };
+  }
+
+  return {
+    gridStroke: "rgba(255,255,255,0.025)",
+    edgeRgb: "255,255,255",
+    nodeBaseFill: "rgba(38,38,38,0.95)",
+    nodeSelectedFill: "rgba(255,255,255,0.96)",
+    nodePathFill: "rgba(255,255,255,0.86)",
+    nodeStableFill: "rgba(255,255,255,0.76)",
+    nodeLearningFill: "rgba(255,255,255,0.62)",
+    nodeReviewFill: "rgba(190,190,190,0.82)",
+    nodeDefaultFill: "rgba(120,120,120,0.76)",
+    frontierRgb: "255,214,102",
+    reviewRingRgb: "255,50,40",
+    labelRgb: "255,255,255",
+    shadowSelected: "rgba(255,255,255,0.35)",
+    shadowPath: "rgba(255,255,255,0.16)",
+    shadowContext: "rgba(255,255,255,0.07)",
+    zoneOpacityMultiplier: 1,
+    zoneOutlineAlpha: 0,
+    zoneOutlineWidth: 0,
+  };
+}
+
+function nodeFillColor(node: GraphNode, selected: boolean, onPath: boolean, palette: GraphCanvasPalette): string {
+  if (selected) return palette.nodeSelectedFill;
+  if (onPath) return palette.nodePathFill;
+  if (node.state === "mastered" || node.state === "solid") return palette.nodeStableFill;
+  if (node.state === "learning") return palette.nodeLearningFill;
+  if (node.state === "needs_review" || node.state === "shaky") return palette.nodeReviewFill;
+  return palette.nodeDefaultFill;
 }
 
 function nodeRadius(node: GraphNode, selected: boolean, onPath: boolean, isRoot: boolean): number {
@@ -130,6 +222,99 @@ function averageAngles(values: number[]): number {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+function buildZoneContour(points: NodePosition[], intensity: number): Array<{ x: number; y: number }> {
+  if (points.length === 0) return [];
+
+  const center = points.reduce(
+    (acc, point) => ({ x: acc.x + point.x / points.length, y: acc.y + point.y / points.length }),
+    { x: 0, y: 0 },
+  );
+  const basePadding = 42 + intensity * 10;
+
+  if (points.length === 1) {
+    const radius = 58 + intensity * 10;
+    return Array.from({ length: 10 }, (_, index) => {
+      const angle = (Math.PI * 2 * index) / 10 - Math.PI / 2;
+      return {
+        x: points[0].x + Math.cos(angle) * radius,
+        y: points[0].y + Math.sin(angle) * radius,
+      };
+    });
+  }
+
+  if (points.length === 2) {
+    const [first, second] = points;
+    const dx = second.x - first.x;
+    const dy = second.y - first.y;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const ux = dx / distance;
+    const uy = dy / distance;
+    const px = -uy;
+    const py = ux;
+    const sidePadding = 44 + intensity * 10;
+    const capPadding = 32 + intensity * 8;
+    return [
+      { x: first.x - ux * capPadding + px * sidePadding, y: first.y - uy * capPadding + py * sidePadding },
+      { x: first.x - ux * capPadding - px * sidePadding, y: first.y - uy * capPadding - py * sidePadding },
+      { x: second.x + ux * capPadding - px * sidePadding, y: second.y + uy * capPadding - py * sidePadding },
+      { x: second.x + ux * capPadding + px * sidePadding, y: second.y + uy * capPadding + py * sidePadding },
+    ];
+  }
+
+  const expanded = points
+    .map((point) => {
+      const dx = point.x - center.x;
+      const dy = point.y - center.y;
+      const distance = Math.max(1, Math.hypot(dx, dy));
+      const nx = dx / distance;
+      const ny = dy / distance;
+      const padding = basePadding + clamp(distance * 0.18, 10, 28);
+      return {
+        x: point.x + nx * padding,
+        y: point.y + ny * padding,
+        angle: Math.atan2(dy, dx),
+      };
+    })
+    .sort((a, b) => a.angle - b.angle);
+
+  return expanded.map(({ x, y }) => ({ x, y }));
+}
+
+function primaryZoneIdForTopic(zones: Zone[], topicId: string | null): string | null {
+  if (!topicId) return null;
+  const matches = zones.filter((zone) => zone.topic_ids.includes(topicId));
+  if (matches.length === 0) return null;
+  matches.sort((left, right) => {
+    const bySize = left.topic_ids.length - right.topic_ids.length;
+    if (bySize !== 0) return bySize;
+    return right.intensity - left.intensity;
+  });
+  return matches[0]?.id ?? null;
+}
+
+function highlightedZoneIdsForSelection(zones: Zone[], selectedTopicId: string | null, pathNodeIds: Set<string>): Set<string> {
+  const ids = new Set<string>();
+  const selectedZoneId = primaryZoneIdForTopic(zones, selectedTopicId);
+  if (selectedZoneId) ids.add(selectedZoneId);
+  for (const topicId of pathNodeIds) {
+    const zoneId = primaryZoneIdForTopic(zones, topicId);
+    if (zoneId) ids.add(zoneId);
+  }
+  return ids;
+}
+
+function zoneIdByTopicId(zones: Zone[]): Map<string, string> {
+  const map = new Map<string, string>();
+  const topicIds = new Set(zones.flatMap((zone) => zone.topic_ids));
+  for (const topicId of topicIds) {
+    const zoneId = primaryZoneIdForTopic(zones, topicId);
+    if (zoneId) {
+      map.set(topicId, zoneId);
+    }
+  }
+  return map;
 }
 
 function cloneManualNodePositions(positions: ManualNodePositions): ManualNodePositions {
@@ -278,6 +463,7 @@ function GraphCanvasComponent({
   onNodePositionsChange,
   disableIdleAnimations = false,
   backgroundFill = "#000000",
+  themeMode = "dark",
   disableGrid = false,
   cascadeStepFrames = 8,
   disablePhysics = false,
@@ -304,6 +490,7 @@ function GraphCanvasComponent({
   onNodePositionsChange?: (positions: ManualNodePositions) => void;
   disableIdleAnimations?: boolean;
   backgroundFill?: string | null;
+  themeMode?: GraphCanvasThemeMode;
   disableGrid?: boolean;
   cascadeStepFrames?: number;
   disablePhysics?: boolean;
@@ -330,12 +517,16 @@ function GraphCanvasComponent({
   const disableIdleAnimationsRef = useRef<boolean>(disableIdleAnimations);
   const disableGridRef = useRef<boolean>(disableGrid);
   const viewportCenteredWheelZoomRef = useRef<boolean>(viewportCenteredWheelZoom ?? false);
+  const paletteRef = useRef<GraphCanvasPalette>(graphCanvasPalette(themeMode));
+  const backgroundFillRef = useRef<string | null>(backgroundFill);
   const onSelectTopicRef = useRef(onSelectTopic);
   const onSelectedTopicAnchorChangeRef = useRef(onSelectedTopicAnchorChange);
   const onNodePositionsChangeRef = useRef(onNodePositionsChange);
   const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pinchGestureRef = useRef<{ distance: number; centerX: number; centerY: number } | null>(null);
   const gestureConsumedRef = useRef<boolean>(false);
+  const zoneGeometryRef = useRef<Map<string, ZoneGeometry>>(new Map());
+  paletteRef.current = graphCanvasPalette(themeMode);
 
   // Smoothly animate zoom towards targetZoom
   useEffect(() => {
@@ -455,6 +646,7 @@ function GraphCanvasComponent({
   disableIdleAnimationsRef.current = disableIdleAnimations;
   disableGridRef.current = disableGrid;
   viewportCenteredWheelZoomRef.current = viewportCenteredWheelZoom ?? false;
+  backgroundFillRef.current = backgroundFill;
 
   const cascadeStepFramesRef = useRef<number>(cascadeStepFrames);
   cascadeStepFramesRef.current = cascadeStepFrames;
@@ -668,28 +860,56 @@ function GraphCanvasComponent({
       }
     }
 
-    function drawZoneBackgrounds(width: number, height: number): void {
+    function drawZoneBackgrounds(width: number, height: number, anchors: Map<string, NodeAnchor>): void {
       const positions = nodesRef.current;
+      const shouldRefreshZoneGeometry = layoutEditModeRef.current || draggedNodeRef.current !== null || zoneGeometryRef.current.size === 0;
       for (const zone of zonesDataRef.current) {
-        const zonePoints = zone.topic_ids
-          .map((topicId) => positions.get(topicId))
-          .filter((point): point is NodePosition => Boolean(point));
-        if (zonePoints.length === 0) continue;
-
-        const center = zonePoints.reduce(
-          (acc, point) => ({ x: acc.x + point.x / zonePoints.length, y: acc.y + point.y / zonePoints.length }),
-          { x: 0, y: 0 },
-        );
-        const spread = Math.max(...zonePoints.map((point) => Math.hypot(point.x - center.x, point.y - center.y)), 44) + 86 + zone.intensity * 16;
+        let geometry = zoneGeometryRef.current.get(zone.id);
+        if (shouldRefreshZoneGeometry || !geometry) {
+          const zonePoints = zone.topic_ids
+            .map((topicId) => positions.get(topicId))
+            .filter((point): point is NodePosition => Boolean(point));
+          if (zonePoints.length === 0) continue;
+          const center = zonePoints.reduce(
+            (acc, point) => ({ x: acc.x + point.x / zonePoints.length, y: acc.y + point.y / zonePoints.length }),
+            { x: 0, y: 0 },
+          );
+          geometry = {
+            center,
+            spread: Math.max(...zonePoints.map((point) => Math.hypot(point.x - center.x, point.y - center.y)), 44) + 86 + zone.intensity * 16,
+            contour: buildZoneContour(zonePoints, zone.intensity),
+          };
+          zoneGeometryRef.current.set(zone.id, geometry);
+        }
+        if (!geometry) continue;
+        const { center, spread, contour } = geometry;
         const rgb = hexToRgb(zone.color) ?? { r: 255, g: 214, b: 10 };
         const gradient = ctx2.createRadialGradient(center.x, center.y, 0, center.x, center.y, spread);
-        gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.09)`);
-        gradient.addColorStop(0.48, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.045)`);
+        const zoneOpacityMultiplier = paletteRef.current.zoneOpacityMultiplier;
+        gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.09 * zoneOpacityMultiplier})`);
+        gradient.addColorStop(0.48, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.045 * zoneOpacityMultiplier})`);
         gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
         ctx2.fillStyle = gradient;
         ctx2.beginPath();
         ctx2.arc(center.x, center.y, spread, 0, Math.PI * 2);
         ctx2.fill();
+        if (paletteRef.current.zoneOutlineAlpha > 0 && contour.length >= 2) {
+          ctx2.save();
+          ctx2.setLineDash([10, 8]);
+          ctx2.lineWidth = paletteRef.current.zoneOutlineWidth;
+          ctx2.strokeStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${paletteRef.current.zoneOutlineAlpha})`;
+          ctx2.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${paletteRef.current.zoneOutlineAlpha * 0.14})`;
+          ctx2.beginPath();
+          ctx2.moveTo(contour[0].x, contour[0].y);
+          for (let index = 1; index < contour.length; index += 1) {
+            const point = contour[index];
+            ctx2.lineTo(point.x, point.y);
+          }
+          ctx2.closePath();
+          ctx2.fill();
+          ctx2.stroke();
+          ctx2.restore();
+        }
       }
 
       const zoom = zoomRef.current;
@@ -704,7 +924,7 @@ function GraphCanvasComponent({
       const gridBottom = Math.ceil(worldBottom / gridStep) * gridStep;
 
       if (!disableGridRef.current) {
-        ctx2.strokeStyle = "rgba(255,255,255,0.025)";
+        ctx2.strokeStyle = paletteRef.current.gridStroke;
         ctx2.lineWidth = 1;
         for (let x = gridLeft; x <= gridRight; x += gridStep) {
           if (x <= worldLeft + 1 || x >= worldRight - 1) continue;
@@ -763,6 +983,7 @@ function GraphCanvasComponent({
         idleFrozenRef.current = false;
         idleSettleFramesRef.current = 0;
         labelPlacementRef.current.clear();
+        zoneGeometryRef.current.clear();
         if (!staticLayout) {
           scheduleCascade();
         } else {
@@ -1020,6 +1241,13 @@ function GraphCanvasComponent({
           const age = litFrame === undefined ? 0 : Math.max(0, frameCount - litFrame);
           const ramp = Math.min(1, age / 32);
           if (pinned) {
+            if (layoutEditModeRef.current) {
+              position.x = pinned.x;
+              position.y = pinned.y;
+              position.vx = 0;
+              position.vy = 0;
+              continue;
+            }
             const anchorDx = pinned.x - position.x;
             const anchorDy = pinned.y - position.y;
             position.vx += anchorDx * 0.04;
@@ -1059,6 +1287,14 @@ function GraphCanvasComponent({
           position.x += position.vx;
           position.y += position.vy;
           if (pinned) {
+            if (layoutEditModeRef.current) {
+              position.x = pinned.x;
+              position.y = pinned.y;
+              position.vx = 0;
+              position.vy = 0;
+              positionCache.set(cacheEntryKey(graphCacheKey, node.id), { x: position.x, y: position.y });
+              continue;
+            }
             const overshootDx = pinned.x - position.x;
             const overshootDy = pinned.y - position.y;
             const overshootDistance = Math.hypot(overshootDx, overshootDy);
@@ -1082,8 +1318,8 @@ function GraphCanvasComponent({
 
       if (frameCount % 60 === 0) savePositionCache();
 
-      if (backgroundFill) {
-        ctx2.fillStyle = backgroundFill;
+      if (backgroundFillRef.current) {
+        ctx2.fillStyle = backgroundFillRef.current;
         ctx2.fillRect(0, 0, width, height);
       } else {
         ctx2.clearRect(0, 0, width, height);
@@ -1096,11 +1332,16 @@ function GraphCanvasComponent({
       ctx2.translate(-width / 2 + panOffsetRef.current.x, -height / 2 + panOffsetRef.current.y);
       const renderIdleFrozen = disableIdleAnimationsRef.current && idleFrozenRef.current;
 
-      drawZoneBackgrounds(width, height);
+      drawZoneBackgrounds(width, height, anchors);
 
-      const selectedZoneIds = new Set(
-        zonesDataRef.current.filter((zone) => selectedTopicIdRef.current && zone.topic_ids.includes(selectedTopicIdRef.current)).map((zone) => zone.id),
-      );
+      const selectedPrimaryZoneId = primaryZoneIdForTopic(zonesDataRef.current, selectedTopicIdRef.current);
+      const selectedZoneIds = themeMode === "light"
+        ? highlightedZoneIdsForSelection(zonesDataRef.current, selectedTopicIdRef.current, pathNodeIdsRef.current)
+        : selectedPrimaryZoneId
+          ? new Set([selectedPrimaryZoneId])
+          : new Set<string>();
+      const zoneByTopicId = zoneIdByTopicId(zonesDataRef.current);
+      const zoneById = new Map(zonesDataRef.current.map((zone) => [zone.id, zone]));
 
       for (const edge of currentEdges) {
         const from = positions.get(edge.source_topic_id);
@@ -1112,6 +1353,10 @@ function GraphCanvasComponent({
         const edgeBrightness = litFrame === undefined ? 0 : Math.min(1, Math.max(0, (frameCount - litFrame) / fadeRate));
         const onPath = pathEdgeIdsRef.current.has(edge.id);
         const onFrontier = frontierEdgeIdsRef.current.has(edge.id);
+        const sourceZoneId = zoneByTopicId.get(edge.source_topic_id) ?? null;
+        const targetZoneId = zoneByTopicId.get(edge.target_topic_id) ?? null;
+        const highlightedSourceZone = sourceZoneId && selectedZoneIds.has(sourceZoneId) ? zoneById.get(sourceZoneId) ?? null : null;
+        const highlightedTargetZone = targetZoneId && selectedZoneIds.has(targetZoneId) ? zoneById.get(targetZoneId) ?? null : null;
         const pulse = renderIdleFrozen ? 0.84 : 0.84 + Math.sin(frameCount * 0.03 + from.x * 0.008) * 0.05;
         const targetX = from.x + (to.x - from.x) * edgeBrightness;
         const targetY = from.y + (to.y - from.y) * edgeBrightness;
@@ -1120,14 +1365,28 @@ function GraphCanvasComponent({
         ctx2.moveTo(from.x, from.y);
         ctx2.lineTo(targetX, targetY);
         if (onPath) {
-          ctx2.strokeStyle = `rgba(255,255,255,${Math.max(0.04, pulse * edgeBrightness)})`;
+          if (themeMode === "light" && (highlightedSourceZone || highlightedTargetZone)) {
+            const startRgb = hexToRgb(highlightedSourceZone?.color ?? highlightedTargetZone?.color ?? "#64748b") ?? { r: 100, g: 116, b: 139 };
+            const endRgb = hexToRgb(highlightedTargetZone?.color ?? highlightedSourceZone?.color ?? "#64748b") ?? { r: 100, g: 116, b: 139 };
+            if (highlightedSourceZone && highlightedTargetZone && highlightedSourceZone.id !== highlightedTargetZone.id) {
+              const gradient = ctx2.createLinearGradient(from.x, from.y, targetX, targetY);
+              gradient.addColorStop(0, rgbaString(startRgb, Math.max(0.24, pulse * 0.7 * edgeBrightness)));
+              gradient.addColorStop(1, rgbaString(endRgb, Math.max(0.24, pulse * 0.7 * edgeBrightness)));
+              ctx2.strokeStyle = gradient;
+            } else {
+              const rgb = mixRgb(startRgb, { r: 100, g: 116, b: 139 }, 0.1);
+              ctx2.strokeStyle = rgbaString(rgb, Math.max(0.22, pulse * 0.72 * edgeBrightness));
+            }
+          } else {
+            ctx2.strokeStyle = `rgba(${paletteRef.current.edgeRgb},${Math.max(0.04, pulse * edgeBrightness)})`;
+          }
           ctx2.lineWidth = 1.7;
         } else if (onFrontier) {
           ctx2.setLineDash([7, 9]);
-          ctx2.strokeStyle = `rgba(255,255,255,${0.012 + 0.05 * edgeBrightness})`;
+          ctx2.strokeStyle = `rgba(${paletteRef.current.edgeRgb},${0.012 + 0.05 * edgeBrightness})`;
           ctx2.lineWidth = 1;
         } else {
-          ctx2.strokeStyle = `rgba(255,255,255,${0.012 + 0.05 * edgeBrightness})`;
+          ctx2.strokeStyle = `rgba(${paletteRef.current.edgeRgb},${0.012 + 0.05 * edgeBrightness})`;
           ctx2.lineWidth = 1;
         }
         ctx2.stroke();
@@ -1146,6 +1405,12 @@ function GraphCanvasComponent({
         const onPath = pathNodeIdsRef.current.has(node.id);
         const contextual = ancestorIdsRef.current.has(node.id);
         const isRoot = rootIdsRef.current.has(node.id);
+        const nodeZoneId = zoneByTopicId.get(node.id) ?? null;
+        const effectiveZoneId = selected && selectedPrimaryZoneId ? selectedPrimaryZoneId : nodeZoneId;
+        const highlightedZone = (selected || onPath) && effectiveZoneId && selectedZoneIds.has(effectiveZoneId)
+          ? zoneById.get(effectiveZoneId) ?? null
+          : null;
+        const highlightedZoneRgb = highlightedZone ? hexToRgb(highlightedZone.color) : null;
         const r = nodeRadius(node, selected, onPath, isRoot);
         const haloPulse = renderIdleFrozen ? 0.55 : 0.55 + Math.sin(frameCount * 0.04 + position.x * 0.008) * 0.07;
         const frontierSources = currentEdges
@@ -1154,7 +1419,13 @@ function GraphCanvasComponent({
           .filter((point): point is NodePosition => Boolean(point));
 
         if (brightness > 0.06 && (selected || onPath)) {
-          ctx2.strokeStyle = selected ? `rgba(255,255,255,${haloPulse * brightness})` : `rgba(255,255,255,${0.24 * brightness})`;
+          if (themeMode === "light" && highlightedZoneRgb) {
+            ctx2.strokeStyle = rgbaString(highlightedZoneRgb, selected ? Math.max(0.72, haloPulse * brightness) : Math.max(0.52, 0.62 * brightness));
+          } else {
+            ctx2.strokeStyle = selected
+              ? `rgba(${paletteRef.current.edgeRgb},${haloPulse * brightness})`
+              : `rgba(${paletteRef.current.edgeRgb},${0.24 * brightness})`;
+          }
           ctx2.lineWidth = selected ? 1.35 : 1;
           ctx2.beginPath();
           ctx2.arc(position.x, position.y, r + (selected ? 8 : 6), 0, Math.PI * 2);
@@ -1167,7 +1438,7 @@ function GraphCanvasComponent({
           averageSource.x /= frontierSources.length;
           averageSource.y /= frontierSources.length;
           const angle = Math.atan2(averageSource.y - position.y, averageSource.x - position.x);
-          ctx2.strokeStyle = `rgba(255,214,102,${0.52 * brightness})`;
+          ctx2.strokeStyle = `rgba(${paletteRef.current.frontierRgb},${0.52 * brightness})`;
           ctx2.lineWidth = 1.35;
           ctx2.beginPath();
           ctx2.arc(position.x, position.y, r + 4, angle - 0.54, angle + 0.54);
@@ -1175,8 +1446,8 @@ function GraphCanvasComponent({
         } else if (brightness > 0.06 && (node.state === "needs_review" || node.state === "shaky")) {
           ctx2.setLineDash([4, 6]);
           ctx2.shadowBlur = 12;
-          ctx2.shadowColor = "rgba(255,50,40,0.6)";
-          ctx2.strokeStyle = `rgba(255,50,40,${0.7 * brightness})`;
+          ctx2.shadowColor = `rgba(${paletteRef.current.reviewRingRgb},0.6)`;
+          ctx2.strokeStyle = `rgba(${paletteRef.current.reviewRingRgb},${0.7 * brightness})`;
           ctx2.lineWidth = 1.2;
           ctx2.beginPath();
           ctx2.arc(position.x, position.y, r + 8, 0, Math.PI * 2);
@@ -1185,15 +1456,21 @@ function GraphCanvasComponent({
           ctx2.shadowBlur = 0;
         } else if (brightness > 0.06 && isRoot) {
           ctx2.setLineDash([4, 6]);
-          ctx2.strokeStyle = `rgba(255,255,255,${0.14 * brightness})`;
+          ctx2.strokeStyle = `rgba(${paletteRef.current.edgeRgb},${0.14 * brightness})`;
           ctx2.lineWidth = 1;
           ctx2.beginPath();
           ctx2.arc(position.x, position.y, r + 8, 0, Math.PI * 2);
           ctx2.stroke();
           ctx2.setLineDash([]);
+        } else if (brightness > 0.06 && themeMode === "light" && highlightedZoneRgb) {
+          ctx2.strokeStyle = rgbaString(highlightedZoneRgb, selected ? 0.9 : onPath ? 0.72 : 0.52);
+          ctx2.lineWidth = selected ? 1.8 : 1.35;
+          ctx2.beginPath();
+          ctx2.arc(position.x, position.y, r + 5, 0, Math.PI * 2);
+          ctx2.stroke();
         }
 
-        ctx2.fillStyle = "rgba(38,38,38,0.95)";
+        ctx2.fillStyle = paletteRef.current.nodeBaseFill;
         ctx2.beginPath();
         ctx2.arc(position.x, position.y, r, 0, Math.PI * 2);
         ctx2.fill();
@@ -1201,8 +1478,17 @@ function GraphCanvasComponent({
         ctx2.globalAlpha = brightness;
         const isBlocker = node.state === "needs_review" || node.state === "shaky";
         ctx2.shadowBlur = selected ? 14 : onPath ? 8 : contextual ? 4 : 0;
-        ctx2.shadowColor = selected ? "rgba(255,255,255,0.35)" : onPath ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.07)";
-        ctx2.fillStyle = nodeFillColor(node, selected, onPath);
+        ctx2.shadowColor = selected
+          ? paletteRef.current.shadowSelected
+          : onPath
+            ? paletteRef.current.shadowPath
+            : paletteRef.current.shadowContext;
+        if (themeMode === "light" && highlightedZoneRgb) {
+          const zoneTint = selected ? 0.78 : onPath ? 0.62 : 0.46;
+          ctx2.fillStyle = rgbaString(highlightedZoneRgb, zoneTint);
+        } else {
+          ctx2.fillStyle = nodeFillColor(node, selected, onPath, paletteRef.current);
+        }
         ctx2.beginPath();
         ctx2.arc(position.x, position.y, r, 0, Math.PI * 2);
         ctx2.fill();
@@ -1280,8 +1566,32 @@ function GraphCanvasComponent({
         }
 
         labelPlacementRef.current.set(node.id, chosenIndex);
+        if (themeMode === "light" && (selected || onPath)) {
+          chosen = { ...chosen, y: chosen.y - 2 };
+          chosenBox = {
+            left: chosenBox.left,
+            right: chosenBox.right,
+            top: chosenBox.top - 2,
+            bottom: chosenBox.bottom - 2,
+          };
+        }
         placedLabels.push(chosenBox);
-        ctx2.fillStyle = `rgba(255,255,255,${alpha})`;
+        const nodeZoneId = zoneByTopicId.get(node.id) ?? null;
+        const effectiveZoneId = selected && selectedPrimaryZoneId ? selectedPrimaryZoneId : nodeZoneId;
+        const highlightedZone = (selected || onPath) && effectiveZoneId && selectedZoneIds.has(effectiveZoneId)
+          ? zoneById.get(effectiveZoneId) ?? null
+          : null;
+        const highlightedZoneRgb = highlightedZone ? hexToRgb(highlightedZone.color) : null;
+        if (themeMode === "light" && highlightedZoneRgb && (selected || onPath)) {
+          const labelBg = mixRgb(highlightedZoneRgb, { r: 255, g: 255, b: 255 }, 0.08);
+          ctx2.fillStyle = rgbaString(labelBg, Math.min(0.96, 0.72 + alpha * 0.3));
+          ctx2.beginPath();
+          ctx2.roundRect(chosenBox.left - 4, chosenBox.top - 3, chosenBox.right - chosenBox.left + 8, chosenBox.bottom - chosenBox.top + 6, 8);
+          ctx2.fill();
+          ctx2.fillStyle = `rgba(255,255,255,${Math.min(0.98, 0.78 + alpha * 0.24)})`;
+        } else {
+          ctx2.fillStyle = `rgba(${paletteRef.current.labelRgb},${alpha})`;
+        }
         ctx2.fillText(node.title, chosen.x, chosen.y);
       }
 
@@ -1631,6 +1941,7 @@ export const GraphCanvas = React.memo(GraphCanvasComponent, (prev, next) => {
   if (prev.nodePositions !== next.nodePositions) return false;
   if (prev.disableIdleAnimations !== next.disableIdleAnimations) return false;
   if (prev.backgroundFill !== next.backgroundFill) return false;
+  if (prev.themeMode !== next.themeMode) return false;
   if (prev.disableGrid !== next.disableGrid) return false;
   if (prev.disablePhysics !== next.disablePhysics) return false;
   if (prev.viewportCenteredWheelZoom !== next.viewportCenteredWheelZoom) return false;
