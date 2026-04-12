@@ -186,7 +186,7 @@ class ChatOrchestratorService:
                 "- After you've explained a concept and the learner confirms understanding, you MAY include a quiz.\n"
                 "- If you emit an inline quiz, use the nested inline_quiz object.\n"
                 "- Inline quizzes are rare checkpoints, not the default interaction style.\n"
-                "- Do not offer or emit a quiz unless the learner explicitly asks for one, asks to be tested, or a short checkpoint is genuinely the most helpful next step after real explanation.\n"
+                "- Do not offer or emit a quiz unless the learner EXPLICITLY asks for a quiz or test.\n"
                 "- Questions MUST require thinking, applying concepts, or drawing analogies. Never ask something the learner can answer by scrolling up and copying text.\n"
                 "- Vary difficulty. Some questions should be tricky with plausible distractors.\n"
                 "- Randomize the position of the correct answer across quizzes.\n"
@@ -222,7 +222,7 @@ class ChatOrchestratorService:
             "- if you choose propose_ingest, set proposal_raw_text to the exact string 'see_original_input' (do NOT copy the raw material); the backend will substitute the real input automatically\n"
             "- if you choose propose_expand, leave proposal_raw_text empty and fill proposal_target_goal and proposal_instructions instead\n"
             "- if action is propose_ingest or propose_expand, inline_quiz must be null\n"
-            "- do not use inline_quiz by default; only emit it when the learner explicitly wants testing or when a single brief checkpoint is clearly more useful than another plain reply\n"
+            "- do not use inline_quiz by default; ONLY emit it when the learner explicitly asks to be tested or quizzed.\n"
             "- you have full context about the learner's progress, quiz results, and current frontier; use it to give personalized study advice when answering\n"
             "Return JSON with action, reply_message, proposal_target_goal, proposal_raw_text, proposal_instructions, and optional inline_quiz."
         )

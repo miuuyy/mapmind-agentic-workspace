@@ -1,5 +1,5 @@
 import React from "react";
-import { UploadSimple } from "@phosphor-icons/react";
+import { UploadSimple } from "@phosphor-icons/react/dist/icons/UploadSimple";
 
 import { API_BASE } from "../lib/api";
 import type { AppCopy } from "../lib/appCopy";

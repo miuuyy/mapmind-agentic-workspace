@@ -1590,7 +1590,7 @@ export default function App(): React.JSX.Element {
   }, [leftSidebarClosing, leftSidebarOpen]);
 
   const openConfigurationSettings = useCallback(() => {
-    setSettingsOpen(true);
+    setSettingsOpen((prev) => !prev);
     setMobileMenuOpen(false);
   }, []);
 
@@ -1653,6 +1653,7 @@ export default function App(): React.JSX.Element {
         setCreateGraphError={setCreateGraphError}
         openConfigurationSettings={openConfigurationSettings}
         openDebugLogs={() => setLogsOpen(true)}
+        isLogsOpen={isLogsOpen}
         isMobileViewport={isMobileViewport}
         leftSidebarOpen={leftSidebarOpen}
         openSidebar={openSidebar}

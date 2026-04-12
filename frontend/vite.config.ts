@@ -1,14 +1,13 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  plugins: [react()],
   build: {
+    cssMinify: false,
+    reportCompressedSize: false,
     rollupOptions: {
       output: {
         manualChunks: {
           react: ["react", "react-dom"],
-          ui: ["@phosphor-icons/react"],
         },
       },
     },

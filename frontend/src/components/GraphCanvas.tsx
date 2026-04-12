@@ -1135,6 +1135,7 @@ function GraphCanvasComponent({
         const spring = 0.0046;
         const centerPull = 0.00008;
         const levelPull = 0.004;
+        const siblingFanStrength = 0.0015;
         // Smooth startup: forces ramp up gradually, constant high damping prevents bounce
         const startupProgress = Math.min(1, frameCount / 80);
         const startupEase = startupProgress * startupProgress; // quadratic ease-in
@@ -1242,6 +1243,53 @@ function GraphCanvasComponent({
             to.vx -= fx;
             to.vy -= fy;
           }
+        }
+
+        const outgoingByParent = new Map<string, string[]>();
+        for (const edge of currentEdges) {
+          outgoingByParent.set(edge.source_topic_id, [...(outgoingByParent.get(edge.source_topic_id) ?? []), edge.target_topic_id]);
+        }
+
+        for (const [parentId, childIds] of outgoingByParent) {
+          if (childIds.length < 2) continue;
+          const parent = positions.get(parentId);
+          if (!parent) continue;
+          const orderedChildren = childIds
+            .map((childId) => {
+              const child = positions.get(childId);
+              if (!child) return null;
+              const stableAngle = anchors.get(childId)?.angle ?? Math.atan2(child.y - parent.y, child.x - parent.x);
+              return { id: childId, child, stableAngle };
+            })
+            .filter((entry): entry is { id: string; child: NodePosition; stableAngle: number } => Boolean(entry))
+            .sort((left, right) => left.stableAngle - right.stableAngle);
+          if (orderedChildren.length < 2) continue;
+
+          const centerAngle = averageAngles(orderedChildren.map((entry) => entry.stableAngle));
+          const totalSpread = clamp(0.56 + (orderedChildren.length - 2) * 0.18, 0.56, 1.28);
+          const stepAngle = orderedChildren.length === 1 ? 0 : totalSpread / (orderedChildren.length - 1);
+
+          orderedChildren.forEach((entry, index) => {
+            if (entry.id === draggedNodeId) {
+              entry.child.vx = 0;
+              entry.child.vy = 0;
+              return;
+            }
+            if (pinnedPositions[entry.id]) return;
+
+            const dx = entry.child.x - parent.x;
+            const dy = entry.child.y - parent.y;
+            const dist = Math.max(1, Math.hypot(dx, dy));
+            const currentAngle = Math.atan2(dy, dx);
+            const targetAngle = centerAngle + (index - (orderedChildren.length - 1) / 2) * stepAngle;
+            const angleDelta = normalizeAngle(targetAngle - currentAngle);
+            const tangentialX = -dy / dist;
+            const tangentialY = dx / dist;
+            const angularForce = angleDelta * siblingFanStrength * forceScale * Math.min(dist, 260);
+
+            entry.child.vx += tangentialX * angularForce;
+            entry.child.vy += tangentialY * angularForce;
+          });
         }
 
         const zoneData = zonesDataRef.current;
@@ -1391,6 +1439,32 @@ function GraphCanvasComponent({
           : new Set<string>();
       const zoneByTopicId = zoneIdByTopicId(zonesDataRef.current);
       const zoneById = new Map(zonesDataRef.current.map((zone) => [zone.id, zone]));
+      const bundleMetaByEdgeId = new Map<string, { angle: number; laneOffset: number; laneCount: number }>();
+
+      const outgoingBySource = new Map<string, Array<{ edge: Edge; angle: number }>>();
+      for (const edge of currentEdges) {
+        const from = positions.get(edge.source_topic_id);
+        const to = positions.get(edge.target_topic_id);
+        if (!from || !to) continue;
+        const angle = Math.atan2(to.y - from.y, to.x - from.x);
+        outgoingBySource.set(edge.source_topic_id, [...(outgoingBySource.get(edge.source_topic_id) ?? []), { edge, angle }]);
+      }
+
+      for (const [sourceId, entries] of outgoingBySource) {
+        if (entries.length === 0) continue;
+        entries.sort((left, right) => left.angle - right.angle);
+        const sourceAnchorAngle = anchors.get(sourceId)?.angle ?? averageAngles(entries.map((entry) => entry.angle));
+        const bundleAngle = averageAngles(entries.map((entry) => entry.angle));
+        const resolvedAngle = Math.abs(normalizeAngle(bundleAngle - sourceAnchorAngle)) > 0.9 ? sourceAnchorAngle : bundleAngle;
+        const laneSpacing = clamp(10 - entries.length * 0.6, 5, 10);
+        entries.forEach((entry, index) => {
+          bundleMetaByEdgeId.set(entry.edge.id, {
+            angle: resolvedAngle,
+            laneOffset: (index - (entries.length - 1) / 2) * laneSpacing,
+            laneCount: entries.length,
+          });
+        });
+      }
 
       for (const edge of currentEdges) {
         const from = positions.get(edge.source_topic_id);
@@ -1409,10 +1483,22 @@ function GraphCanvasComponent({
         const pulse = renderIdleFrozen ? 0.84 : 0.84 + Math.sin(frameCount * 0.03 + from.x * 0.008) * 0.05;
         const targetX = from.x + (to.x - from.x) * edgeBrightness;
         const targetY = from.y + (to.y - from.y) * edgeBrightness;
+        const bundleMeta = bundleMetaByEdgeId.get(edge.id);
+        const bundleAngle = bundleMeta?.angle ?? Math.atan2(targetY - from.y, targetX - from.x);
+        const bundleDist = Math.max(16, Math.min(46, Math.hypot(targetX - from.x, targetY - from.y) * 0.24));
+        const laneOffset = bundleMeta?.laneOffset ?? 0;
+        const perpX = -Math.sin(bundleAngle);
+        const perpY = Math.cos(bundleAngle);
+        const startControlX = from.x + Math.cos(bundleAngle) * bundleDist + perpX * laneOffset;
+        const startControlY = from.y + Math.sin(bundleAngle) * bundleDist + perpY * laneOffset;
+        const targetAngle = Math.atan2(targetY - from.y, targetX - from.x);
+        const endBundleDist = Math.max(10, Math.min(34, Math.hypot(targetX - from.x, targetY - from.y) * 0.18));
+        const endControlX = targetX - Math.cos(targetAngle) * endBundleDist + perpX * laneOffset * 0.24;
+        const endControlY = targetY - Math.sin(targetAngle) * endBundleDist + perpY * laneOffset * 0.24;
 
         ctx2.beginPath();
         ctx2.moveTo(from.x, from.y);
-        ctx2.lineTo(targetX, targetY);
+        ctx2.bezierCurveTo(startControlX, startControlY, endControlX, endControlY, targetX, targetY);
         if (onPath) {
           if (themeModeRef.current === "light" && (highlightedSourceZone || highlightedTargetZone)) {
             const startRgb = hexToRgb(highlightedSourceZone?.color ?? highlightedTargetZone?.color ?? "#64748b") ?? { r: 100, g: 116, b: 139 };
