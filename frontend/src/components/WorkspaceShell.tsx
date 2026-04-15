@@ -1142,6 +1142,46 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
               <div key={message.id} className={`chatMessage chatMessage-${message.role}`}>
                 <div className="chatBubble">
                   <div className="chatCopy">{renderDisplayText(message.content)}</div>
+                  {message.inline_quiz ? (() => {
+                    const quiz = message.inline_quiz;
+                    const answered = quiz.answered_index != null;
+                    return (
+                      <div className="inlineQuizCard">
+                        <div className="inlineQuizQuestion">{renderDisplayText(quiz.question)}</div>
+                        <div className="inlineQuizChoices">
+                          {quiz.choices.map((choice: string, idx: number) => {
+                            let cls = "inlineQuizChoice";
+                            if (answered) {
+                              if (idx === quiz.correct_index) cls += " inlineQuizCorrect";
+                              else if (idx === quiz.answered_index) cls += " inlineQuizWrong";
+                              else cls += " inlineQuizDimmed";
+                            }
+                            return (
+                              <button
+                                key={idx}
+                                className={cls}
+                                type="button"
+                                disabled={answered || chatLoading}
+                                onClick={() => {
+                                  const answeredMessages = currentChatState.messages.map((entry) =>
+                                    entry.id === message.id && entry.inline_quiz
+                                      ? { ...entry, inline_quiz: { ...entry.inline_quiz, answered_index: idx } }
+                                      : entry,
+                                  );
+                                  updateCurrentChatState((prev) => ({
+                                    ...prev,
+                                    messages: answeredMessages,
+                                  }));
+                                }}
+                              >
+                                {choice}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })() : null}
                   {message.role === "assistant" ? (
                     <div className="chatMetaRow">
                       {message.model ? <span className="badge badge-gray">{message.model}</span> : null}
