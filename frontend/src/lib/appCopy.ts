@@ -131,6 +131,8 @@ export const APP_COPY = {
     personaPlaceholder: "Examples: be concise, be strict about study plans, avoid vague reassurance, focus on concrete next steps.",
     idleGraphMotion: "Idle graph motion",
     idleGraphMotionHelp: "Disables the ambient breathing motion. Generation and new topic placement stay unchanged.",
+    edgeLines: "Straight edge lines",
+    edgeLinesHelp: "Keeps topic links straight instead of using the loose organic curves.",
     debugMode: "Debug mode",
     debugModeHelp: "Enables local capture for frontend errors, API requests, and backend errors. When enabled, Logs appears in the sidebar.",
     appearance: "Appearance",

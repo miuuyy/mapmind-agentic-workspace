@@ -22,6 +22,7 @@ type ModeOption<T extends string> = {
 
 type SettingsModalProps = {
   isSettingsOpen: boolean;
+  logsOpen: boolean;
   copy: AppCopy;
   setSettingsOpen: StateSetter<boolean>;
   currentConfig: WorkspaceConfig | null;
@@ -88,6 +89,8 @@ type SettingsModalProps = {
   setEnableClosureTestsDraft: StateSetter<boolean>;
   debugModeEnabledDraft: boolean;
   setDebugModeEnabledDraft: StateSetter<boolean>;
+  curvedEdgeLinesDraft: boolean;
+  setCurvedEdgeLinesDraft: StateSetter<boolean>;
   themeModeDraft: ThemeMode;
   setThemeModeDraft: StateSetter<ThemeMode>;
   quizQuestionCountDraft: number;
@@ -102,6 +105,7 @@ type SettingsModalProps = {
 export function SettingsModal(props: SettingsModalProps): React.JSX.Element | null {
   const {
     isSettingsOpen,
+    logsOpen,
     copy,
     setSettingsOpen,
     currentConfig,
@@ -168,6 +172,8 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
     setEnableClosureTestsDraft,
     debugModeEnabledDraft,
     setDebugModeEnabledDraft,
+    curvedEdgeLinesDraft,
+    setCurvedEdgeLinesDraft,
     themeModeDraft,
     setThemeModeDraft,
     quizQuestionCountDraft,
@@ -184,13 +190,39 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
       ? currentConfig.model_options
       : DEFAULT_PROVIDER_MODELS[resolvedProvider]
   ) ?? [];
+  const snapshotsScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const [snapshotsScrolledTop, setSnapshotsScrolledTop] = React.useState(false);
+  const [snapshotsScrolledBottom, setSnapshotsScrolledBottom] = React.useState(false);
+
+  React.useEffect(() => {
+    const el = snapshotsScrollRef.current;
+    if (!el) return;
+
+    const syncSnapshotsScrollState = () => {
+      const maxScrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
+      setSnapshotsScrolledTop(el.scrollTop > 2);
+      setSnapshotsScrolledBottom(el.scrollTop < maxScrollTop - 2);
+    };
+
+    syncSnapshotsScrollState();
+    el.addEventListener("scroll", syncSnapshotsScrollState, { passive: true });
+    window.addEventListener("resize", syncSnapshotsScrollState);
+
+    return () => {
+      el.removeEventListener("scroll", syncSnapshotsScrollState);
+      window.removeEventListener("resize", syncSnapshotsScrollState);
+    };
+  }, [isSettingsOpen, activeGraph?.graph_id, historyError, snapshots.length]);
 
   if (!isSettingsOpen) {
     return null;
   }
 
   return (
-    <div className="quizOverlay settingsOverlay" style={{ zIndex: 100 }}>
+    <div
+      className={`quizOverlay settingsOverlay ${logsOpen ? "settingsOverlayCoexisting settingsOverlaySettings" : ""}`}
+      style={{ zIndex: 100 }}
+    >
       <div className="settingsModal">
         <div className="settingsContent">
           <div className="settingsContentHeader">
@@ -437,6 +469,21 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                           <span className="settingsSwitchKnob" />
                         </button>
                       </label>
+                      <label className="settingsToggleRow" htmlFor="edge-lines-toggle">
+                        <div className="settingsToggleCopy">
+                          <span className="fieldLabel">{copy.settingsPanel.edgeLines}</span>
+                          <span className="mutedSmall">{copy.settingsPanel.edgeLinesHelp}</span>
+                        </div>
+                        <button
+                          id="edge-lines-toggle"
+                          className={`settingsSwitch ${curvedEdgeLinesDraft ? "settingsSwitchActive" : ""}`}
+                          onClick={() => setCurvedEdgeLinesDraft((current) => !current)}
+                          type="button"
+                          aria-pressed={curvedEdgeLinesDraft}
+                        >
+                          <span className="settingsSwitchKnob" />
+                        </button>
+                      </label>
                     </div>
                   </section>
 
@@ -562,7 +609,10 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                 <div className="settingsSecondaryColumn">
                   {activeGraph ? (
                     <Card className="snapshotsCard settingsSnapshotsCard" title={copy.settingsPanel.snapshots} right={<button className="btn btn-sm" onClick={() => void loadSnapshots()} type="button">{historyLoading ? copy.settingsPanel.refreshing : copy.settingsPanel.refresh}</button>}>
-                      <div className="snapshotsScrollContainer stack">
+                      <div
+                        ref={snapshotsScrollRef}
+                        className={`snapshotsScrollContainer stack ${snapshotsScrolledTop ? "snapshotsScrollContainerScrolledTop" : ""} ${snapshotsScrolledBottom ? "snapshotsScrollContainerScrolledBottom" : ""}`}
+                      >
                         {historyError ? <div className="inlineNotice inlineNoticeError">{historyError}</div> : null}
                         {snapshots.length > 0 ? (
                           <div className="list">

@@ -1,5 +1,5 @@
 import React from "react";
-import { BookBookmark, BugBeetle, CaretDown, CaretLeft, CaretRight, CrosshairSimple, DownloadSimple, GearSix, LockSimple, LockSimpleOpen, Moon, PencilSimple, SunDim } from "@phosphor-icons/react";
+import { BookBookmark, BugBeetle, CaretDown, CaretLeft, CaretRight, ChatCircleDots, CrosshairSimple, DownloadSimple, FolderOpen, FolderSimple, GearSix, LockSimple, LockSimpleOpen, Moon, PencilSimple, SquaresFour, SunDim } from "@phosphor-icons/react";
 
 import { APP_LOGO_SRC, ASSISTANT_MIN_WIDTH, type AuthSessionPayload, type GraphChatState, type ThemeMode, type WorkspaceSurfacePayload } from "../lib/appContracts";
 import { API_BASE } from "../lib/api";
@@ -46,6 +46,160 @@ type AssistantTemplate = {
   value: string;
 };
 
+type FloatingWindowPosition = {
+  x: number;
+  y: number;
+};
+
+type FloatingWindowDragTarget = "dock" | "workspace" | "chat";
+
+type FloatingRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+const FLOATING_WINDOW_COLLISION_MARGIN = 18;
+const LIGHT_DESKTOP_LAYOUT_STORAGE_KEY = "knowledge_graph_light_desktop_layout_v1";
+
+type StoredLightDesktopLayout = {
+  dock: FloatingWindowPosition;
+  workspace: FloatingWindowPosition;
+  chat: FloatingWindowPosition;
+};
+
+function makeFloatingRect(position: FloatingWindowPosition, size: { width: number; height: number }): FloatingRect {
+  return {
+    x: position.x,
+    y: position.y,
+    width: size.width,
+    height: size.height,
+  };
+}
+
+function toFloatingRect(shellRect: DOMRect, rect: DOMRect): FloatingRect {
+  return {
+    x: rect.left - shellRect.left,
+    y: rect.top - shellRect.top,
+    width: rect.width,
+    height: rect.height,
+  };
+}
+
+function floatingRectsOverlap(a: FloatingRect, b: FloatingRect, margin = FLOATING_WINDOW_COLLISION_MARGIN): boolean {
+  return !(
+    a.x + a.width + margin <= b.x ||
+    a.x >= b.x + b.width + margin ||
+    a.y + a.height + margin <= b.y ||
+    a.y >= b.y + b.height + margin
+  );
+}
+
+function clampFloatingPosition(
+  target: FloatingWindowDragTarget,
+  position: FloatingWindowPosition,
+  size: { width: number; height: number },
+  shellRect: DOMRect,
+): FloatingWindowPosition {
+  return {
+    x: Math.max(target === "dock" ? 6 : 84, Math.min(shellRect.width - size.width - 10, position.x)),
+    y: Math.max(10, Math.min(shellRect.height - size.height - 10, position.y)),
+  };
+}
+
+function resolveFloatingCollision(
+  target: FloatingWindowDragTarget,
+  position: FloatingWindowPosition,
+  size: { width: number; height: number },
+  shellRect: DOMRect,
+  blockedRects: FloatingRect[],
+): FloatingWindowPosition {
+  let resolved = clampFloatingPosition(target, position, size, shellRect);
+  const distanceFrom = (candidate: FloatingWindowPosition): number => Math.hypot(candidate.x - position.x, candidate.y - position.y);
+
+  for (const blockedRect of blockedRects) {
+    const currentRect = makeFloatingRect(resolved, size);
+    if (!floatingRectsOverlap(currentRect, blockedRect)) continue;
+
+    const candidates = [
+      { x: blockedRect.x + blockedRect.width + FLOATING_WINDOW_COLLISION_MARGIN, y: resolved.y },
+      { x: blockedRect.x - size.width - FLOATING_WINDOW_COLLISION_MARGIN, y: resolved.y },
+      { x: resolved.x, y: blockedRect.y + blockedRect.height + FLOATING_WINDOW_COLLISION_MARGIN },
+      { x: resolved.x, y: blockedRect.y - size.height - FLOATING_WINDOW_COLLISION_MARGIN },
+    ]
+      .map((candidate) => clampFloatingPosition(target, candidate, size, shellRect))
+      .filter((candidate) => {
+        const candidateRect = makeFloatingRect(candidate, size);
+        return blockedRects.every((otherRect) => !floatingRectsOverlap(candidateRect, otherRect));
+      })
+      .sort((left, right) => distanceFrom(left) - distanceFrom(right));
+
+    if (candidates.length > 0) {
+      resolved = candidates[0];
+    }
+  }
+
+  return resolved;
+}
+
+function isValidFloatingWindowPosition(value: unknown): value is FloatingWindowPosition {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<FloatingWindowPosition>;
+  return typeof candidate.x === "number" && Number.isFinite(candidate.x) && typeof candidate.y === "number" && Number.isFinite(candidate.y);
+}
+
+function readStoredLightDesktopLayout(): StoredLightDesktopLayout | null {
+  try {
+    const raw = localStorage.getItem(LIGHT_DESKTOP_LAYOUT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<StoredLightDesktopLayout>;
+    if (
+      isValidFloatingWindowPosition(parsed.dock) &&
+      isValidFloatingWindowPosition(parsed.workspace) &&
+      isValidFloatingWindowPosition(parsed.chat)
+    ) {
+      return {
+        dock: parsed.dock,
+        workspace: parsed.workspace,
+        chat: parsed.chat,
+      };
+    }
+  } catch {
+    // Ignore invalid stored layout values.
+  }
+  return null;
+}
+
+function computeCanonicalLightDesktopLayout(
+  shellRect: DOMRect,
+  dockSize: { width: number; height: number },
+  workspaceSize: { width: number; height: number },
+  chatSize: { width: number; height: number },
+): {
+  dock: FloatingWindowPosition;
+  workspace: FloatingWindowPosition;
+  chat: FloatingWindowPosition;
+} {
+  const dock = clampFloatingPosition("dock", { x: 18, y: 82 }, dockSize, shellRect);
+  const dockRect = makeFloatingRect(dock, dockSize);
+  const workspace = resolveFloatingCollision(
+    "workspace",
+    { x: dock.x + dockSize.width + 18, y: 84 },
+    workspaceSize,
+    shellRect,
+    [dockRect],
+  );
+  const chat = resolveFloatingCollision(
+    "chat",
+    { x: shellRect.width - chatSize.width - 24, y: 84 },
+    chatSize,
+    shellRect,
+    [dockRect, makeFloatingRect(workspace, workspaceSize)],
+  );
+  return { dock, workspace, chat };
+}
+
 type WorkspaceShellProps = {
   copy: AppCopy;
   sidebarVisible: boolean;
@@ -71,6 +225,7 @@ type WorkspaceShellProps = {
   setCreateGraphError: StateSetter<string | null>;
   openConfigurationSettings: () => void;
   openDebugLogs: () => void;
+  isLogsOpen: boolean;
   isMobileViewport: boolean;
   leftSidebarOpen: boolean;
   openSidebar: () => void;
@@ -79,6 +234,7 @@ type WorkspaceShellProps = {
   assistantWidth: number;
   viewportCenteredZoom: boolean;
   setViewportCenteredZoom: StateSetter<boolean>;
+  curvedEdgeLinesEnabled: boolean;
   topOverlayCompact: boolean;
   overlayLeftOffset: number;
   overlayRightOffset: number;
@@ -188,6 +344,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     setCreateGraphError,
     openConfigurationSettings,
     openDebugLogs,
+    isLogsOpen,
     isMobileViewport,
     leftSidebarOpen,
     openSidebar,
@@ -196,6 +353,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     assistantWidth,
     viewportCenteredZoom,
     setViewportCenteredZoom,
+    curvedEdgeLinesEnabled,
     topOverlayCompact,
     overlayLeftOffset,
     overlayRightOffset,
@@ -278,9 +436,35 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     themeMode,
     setThemeMode,
   } = props;
+  const experimentalLightDesktop = themeMode === "light" && !isMobileViewport;
+  const shellSurfaceRef = React.useRef<HTMLDivElement | null>(null);
+  const dockRef = React.useRef<HTMLDivElement | null>(null);
+  const workspaceWindowRef = React.useRef<HTMLDivElement | null>(null);
+  const chatWindowRef = React.useRef<HTMLDivElement | null>(null);
+  const dragStateRef = React.useRef<{
+    target: FloatingWindowDragTarget;
+    origin: FloatingWindowPosition;
+    startPointerX: number;
+    startPointerY: number;
+    shellRect: DOMRect;
+    size: { width: number; height: number };
+  } | null>(null);
+  const storedLightDesktopLayout = React.useMemo(() => readStoredLightDesktopLayout(), []);
+  const hadStoredLightDesktopLayoutRef = React.useRef(Boolean(storedLightDesktopLayout));
+  const lightDesktopLayoutInitializedRef = React.useRef(false);
+  const prevLightWorkspacePanelOpenRef = React.useRef(false);
+  const prevLightChatPanelOpenRef = React.useRef(false);
+  const [dockPosition, setDockPosition] = React.useState<FloatingWindowPosition>(() => storedLightDesktopLayout?.dock ?? { x: 18, y: 82 });
+  const [workspaceWindowPosition, setWorkspaceWindowPosition] = React.useState<FloatingWindowPosition>(() => storedLightDesktopLayout?.workspace ?? { x: 92, y: 86 });
+  const [chatWindowPosition, setChatWindowPosition] = React.useState<FloatingWindowPosition>(() => storedLightDesktopLayout?.chat ?? { x: 0, y: 84 });
+  const [lightWorkspaceExpandedGraphId, setLightWorkspaceExpandedGraphId] = React.useState<string | null>(null);
   const showMobileOverlay = isMobileViewport && !isSettingsOpen;
   const showCompactDesktopOverlay = topOverlayCompact && !isMobileViewport && !isSettingsOpen;
   const showInlineDesktopOverlay = !topOverlayCompact && !isMobileViewport && !isSettingsOpen;
+  const lightWorkspacePanelOpen = experimentalLightDesktop && leftSidebarOpen;
+  const lightChatPanelOpen = experimentalLightDesktop && assistantOpen;
+  const overlayLeftInset = experimentalLightDesktop ? 104 : overlayLeftOffset;
+  const overlayRightInset = experimentalLightDesktop ? 24 : overlayRightOffset;
 
   const renderGraphStatItems = (): React.JSX.Element => (
     <>
@@ -407,6 +591,204 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   React.useEffect(() => {
     closeTopicAssetModal();
   }, [closeTopicAssetModal, selectedTopic?.id]);
+
+  const beginFloatingDrag = React.useCallback((target: FloatingWindowDragTarget, event: React.PointerEvent<HTMLElement>) => {
+    if (!experimentalLightDesktop) return;
+    const shell = shellSurfaceRef.current;
+    const targetElement = target === "dock" ? dockRef.current : target === "workspace" ? workspaceWindowRef.current : chatWindowRef.current;
+    if (!shell || !targetElement) return;
+    const shellRect = shell.getBoundingClientRect();
+    const targetRect = targetElement.getBoundingClientRect();
+    const origin = target === "dock" ? dockPosition : target === "workspace" ? workspaceWindowPosition : chatWindowPosition;
+    dragStateRef.current = {
+      target,
+      origin,
+      startPointerX: event.clientX,
+      startPointerY: event.clientY,
+      shellRect,
+      size: { width: targetRect.width, height: targetRect.height },
+    };
+    event.preventDefault();
+  }, [chatWindowPosition, dockPosition, experimentalLightDesktop, workspaceWindowPosition]);
+
+  React.useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      const drag = dragStateRef.current;
+      if (!drag) return;
+      const nextPosition = {
+        x: drag.origin.x + (event.clientX - drag.startPointerX),
+        y: drag.origin.y + (event.clientY - drag.startPointerY),
+      };
+      const blockedRects: FloatingRect[] = [];
+
+      if (drag.target !== "dock") {
+        const dockRect = dockRef.current?.getBoundingClientRect();
+        if (dockRect) blockedRects.push(toFloatingRect(drag.shellRect, dockRect));
+      }
+      if (drag.target !== "workspace" && lightWorkspacePanelOpen) {
+        const workspaceRect = workspaceWindowRef.current?.getBoundingClientRect();
+        if (workspaceRect) blockedRects.push(toFloatingRect(drag.shellRect, workspaceRect));
+      }
+      if (drag.target !== "chat" && lightChatPanelOpen) {
+        const chatRect = chatWindowRef.current?.getBoundingClientRect();
+        if (chatRect) blockedRects.push(toFloatingRect(drag.shellRect, chatRect));
+      }
+
+      const resolved = resolveFloatingCollision(drag.target, nextPosition, drag.size, drag.shellRect, blockedRects);
+
+      if (drag.target === "workspace") {
+        setWorkspaceWindowPosition(resolved);
+      } else if (drag.target === "chat") {
+        setChatWindowPosition(resolved);
+      } else if (drag.target === "dock") {
+        setDockPosition(resolved);
+      }
+    };
+    const handlePointerUp = () => {
+      dragStateRef.current = null;
+    };
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [lightChatPanelOpen, lightWorkspacePanelOpen]);
+
+  const applyCanonicalLightDesktopLayout = React.useCallback(() => {
+    if (!experimentalLightDesktop) return;
+    const shell = shellSurfaceRef.current;
+    if (!shell) return;
+    const shellRect = shell.getBoundingClientRect();
+    const dockRect = dockRef.current?.getBoundingClientRect();
+    const workspaceRect = workspaceWindowRef.current?.getBoundingClientRect();
+    const chatRect = chatWindowRef.current?.getBoundingClientRect();
+    const dockSize = dockRect ? { width: dockRect.width, height: dockRect.height } : { width: 72, height: 320 };
+    const workspaceSize = workspaceRect ? { width: workspaceRect.width, height: workspaceRect.height } : { width: 400, height: 520 };
+    const chatSize = chatRect ? { width: chatRect.width, height: chatRect.height } : { width: Math.min(Math.max(assistantWidth, 390), 460), height: 760 };
+    const next = computeCanonicalLightDesktopLayout(shellRect, dockSize, workspaceSize, chatSize);
+    setDockPosition(next.dock);
+    setWorkspaceWindowPosition(next.workspace);
+    setChatWindowPosition(next.chat);
+  }, [assistantWidth, experimentalLightDesktop]);
+
+  React.useLayoutEffect(() => {
+    if (!experimentalLightDesktop) {
+      lightDesktopLayoutInitializedRef.current = false;
+      prevLightWorkspacePanelOpenRef.current = false;
+      prevLightChatPanelOpenRef.current = false;
+      return;
+    }
+    if (lightDesktopLayoutInitializedRef.current) return;
+    if (!hadStoredLightDesktopLayoutRef.current) {
+      applyCanonicalLightDesktopLayout();
+    }
+    lightDesktopLayoutInitializedRef.current = true;
+  }, [applyCanonicalLightDesktopLayout, experimentalLightDesktop]);
+
+  React.useLayoutEffect(() => {
+    if (!experimentalLightDesktop) return;
+    const workspaceJustOpened = lightWorkspacePanelOpen && !prevLightWorkspacePanelOpenRef.current;
+    const chatJustOpened = lightChatPanelOpen && !prevLightChatPanelOpenRef.current;
+    if (workspaceJustOpened || chatJustOpened) {
+      applyCanonicalLightDesktopLayout();
+    }
+    prevLightWorkspacePanelOpenRef.current = lightWorkspacePanelOpen;
+    prevLightChatPanelOpenRef.current = lightChatPanelOpen;
+  }, [
+    applyCanonicalLightDesktopLayout,
+    experimentalLightDesktop,
+    lightChatPanelOpen,
+    lightWorkspacePanelOpen,
+  ]);
+
+  React.useLayoutEffect(() => {
+    if (!experimentalLightDesktop) return;
+    const shell = shellSurfaceRef.current;
+    if (!shell) return;
+    const rect = shell.getBoundingClientRect();
+    setDockPosition((current) => ({
+      x: Math.min(Math.max(18, current.x), Math.max(18, rect.width - 92)),
+      y: Math.min(Math.max(72, current.y), Math.max(18, rect.height - 360)),
+    }));
+    setWorkspaceWindowPosition((current) => ({
+      x: Math.min(Math.max(104, current.x), Math.max(24, rect.width - 428)),
+      y: Math.min(Math.max(84, current.y), Math.max(24, rect.height - 420)),
+    }));
+    setChatWindowPosition((current) => {
+      const defaultX = Math.max(180, rect.width - Math.min(Math.max(assistantWidth, 390), 460) - 28);
+      return {
+        x: Math.min(Math.max(180, current.x || defaultX), Math.max(40, rect.width - 470)),
+        y: Math.min(Math.max(76, current.y), Math.max(24, rect.height - 560)),
+      };
+    });
+  }, [assistantWidth, experimentalLightDesktop]);
+
+  React.useLayoutEffect(() => {
+    if (!experimentalLightDesktop) return;
+    const shell = shellSurfaceRef.current;
+    if (!shell) return;
+    const shellRect = shell.getBoundingClientRect();
+    const dockRect = dockRef.current?.getBoundingClientRect();
+    const workspaceRect = workspaceWindowRef.current?.getBoundingClientRect();
+    const chatRect = chatWindowRef.current?.getBoundingClientRect();
+
+    const dockSize = dockRect ? { width: dockRect.width, height: dockRect.height } : { width: 72, height: 320 };
+    const workspaceSize = workspaceRect ? { width: workspaceRect.width, height: workspaceRect.height } : { width: 400, height: 520 };
+    const chatSize = chatRect ? { width: chatRect.width, height: chatRect.height } : { width: Math.min(Math.max(assistantWidth, 390), 460), height: 760 };
+
+    const nextDockPosition = clampFloatingPosition("dock", dockPosition, dockSize, shellRect);
+    let nextWorkspacePosition = workspaceWindowPosition;
+    let nextChatPosition = chatWindowPosition;
+
+    const dockBlockedRect = makeFloatingRect(nextDockPosition, dockSize);
+
+    if (lightWorkspacePanelOpen) {
+      nextWorkspacePosition = resolveFloatingCollision("workspace", workspaceWindowPosition, workspaceSize, shellRect, [dockBlockedRect]);
+    }
+
+    if (lightChatPanelOpen) {
+      const blockedRects = [dockBlockedRect];
+      if (lightWorkspacePanelOpen) {
+        blockedRects.push(makeFloatingRect(nextWorkspacePosition, workspaceSize));
+      }
+      nextChatPosition = resolveFloatingCollision("chat", chatWindowPosition, chatSize, shellRect, blockedRects);
+    }
+
+    if (nextDockPosition.x !== dockPosition.x || nextDockPosition.y !== dockPosition.y) {
+      setDockPosition(nextDockPosition);
+    }
+    if (nextWorkspacePosition.x !== workspaceWindowPosition.x || nextWorkspacePosition.y !== workspaceWindowPosition.y) {
+      setWorkspaceWindowPosition(nextWorkspacePosition);
+    }
+    if (nextChatPosition.x !== chatWindowPosition.x || nextChatPosition.y !== chatWindowPosition.y) {
+      setChatWindowPosition(nextChatPosition);
+    }
+  }, [
+    assistantWidth,
+    chatWindowPosition,
+    dockPosition,
+    experimentalLightDesktop,
+    lightChatPanelOpen,
+    lightWorkspacePanelOpen,
+    workspaceWindowPosition,
+  ]);
+
+  React.useEffect(() => {
+    if (!experimentalLightDesktop) return;
+    try {
+      localStorage.setItem(
+        LIGHT_DESKTOP_LAYOUT_STORAGE_KEY,
+        JSON.stringify({
+          dock: dockPosition,
+          workspace: workspaceWindowPosition,
+          chat: chatWindowPosition,
+        } satisfies StoredLightDesktopLayout),
+      );
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [chatWindowPosition, dockPosition, experimentalLightDesktop, workspaceWindowPosition]);
   const activeSession = activeSessionId
     ? chatSessions.find((session) => session.session_id === activeSessionId) ?? null
     : null;
@@ -415,6 +797,12 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const visibleMessages = currentChatState.messages.filter((message) => !message.hidden);
   const pathTitles = focusData.pathLayers.flat().map((entry) => entry.title);
   const selectedTopicClosed = selectedTopic?.state === "solid" || selectedTopic?.state === "mastered";
+
+  React.useEffect(() => {
+    if (!experimentalLightDesktop) return;
+    if (!activeGraph?.graph_id) return;
+    setLightWorkspaceExpandedGraphId((current) => current ?? activeGraph.graph_id);
+  }, [activeGraph?.graph_id, experimentalLightDesktop]);
 
   function openTopicAssetDialog(kind: "resource" | "artifact"): void {
     if (!selectedTopic) return;
@@ -448,8 +836,471 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     }
   }
 
+  const toggleExperimentalWorkspaceWindow = (): void => {
+    if (leftSidebarOpen) {
+      closeSidebar();
+      return;
+    }
+    applyCanonicalLightDesktopLayout();
+    openSidebar();
+  };
+
+  const toggleExperimentalChatWindow = (): void => {
+    if (assistantOpen) {
+      setAssistantWidth(0);
+      return;
+    }
+    setAssistantWidth((current) => (current < ASSISTANT_MIN_WIDTH ? 390 : current));
+    applyCanonicalLightDesktopLayout();
+  };
+
+  const lightWorkspaceWindow = lightWorkspacePanelOpen ? (
+    <div
+      ref={workspaceWindowRef}
+      className="lightFloatingWindow lightWorkspaceWindow lightFloatingWindowEnter"
+      style={{ left: `${workspaceWindowPosition.x}px`, top: `${workspaceWindowPosition.y}px` }}
+    >
+      <div className="lightFloatingWindowHeader" onPointerDown={(event) => beginFloatingDrag("workspace", event)}>
+        <div>
+          <div className="lightFloatingWindowTitle">{copy.shell.workspace}</div>
+          <div className="lightFloatingWindowSubtle">{availableGraphs.length} workspaces</div>
+        </div>
+        <div className="lightWorkspaceWindowHeaderActions">
+          <button
+            className="lightWindowActionButton lightWindowCreateWorkspaceButton"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={() => {
+              setCreateGraphOpen(true);
+              setCreateGraphError(null);
+            }}
+            title={copy.emptyState.createGraph}
+            type="button"
+          >
+            <span className="lightWindowCreateWorkspaceGlyph">+</span>
+            <span>New workspace</span>
+          </button>
+        </div>
+      </div>
+      <div className="lightWorkspaceWindowBody lightWorkspaceExplorerBody">
+        {availableGraphs.map((graph) => {
+          const isActiveGraph = graph.graph_id === activeGraph?.graph_id;
+          const isExpanded = lightWorkspaceExpandedGraphId === graph.graph_id;
+          const completedTopics = graph.topics.filter((topic) => topic.state === "solid" || topic.state === "mastered").length;
+
+          return (
+            <section
+              key={graph.graph_id}
+              className={`lightWorkspaceFolder ${isActiveGraph ? "lightWorkspaceFolderActive" : ""} ${isExpanded ? "lightWorkspaceFolderOpen" : ""}`}
+            >
+              <div className="lightWorkspaceFolderRow">
+                <button
+                  className="lightWorkspaceFolderMain"
+                  onClick={() => {
+                    setLightWorkspaceExpandedGraphId((current) => current === graph.graph_id ? null : graph.graph_id);
+                    setActiveGraphId(graph.graph_id);
+                    setSelectedTopicId(null);
+                    setSelectedTopicAnchor(null);
+                  }}
+                  type="button"
+                >
+                  <span className="lightWorkspaceFolderCaret">
+                    {isExpanded ? <CaretDown size={14} weight="bold" /> : <CaretRight size={14} weight="bold" />}
+                  </span>
+                  <span className="lightWorkspaceFolderIcon">
+                    {isExpanded ? <FolderOpen size={18} weight="duotone" /> : <FolderSimple size={18} weight="duotone" />}
+                  </span>
+                  {renamingGraphId === graph.graph_id ? (
+                    <input
+                      className="lightWorkspaceFolderInput"
+                      value={renameGraphDraft}
+                      onChange={(event) => setRenameGraphDraft(event.target.value)}
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          void renameGraph(graph.graph_id);
+                        }
+                        if (event.key === "Escape") {
+                          event.preventDefault();
+                          setRenamingGraphId(null);
+                          setRenameGraphDraft("");
+                        }
+                      }}
+                      autoFocus
+                      spellCheck={false}
+                      aria-label={copy.sidebar.graphTitle}
+                    />
+                  ) : (
+                    <span className="lightWorkspaceFolderMeta">
+                      <span className="lightWorkspaceFolderTitleRow">
+                        <span className="lightWorkspaceFolderTitle">{graph.title}</span>
+                        <span className="lightWorkspaceFolderCount">{graph.topics.length}</span>
+                      </span>
+                      <span className="lightWorkspaceFolderSubtle">{graph.language.toUpperCase()} · {completedTopics} closed</span>
+                    </span>
+                  )}
+                </button>
+                <div className="lightWorkspaceFolderActions">
+                  <button
+                    className="lightWorkspaceFolderAction"
+                    onClick={() => openExportGraphModal(graph)}
+                    title={copy.sidebar.exportGraph(graph.title)}
+                    type="button"
+                  >
+                    <DownloadSimple size={14} weight="bold" />
+                  </button>
+                  <button
+                    className={`lightWorkspaceFolderAction ${renamingGraphId === graph.graph_id ? "lightWorkspaceFolderActionActive" : ""}`}
+                    onClick={() => {
+                      if (renamingGraphId === graph.graph_id) {
+                        void renameGraph(graph.graph_id);
+                        return;
+                      }
+                      setError(null);
+                      setRenamingGraphId(graph.graph_id);
+                      setRenameGraphDraft(graph.title);
+                    }}
+                    title={renamingGraphId === graph.graph_id ? copy.sidebar.saveGraphTitle : copy.sidebar.renameGraph(graph.title)}
+                    disabled={renameGraphSaving && renamingGraphId === graph.graph_id}
+                    type="button"
+                  >
+                    {renamingGraphId === graph.graph_id ? "OK" : <PencilSimple size={14} weight="bold" />}
+                  </button>
+                  <button
+                    className="lightWorkspaceFolderAction lightWorkspaceFolderActionDanger"
+                    onClick={() => setDeleteConfirm({ graphId: graph.graph_id, title: graph.title })}
+                    title={copy.sidebar.deleteGraph(graph.title)}
+                    type="button"
+                  >
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M5 2V1h6v1h3v1H2V2h3zm1 3v7h1V5H6zm3 0v7h1V5H9zM3 4h10l-.8 10H3.8L3 4z" fill="currentColor" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              {isExpanded ? (
+                <div className="lightWorkspaceTopicList">
+                  {graph.topics.length > 0 ? (
+                    graph.topics.map((topic) => {
+                      const isSelectedTopic = isActiveGraph && selectedTopicId === topic.id;
+                      return (
+                        <button
+                          key={topic.id}
+                          className={`lightWorkspaceTopicItem ${isSelectedTopic ? "lightWorkspaceTopicItemActive" : ""}`}
+                          onClick={() => {
+                            setActiveGraphId(graph.graph_id);
+                            handleSelectTopic(topic.id, null);
+                          }}
+                          type="button"
+                        >
+                          <span className="lightWorkspaceTopicBullet" />
+                          <span className="lightWorkspaceTopicLabel">{topic.title}</span>
+                          <span className="lightWorkspaceTopicState">{formatTopicState(topic.state)}</span>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <div className="lightWorkspaceTopicEmpty">No topics yet</div>
+                  )}
+                </div>
+              ) : null}
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  ) : null;
+
+  const lightChatWindow = lightChatPanelOpen ? (
+    <div
+      ref={chatWindowRef}
+      className="lightFloatingWindow lightChatWindow lightFloatingWindowEnter"
+      style={{
+        left: `${chatWindowPosition.x}px`,
+        top: `${chatWindowPosition.y}px`,
+        width: `${Math.min(Math.max(assistantWidth, 390), 460)}px`,
+      }}
+    >
+      <div className="lightFloatingWindowHeader" onPointerDown={(event) => beginFloatingDrag("chat", event)}>
+        <div>
+          <div className="lightFloatingWindowTitle">{activeSession?.title ?? "Assistant"}</div>
+          <div className="lightFloatingWindowSubtle">
+            {activeSession?.topic_id
+              ? copy.sessions.learningSession
+              : selectedTopic
+                ? copy.sessions.focusedOn(selectedTopic.title)
+                : activeGraph?.title ?? copy.sessions.noGraphSelected}
+          </div>
+        </div>
+      </div>
+      <div className="sessionListWrap" ref={sessionListWrapRef}>
+        <div
+          className="sessionList"
+          ref={sessionListRef}
+          onScroll={() => {
+            const el = sessionListRef.current;
+            const wrap = sessionListWrapRef.current;
+            if (!el || !wrap) return;
+            wrap.classList.toggle("scrolledLeft", el.scrollLeft > 4);
+            wrap.classList.toggle("scrolledRight", el.scrollLeft >= el.scrollWidth - el.clientWidth - 4);
+          }}
+          onMouseDown={(e) => {
+            if (!sessionListRef.current) return;
+            sessionDragRef.current = { startX: e.clientX, scrollLeft: sessionListRef.current.scrollLeft };
+          }}
+          onMouseMove={(e) => {
+            if (!sessionDragRef.current || !sessionListRef.current) return;
+            const dx = e.clientX - sessionDragRef.current.startX;
+            sessionListRef.current.scrollLeft = sessionDragRef.current.scrollLeft - dx;
+          }}
+          onMouseUp={() => { sessionDragRef.current = null; }}
+          onMouseLeave={() => { sessionDragRef.current = null; }}
+          onWheel={(e) => {
+            if (!sessionListRef.current) return;
+            if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+              e.preventDefault();
+              sessionListRef.current.scrollLeft += e.deltaY;
+            }
+          }}
+        >
+          <button
+            className={`sessionItem lightChatSessionChip ${!activeSessionId ? "sessionItemActive lightChatSessionChipActive" : ""}`}
+            onClick={() => setActiveSessionId(null)}
+            type="button"
+          >
+            <span className="sessionItemLabel">{copy.sessions.general}</span>
+            <span className="sessionItemBadge">{generalSession?.message_count ?? 0}</span>
+          </button>
+          {topicSessions.map((session) => (
+            <div
+              key={session.session_id}
+              className={`sessionItemGroup lightChatSessionChip ${activeSessionId === session.session_id ? "sessionItemGroupActive lightChatSessionChipActive" : ""}`}
+            >
+              <button
+                className="sessionItemInline"
+                onClick={() => setActiveSessionId(session.session_id)}
+                type="button"
+              >
+                <span className="sessionItemLabel">{session.title ?? session.topic_id}</span>
+                <span className="sessionItemBadge">{session.message_count}</span>
+              </button>
+              <button
+                className="sessionDeleteBtn"
+                title={copy.sessions.deleteSession}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setSessionDeleteConfirm({ sessionId: session.session_id, title: session.title ?? session.topic_id ?? copy.sessions.fallbackSessionTitle });
+                }}
+                aria-label={copy.sessions.deleteSessionAria(session.title ?? session.topic_id ?? copy.sessions.fallbackSessionTitle)}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          {selectedTopic && !chatSessions.find((session) => session.topic_id === selectedTopicId) ? (
+            <button
+              className="sessionItem sessionItemNew"
+              type="button"
+              onClick={async () => {
+                if (!activeGraph || !selectedTopicId) return;
+                const response = await apiFetch(`${API_BASE}/api/v1/graphs/${activeGraph.graph_id}/chat/sessions`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ topic_id: selectedTopicId, title: selectedTopic.title }),
+                });
+                if (!response.ok) return;
+                const session = await response.json();
+                setActiveSessionId(session.session_id);
+                void loadSessions();
+              }}
+            >
+              {copy.sessions.learnTopic(selectedTopic.title)}
+            </button>
+          ) : null}
+        </div>
+      </div>
+      <div className="sessionShadow" />
+      <div ref={chatViewportRef} className="assistantThread">
+        {currentChatState.messages.length === 0 && !chatThreadLoading ? (
+          <div className="assistantHello">
+            <div className="assistantHelloTitle">{copy.sessions.helloTitle}</div>
+            <div className="assistantHelloCopy">{copy.sessions.helloCopy}</div>
+          </div>
+        ) : null}
+        {visibleMessages.length > 0 ? (
+          visibleMessages.map((message) => {
+            const proposal = message.proposal;
+            const proposalCounts = proposal ? summarizePreviewCounts(proposal) : [];
+            const proposalHighlights = proposal ? summarizeTopOperations(proposal) : [];
+            return (
+              <div key={message.id} className={`chatMessage chatMessage-${message.role}`}>
+                <div className="chatBubble">
+                  <div className="chatCopy">{renderDisplayText(message.content)}</div>
+                  {message.role === "assistant" ? (
+                    <div className="chatMetaRow">
+                      {message.model ? <span className="badge badge-gray">{message.model}</span> : null}
+                      {message.fallback_used ? <span className="badge badge-yellow">{copy.sessions.fallbackUsed}</span> : null}
+                    </div>
+                  ) : null}
+                  {message.planning_status ? (
+                    <div className="proposalInlineCard proposalInlinePending">
+                      <div className="proposalInlinePendingRow">
+                        <div className="proposalInlinePendingLabel">{message.planning_status}</div>
+                        <div className="proposalInlinePendingDots" aria-hidden="true"><span /><span /><span /></div>
+                      </div>
+                    </div>
+                  ) : null}
+                  {message.planning_error ? <div className="inlineNotice inlineNoticeError">{message.planning_error}</div> : null}
+                  {proposal ? (
+                    <div className="proposalInlineCard">
+                      <div className="proposalInlineHead">
+                        <div>
+                          <div className="proposalInlineTitle">{proposal.display.summary}</div>
+                          {proposal.proposal_envelope.assistant_message ? (
+                            <div className="mutedSmall">{proposal.proposal_envelope.assistant_message}</div>
+                          ) : null}
+                        </div>
+                        <button
+                          className="proposalAddButton"
+                          disabled={applyLoadingMessageId === message.id || message.proposal_applied || !proposal.apply_plan.validation.ok}
+                          onClick={() => void applyProposalFromMessage(message.id, proposal)}
+                          type="button"
+                          aria-label={message.proposal_applied ? copy.sessions.proposalApplied : copy.sessions.addProposalToGraph}
+                          title={message.proposal_applied ? copy.sessions.applied : copy.sessions.addProposalToGraph}
+                        >
+                          {applyLoadingMessageId === message.id ? "…" : message.proposal_applied ? <span className="proposalAppliedMark" aria-hidden="true" /> : "+"}
+                        </button>
+                      </div>
+                      {proposalCounts.length > 0 ? (
+                        <div className="previewStatGrid">
+                          {proposalCounts.map((item) => (
+                            <div key={item.label} className="previewStatCard">
+                              <strong>{item.value}</strong>
+                              <span>{item.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                      {proposalHighlights.length > 0 ? (
+                        <div className="proposalMiniList">
+                          {proposalHighlights.map((item, index) => (
+                            <button
+                              key={`${item.label}-${item.target}-${index}`}
+                              className="proposalMiniItem"
+                              type="button"
+                              onClick={() => {
+                                updateCurrentChatState((current) => ({
+                                  ...current,
+                                  input: `Expand from topic ${item.target} to topic: `,
+                                }));
+                                window.requestAnimationFrame(() => chatComposerRef.current?.focus());
+                              }}
+                            >
+                              <span>{item.target}</span>
+                              <span className="badge badge-gray">{item.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })
+        ) : null}
+        {chatLoading && !hasInlinePlanningWidget ? (
+          <div className="chatMessage chatMessage-assistant">
+            <div className="chatBubble chatBubbleLoading">
+              <span className="chatTypingDot" />
+              <span className="chatTypingDot" />
+              <span className="chatTypingDot" />
+            </div>
+          </div>
+        ) : null}
+      </div>
+      <div className="assistantComposerWrap">
+        {chatError ? <div className="inlineNotice inlineNoticeError">{chatError}</div> : null}
+        {chatSessionsError ? <div className="inlineNotice inlineNoticeError">{chatSessionsError}</div> : null}
+        {applyError ? <div className="inlineNotice inlineNoticeError">{applyError}</div> : null}
+        <div className="assistantTemplates">
+          <button
+            className={`assistantTemplate webGroundingToggle ${composerUseGrounding ? "active" : ""}`}
+            onClick={() => setComposerUseGrounding((current) => !current)}
+            title={copy.sessions.groundingToggle}
+            type="button"
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+            Web
+          </button>
+          {assistantTemplates.map((template) => (
+            <button
+              key={template.id}
+              className="assistantTemplate"
+              onClick={() => {
+                updateCurrentChatState((current) => ({
+                  ...current,
+                  input: template.value,
+                }));
+                window.requestAnimationFrame(() => chatComposerRef.current?.focus());
+              }}
+              type="button"
+            >
+              {template.label}
+            </button>
+          ))}
+        </div>
+        <div className="assistantComposer">
+          <textarea
+            ref={chatComposerRef}
+            className="assistantInput"
+            value={currentChatState.input}
+            onChange={(event) =>
+              updateCurrentChatState((current) => ({
+                ...current,
+                input: event.target.value,
+              }))
+            }
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                void sendChat();
+              }
+            }}
+            placeholder={copy.sessions.composerPlaceholder}
+          />
+          <button
+            className="assistantSendButton assistantSendButtonIcon"
+            disabled={chatLoading || chatThreadLoading || !currentChatState.input.trim()}
+            onClick={() => void sendChat()}
+            type="button"
+          >
+            {chatLoading ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+                <circle cx="12" cy="12" r="10" strokeOpacity="0.25"></circle>
+                <path d="M12 2a10 10 0 0 1 10 10"></path>
+              </svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 19V5"></path>
+                <path d="M5 12L12 5L19 12"></path>
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
+      {!experimentalLightDesktop ? (
       <aside className={`leftSidebar ${sidebarVisible ? "leftSidebarVisible" : "leftSidebarCollapsed"} ${leftSidebarClosing ? "leftSidebarClosing" : ""}`}>
         <div className="sidebarHeader">
           <div className="sidebarBrand" aria-label="MapMind brand">
@@ -603,14 +1454,15 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
           ) : null}
         </div>
       </aside>
+      ) : null}
 
       <main className="main">
-        {!isMobileViewport && !leftSidebarOpen && !leftSidebarClosing && (
+        {!experimentalLightDesktop && !isMobileViewport && !leftSidebarOpen && !leftSidebarClosing && (
           <button className="sidebarToggleBtn floatingToggle" onClick={openSidebar} title={copy.sidebar.openSidebar}>
             <CaretRight size={16} weight="bold" />
           </button>
         )}
-        {!isMobileViewport && !assistantOpen && (
+        {!experimentalLightDesktop && !isMobileViewport && !assistantOpen && (
           <button
             className="sidebarToggleBtn floatingToggle floatingToggleRight"
             onClick={() => setAssistantWidth(ASSISTANT_MIN_WIDTH)}
@@ -684,8 +1536,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
           <div
             className="topOverlayStack"
             style={{
-              left: `${overlayLeftOffset}px`,
-              right: `${overlayRightOffset}px`,
+              left: `${overlayLeftInset}px`,
+              right: `${overlayRightInset}px`,
               top: "20px",
             }}
           >
@@ -712,8 +1564,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
           <div
             className="topOverlayInline"
             style={{
-              left: `${overlayLeftOffset}px`,
-              right: `${overlayRightOffset}px`,
+              left: `${overlayLeftInset}px`,
+              right: `${overlayRightInset}px`,
               top: "20px",
             }}
           >
@@ -736,7 +1588,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
           </div>
         ) : null}
 
-        <div className="workspaceShell">
+        <div ref={shellSurfaceRef} className={`workspaceShell ${experimentalLightDesktop ? "workspaceShellLightDockMode" : ""}`}>
           <div className="workspaceMain">
             <div className="neuroLayout">
               <div ref={graphShellRef} className="neuroGraphShell">
@@ -773,6 +1625,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                     onNodePositionsChange={setGraphLayoutDraft}
                     disableIdleAnimations={liveDisableIdleAnimations}
                     viewportCenteredWheelZoom={viewportCenteredZoom}
+                    curvedEdgeLinesEnabled={!curvedEdgeLinesEnabled}
                     themeMode={themeMode}
                     backgroundFill={graphCanvasBackgroundFill}
                   />
@@ -797,6 +1650,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                         graphCacheKey="graph:loading"
                         disableIdleAnimations
                         viewportCenteredWheelZoom={viewportCenteredZoom}
+                        curvedEdgeLinesEnabled={!curvedEdgeLinesEnabled}
                         themeMode={themeMode}
                         backgroundFill={graphCanvasBackgroundFill}
                       />
@@ -822,6 +1676,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                         centerOnNodeId={null}
                         graphCacheKey="graph:empty"
                         viewportCenteredWheelZoom={viewportCenteredZoom}
+                        curvedEdgeLinesEnabled={!curvedEdgeLinesEnabled}
                         themeMode={themeMode}
                         backgroundFill={graphCanvasBackgroundFill}
                       />
@@ -997,7 +1852,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                           ) : null}
                           {!(selectedTopicClosed && !closureTestsEnabled) ? (
                             <button
-                              className="assistantSendButton"
+                              className={`assistantSendButton ${closureTestsEnabled ? "startQuizButton" : "markFinishedButton"}`}
                               disabled={quizLoading || (closureTestsEnabled && !selectedClosureStatus.can_award_completion)}
                               onClick={() => void (closureTestsEnabled ? startQuiz() : markTopicFinished())}
                               type="button"
@@ -1015,6 +1870,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
               </div>
             </div>
           </div>
+          {!experimentalLightDesktop ? (
           <aside
             className={`assistantDock ${assistantOpen ? "assistantDockOpen" : "assistantDockHidden"}`}
             style={{
@@ -1358,16 +2214,68 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   placeholder={copy.sessions.composerPlaceholder}
                 />
                 <button
-                  className="assistantSendButton"
+                  className="assistantSendButton assistantSendButtonIcon"
                   disabled={chatLoading || chatThreadLoading || !currentChatState.input.trim()}
                   onClick={() => void sendChat()}
                   type="button"
                 >
-                  <span>{chatLoading ? copy.shell.thinking : copy.shell.send}</span>
+                  {chatLoading ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25"></circle>
+                      <path d="M12 2a10 10 0 0 1 10 10"></path>
+                    </svg>
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 19V5"></path>
+                      <path d="M5 12L12 5L19 12"></path>
+                    </svg>
+                  )}
                 </button>
               </div>
             </div>
           </aside>
+          ) : null}
+
+          {experimentalLightDesktop ? (
+            <>
+              <div
+                ref={dockRef}
+                className="lightDock lightFloatingWindowEnter"
+                style={{ left: `${dockPosition.x}px`, top: `${dockPosition.y}px` }}
+              >
+                <div className="lightDockGrip" onPointerDown={(event) => beginFloatingDrag("dock", event)} />
+                <button
+                  className={`lightDockButton ${lightWorkspacePanelOpen ? "lightDockButtonActive" : ""}`}
+                  onClick={toggleExperimentalWorkspaceWindow}
+                  title={copy.shell.workspace}
+                  type="button"
+                >
+                  <SquaresFour size={28} weight="duotone" />
+                </button>
+                <button
+                  className={`lightDockButton ${lightChatPanelOpen ? "lightDockButtonActive" : ""}`}
+                  onClick={toggleExperimentalChatWindow}
+                  title={copy.shell.chat}
+                  type="button"
+                >
+                  <ChatCircleDots size={28} weight="duotone" />
+                </button>
+                <button className={`lightDockButton ${isSettingsOpen ? "lightDockButtonActive" : ""}`} onClick={openConfigurationSettings} title={copy.shell.configuration} type="button">
+                  <GearSix size={28} weight="duotone" />
+                </button>
+                <a className="lightDockButton lightDockButtonLink" href="https://mapmind.space/how-to-use" rel="noreferrer" target="_blank" title={copy.sidebar.documentation}>
+                  <BookBookmark size={28} weight="duotone" />
+                </a>
+                {debugModeEnabled ? (
+                  <button className={`lightDockButton ${isLogsOpen ? "lightDockButtonActive" : ""}`} onClick={openDebugLogs} title={copy.sidebar.logs} type="button">
+                    <BugBeetle size={28} weight="duotone" />
+                  </button>
+                ) : null}
+              </div>
+              {lightWorkspaceWindow}
+              {lightChatWindow}
+            </>
+          ) : null}
         </div>
 
         {isMobileViewport ? (
@@ -1443,7 +2351,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
         <div className="quizOverlay">
           <div
             ref={topicAssetModalRef}
-            className="quizModal"
+            className="quizModal topicAssetModal"
             style={{ maxWidth: 520 }}
             role="dialog"
             aria-modal="true"
@@ -1464,16 +2372,16 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                 ×
               </button>
             </div>
-            <div className="quizModalBody stack">
-              <div className="mutedSmall">{topicAssetDialog.topicTitle}</div>
+            <div className="quizModalBody stack topicAssetModalBody">
+              <div className="mutedSmall topicAssetTopicTitle">{topicAssetDialog.topicTitle}</div>
               {topicAssetDialog.kind === "resource" ? (
-                <label className="field">
-                  <span className="fieldLabel">{copy.dialogs.resourceUrl}</span>
+                <label className="field topicAssetField">
+                  <span className="fieldLabel topicAssetFieldLabel">{copy.dialogs.resourceUrl}</span>
                   <textarea
                     ref={(node) => {
                       topicAssetPrimaryInputRef.current = node;
                     }}
-                    className="textarea textareaCompact textareaPersona"
+                    className="textarea textareaCompact textareaPersona topicAssetResourceInput"
                     value={topicResourceUrlDraft}
                     onChange={(event) => setTopicResourceUrlDraft(event.target.value)}
                     placeholder={copy.dialogs.resourceUrlPlaceholder}
@@ -1481,22 +2389,22 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                 </label>
               ) : (
                 <>
-                  <label className="field">
-                    <span className="fieldLabel">{copy.dialogs.artifactTitle}</span>
+                  <label className="field topicAssetField">
+                    <span className="fieldLabel topicAssetFieldLabel">{copy.dialogs.artifactTitle}</span>
                     <input
                       ref={(node) => {
                         topicAssetPrimaryInputRef.current = node;
                       }}
-                      className="input"
+                      className="input topicAssetTextInput"
                       value={topicArtifactTitleDraft}
                       onChange={(event) => setTopicArtifactTitleDraft(event.target.value)}
                       placeholder={copy.dialogs.artifactTitlePlaceholder}
                     />
                   </label>
-                  <label className="field">
-                    <span className="fieldLabel">{copy.dialogs.artifactBodyLabel}</span>
+                  <label className="field topicAssetField">
+                    <span className="fieldLabel topicAssetFieldLabel">{copy.dialogs.artifactBodyLabel}</span>
                     <textarea
-                      className="textarea textareaCompact textareaPersona"
+                      className="textarea textareaCompact textareaPersona topicAssetTextInput"
                       value={topicArtifactBodyDraft}
                       onChange={(event) => setTopicArtifactBodyDraft(event.target.value)}
                       placeholder={copy.dialogs.artifactBodyPlaceholder}
@@ -1507,7 +2415,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
               {topicAssetError ? <div className="inlineNotice inlineNoticeError">{topicAssetError}</div> : null}
               <div className="quizActions quizActionsRight">
                 <button
-                  className="assistantSendButton quizSubmitButton"
+                  className="assistantSendButton quizSubmitButton topicAssetSaveButton"
                   disabled={
                     topicAssetSaving ||
                     (topicAssetDialog.kind === "resource"

@@ -63,7 +63,10 @@ class GraphOperationDraft(BaseModel):
 
 class GeminiProposalDraft(BaseModel):
     summary: str = ""
-    assistant_message: str = ""
+    assistant_message: str = Field(
+        default="",
+        description="A message explaining the proposal. Format with standard single unescaped newlines. DO NOT output literal double-escaped '\\n' strings."
+    )
     assumptions: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     open_questions: list[ProposalOpenQuestion] = Field(default_factory=list)
@@ -88,7 +91,10 @@ class InlineQuizDraft(BaseModel):
 
 class OrchestratorDecision(BaseModel):
     action: OrchestratorAction = "answer"
-    reply_message: str = ""
+    reply_message: str = Field(
+        default="",
+        description="The assistant's natural language reply. Format paragraphs with standard single unescaped newlines. DO NOT output literal double-escaped '\\n' strings."
+    )
     proposal_target_goal: str = ""
     proposal_raw_text: str = ""
     proposal_instructions: str = ""

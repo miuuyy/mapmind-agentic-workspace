@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timezone
 from hashlib import sha1
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,12 +13,14 @@ from app.models.api import GraphExportRequest, GraphImportRequest, GraphLayoutPo
 from app.models.domain import Artifact, ChatMessage, CreateGraphRequest, GraphChatRequest, GraphProposal, GraphProposalEnvelope, InlineChatQuiz, ProposalGenerateRequest, QuizQuestionPublic, QuizStartRequest, QuizStartResponse, QuizSubmitRequest, QuizSubmitResponse, ResourceLink, StudyAssistantRequest, StudyAssistantResponse, TopicQuizSessionPublic, UpdateWorkspaceConfigRequest
 from app.services.assessment_service import AssessmentService
 from app.services.debug_log_service import DebugClientLogRequest, get_debug_log_service
-from app.services.chat_orchestrator import ChatOrchestratorError, ChatOrchestratorService
-from app.services.gemini_planner import GeminiPlanner, GeminiPlannerError
 from app.services.proposal_normalizer import ProposalNormalizer
-from app.services.quiz_service import QuizService
 from app.services.repository import ChatSessionDeletionError, ChatSessionNotFoundError, GraphRepository
-from app.services.study_assistant import StudyAssistantError, StudyAssistantService
+
+if TYPE_CHECKING:
+    from app.services.chat_orchestrator import ChatOrchestratorService
+    from app.services.gemini_planner import GeminiPlanner
+    from app.services.quiz_service import QuizService
+    from app.services.study_assistant import StudyAssistantService
 
 router = APIRouter()
 
@@ -35,7 +38,9 @@ def get_effective_settings(
     return settings.with_workspace_overrides(workspace_config)
 
 
-def get_planner(settings: Settings = Depends(get_effective_settings)) -> GeminiPlanner:
+def get_planner(settings: Settings = Depends(get_effective_settings)) -> "GeminiPlanner":
+    from app.services.gemini_planner import GeminiPlanner, GeminiPlannerError
+
     try:
         return GeminiPlanner(settings)
     except GeminiPlannerError as exc:
@@ -46,7 +51,9 @@ def get_normalizer() -> ProposalNormalizer:
     return ProposalNormalizer()
 
 
-def get_quiz_service(settings: Settings = Depends(get_effective_settings)) -> QuizService:
+def get_quiz_service(settings: Settings = Depends(get_effective_settings)) -> "QuizService":
+    from app.services.quiz_service import QuizService
+
     return QuizService(settings)
 
 
@@ -54,14 +61,18 @@ def get_assessment_service() -> AssessmentService:
     return AssessmentService()
 
 
-def get_study_assistant(settings: Settings = Depends(get_effective_settings)) -> StudyAssistantService:
+def get_study_assistant(settings: Settings = Depends(get_effective_settings)) -> "StudyAssistantService":
+    from app.services.study_assistant import StudyAssistantService
+
     return StudyAssistantService(settings)
 
 
 def get_chat_orchestrator(
     settings: Settings = Depends(get_effective_settings),
-    planner: GeminiPlanner = Depends(get_planner),
-) -> ChatOrchestratorService:
+    planner: "GeminiPlanner" = Depends(get_planner),
+) -> "ChatOrchestratorService":
+    from app.services.chat_orchestrator import ChatOrchestratorService
+
     return ChatOrchestratorService(settings, planner)
 
 
@@ -440,8 +451,10 @@ def propose_graph_changes(
     graph_id: str,
     request: ProposalGenerateRequest,
     repository: GraphRepository = Depends(get_repository),
-    planner: GeminiPlanner = Depends(get_planner),
+    planner: "GeminiPlanner" = Depends(get_planner),
 ) -> dict:
+    from app.services.gemini_planner import GeminiPlannerError
+
     try:
         graph = repository.graph(graph_id)
         result = planner.generate_proposal(graph, request)
@@ -467,8 +480,10 @@ def propose_graph_changes_stream(
     graph_id: str,
     request: ProposalGenerateRequest,
     repository: GraphRepository = Depends(get_repository),
-    planner: GeminiPlanner = Depends(get_planner),
+    planner: "GeminiPlanner" = Depends(get_planner),
 ) -> StreamingResponse:
+    from app.services.gemini_planner import GeminiPlannerError
+
     try:
         graph = repository.graph(graph_id)
     except KeyError as exc:
@@ -506,7 +521,7 @@ def start_topic_quiz(
     topic_id: str,
     request: QuizStartRequest,
     repository: GraphRepository = Depends(get_repository),
-    quiz_service: QuizService = Depends(get_quiz_service),
+    quiz_service: "QuizService" = Depends(get_quiz_service),
 ) -> dict:
     try:
         graph = repository.graph(graph_id)
@@ -584,7 +599,7 @@ def submit_topic_quiz(
     topic_id: str,
     request: QuizSubmitRequest,
     repository: GraphRepository = Depends(get_repository),
-    quiz_service: QuizService = Depends(get_quiz_service),
+    quiz_service: "QuizService" = Depends(get_quiz_service),
     settings: Settings = Depends(get_settings),
 ) -> dict:
     try:
@@ -629,7 +644,7 @@ def mark_topic_finished(
     graph_id: str,
     topic_id: str,
     repository: GraphRepository = Depends(get_repository),
-    quiz_service: QuizService = Depends(get_quiz_service),
+    quiz_service: "QuizService" = Depends(get_quiz_service),
     settings: Settings = Depends(get_settings),
 ) -> dict:
     try:
@@ -669,8 +684,10 @@ def graph_study_assistant(
     graph_id: str,
     request: StudyAssistantRequest,
     repository: GraphRepository = Depends(get_repository),
-    assistant: StudyAssistantService = Depends(get_study_assistant),
+    assistant: "StudyAssistantService" = Depends(get_study_assistant),
 ) -> dict:
+    from app.services.study_assistant import StudyAssistantError
+
     try:
         graph = repository.graph(graph_id)
     except KeyError as exc:
@@ -741,8 +758,10 @@ def graph_chat(
     graph_id: str,
     request: GraphChatRequest,
     repository: GraphRepository = Depends(get_repository),
-    orchestrator: ChatOrchestratorService = Depends(get_chat_orchestrator),
+    orchestrator: "ChatOrchestratorService" = Depends(get_chat_orchestrator),
 ) -> dict:
+    from app.services.chat_orchestrator import ChatOrchestratorError
+
     try:
         graph = repository.graph(graph_id)
     except KeyError as exc:
@@ -798,8 +817,10 @@ def graph_chat_stream(
     graph_id: str,
     request: GraphChatRequest,
     repository: GraphRepository = Depends(get_repository),
-    orchestrator: ChatOrchestratorService = Depends(get_chat_orchestrator),
+    orchestrator: "ChatOrchestratorService" = Depends(get_chat_orchestrator),
 ) -> StreamingResponse:
+    from app.services.chat_orchestrator import ChatOrchestratorError
+
     try:
         graph = repository.graph(graph_id)
     except KeyError as exc:

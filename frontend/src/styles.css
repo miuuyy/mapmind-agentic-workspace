@@ -27,29 +27,32 @@
 }
 
 :root[data-theme="light"] {
-  --bg: #f7f7f4;
-  --panel: rgba(255, 255, 255, 0.82);
-  --panel2: #fcfcfa;
-  --border: rgba(17, 24, 39, 0.1);
-  --text: #141821;
-  --muted: #5f6572;
-  --surface-0: rgba(255, 255, 255, 0.92);
-  --surface-1: rgba(255, 255, 255, 0.72);
-  --surface-2: rgba(17, 24, 39, 0.07);
-  --surface-3: rgba(17, 24, 39, 0.12);
-  --field-bg: rgba(255, 255, 255, 0.9);
-  --field-bg-focus: rgba(255, 255, 255, 0.98);
-  --field-border: rgba(17, 24, 39, 0.12);
-  --shadow-soft: rgba(34, 38, 48, 0.08);
-  --shadow-strong: rgba(34, 38, 48, 0.12);
-  --grid-line: rgba(17, 24, 39, 0.05);
-  --text-secondary: rgba(17, 24, 39, 0.72);
-  --mm-accent-green: #34a853;
-  --mm-accent-green-hover: #2c9148;
-  --mm-accent-green-text: #f7fff9;
-  --mm-accent-green-soft-bg: rgba(52, 168, 83, 0.12);
-  --mm-accent-green-soft-border: rgba(52, 168, 83, 0.34);
-  --mm-accent-green-soft-text: rgba(39, 112, 59, 0.96);
+  --bg: #faf9f6;
+  --panel: #faf9f6;
+  --panel2: #faf9f6;
+  --border: #e8e4de;
+  --text: #2d2b28;
+  --muted: #8b8580;
+  --surface-0: #faf9f6;
+  --surface-1: #f0ede7;
+  --surface-2: rgba(45, 43, 40, 0.06);
+  --surface-3: rgba(45, 43, 40, 0.11);
+  --field-bg: #faf9f6;
+  --field-bg-focus: #faf9f6;
+  --field-border: rgba(195, 90, 44, 0.18);
+  --shadow-soft: rgba(45, 43, 40, 0.08);
+  --shadow-strong: rgba(45, 43, 40, 0.14);
+  --grid-line: rgba(45, 43, 40, 0.045);
+  --text-secondary: rgba(45, 43, 40, 0.72);
+  --mm-accent-green: #c35a2c;
+  --mm-accent-green-hover: #ab4d24;
+  --mm-accent-green-text: #fffaf6;
+  --mm-accent-green-soft-bg: rgba(195, 90, 44, 0.12);
+  --mm-accent-green-soft-border: rgba(195, 90, 44, 0.32);
+  --mm-accent-green-soft-text: rgba(145, 63, 28, 0.96);
+  --light-flat-bg: #faf9f6;
+  --light-soft-bg: #f0ede7;
+  --light-soft-hover: #f5f1eb;
 }
 
 * {
@@ -1388,6 +1391,10 @@ body {
   overflow: hidden;
 }
 
+.workspaceShellLightDockMode {
+  isolation: isolate;
+}
+
 .workspaceMain {
   width: 100%;
   height: 100%;
@@ -1416,6 +1423,231 @@ body {
   transition: transform 120ms ease-out, opacity 110ms ease-out;
   backface-visibility: hidden;
   isolation: isolate;
+}
+
+.lightFloatingWindowEnter {
+  animation: lightWindowEnter 180ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@keyframes lightWindowEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.lightDock {
+  position: absolute;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  width: 72px;
+  padding: 10px 9px 10px;
+  border-radius: 26px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 24px rgba(30, 41, 59, 0.08);
+}
+
+.lightDockGrip {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 25% 50%, rgba(148, 163, 184, 0.34) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.34) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 75% 50%, rgba(148, 163, 184, 0.34) 0 1.2px, transparent 1.8px);
+  cursor: grab;
+}
+
+.lightDockButton,
+.lightDockButtonLink {
+  width: 54px;
+  height: 54px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: rgba(51, 65, 85, 0.74);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 180ms ease;
+}
+
+.lightDockButton::before,
+.lightDockButtonLink::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 999px;
+  background: rgba(255, 214, 102, 0.24);
+  opacity: 0;
+  transform: scale(0.82);
+  transition: opacity 180ms ease, transform 220ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.lightDockButtonActive::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.lightDockButton:hover,
+.lightDockButtonLink:hover,
+.lightDockButtonActive {
+  background: transparent;
+  color: rgba(15, 23, 42, 0.92);
+}
+
+.lightDockButton svg,
+.lightDockButtonLink svg {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+}
+
+.lightFloatingWindow {
+  position: absolute;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.12), 0 0 0 1px inset rgba(255, 255, 255, 0.6);
+}
+
+.lightWorkspaceWindow {
+  width: min(400px, calc(100% - 140px));
+  height: min(520px, calc(100% - 120px));
+}
+
+.lightChatWindow {
+  height: min(760px, calc(100% - 120px));
+}
+
+.lightFloatingWindowHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 12px;
+  background: transparent;
+  cursor: grab;
+}
+
+.lightFloatingWindowTitle {
+  font-size: 14px;
+  font-weight: 650;
+  color: rgba(15, 23, 42, 0.94);
+}
+
+.lightFloatingWindowSubtle {
+  margin-top: 3px;
+  font-size: 11px;
+  color: rgba(100, 116, 139, 0.86);
+}
+
+.lightWorkspaceWindowHeaderActions {
+  display: flex;
+  gap: 8px;
+}
+
+.lightWindowActionButton {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(195, 90, 44, 0.16);
+  background: rgba(195, 90, 44, 0.1);
+  color: rgba(131, 55, 24, 0.9);
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.lightWindowActionButton:hover {
+  background: rgba(195, 90, 44, 0.16);
+  border-color: rgba(195, 90, 44, 0.24);
+  color: rgba(111, 44, 17, 0.96);
+}
+
+.lightWorkspaceWindowBody {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--panel2);
+}
+
+.lightWorkspaceListItem {
+  display: block;
+  border-radius: 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.lightWorkspaceListItem:hover {
+  background: #ffffff;
+  border-color: rgba(195, 90, 44, 0.14);
+  box-shadow: none;
+}
+
+.lightWorkspaceListItemActive {
+  border-color: rgba(195, 90, 44, 0.2);
+  background: rgba(195, 90, 44, 0.1);
+  box-shadow: none;
+}
+
+.lightWorkspaceListButton {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px 14px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.lightWorkspaceListTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(45, 43, 40, 0.94);
+}
+
+.lightWorkspaceListMeta {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(139, 133, 128, 0.88);
 }
 
 .assistantDockOpen {
@@ -4433,27 +4665,43 @@ select.input {
 :root[data-theme="light"] .leftSidebar,
 :root[data-theme="light"] .assistantDock,
 :root[data-theme="light"] .topicPopover,
-:root[data-theme="light"] .card,
 :root[data-theme="light"] .settingsModal,
 :root[data-theme="light"] .settingsSidebar,
 :root[data-theme="light"] .settingsContentHeader,
-:root[data-theme="light"] .settingsPanel,
 :root[data-theme="light"] .mobileDock {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(17, 24, 39, 0.09);
-  box-shadow: 0 18px 40px rgba(34, 38, 48, 0.08);
+  background: var(--panel);
+  border-color: var(--border);
+  box-shadow: 0 18px 40px var(--shadow-soft);
+}
+
+:root[data-theme="light"] .topicPopover {
+  background: rgba(255, 255, 255, 0.958);
+}
+
+:root[data-theme="light"] .card {
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsPanel {
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: none !important;
 }
 
 :root[data-theme="light"] .leftSidebar,
 :root[data-theme="light"] .assistantDockHeader,
 :root[data-theme="light"] .settingsSidebar,
 :root[data-theme="light"] .settingsContentHeader {
-  background: rgba(255, 255, 255, 0.985);
+  background: rgba(255, 255, 255, 0.958);
 }
 
 :root[data-theme="light"] .topicPopover::after {
-  background: rgba(255, 255, 255, 0.96);
-  border-top-color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.958);
+  border-top-color: rgba(255, 255, 255, 0.958);
 }
 
 :root[data-theme="light"] .topicPopover-left::after {
@@ -4464,18 +4712,21 @@ select.input {
   border-left-color: rgba(255, 255, 255, 0.95);
 }
 
-:root[data-theme="light"] .settingsPanelHeader,
 :root[data-theme="light"] .settingsContentHeader,
 :root[data-theme="light"] .settingsSidebar,
 :root[data-theme="light"] .assistantDockHeader,
 :root[data-theme="light"] .topicPopoverHeader,
 :root[data-theme="light"] .leftSidebar,
 :root[data-theme="light"] .subbar {
-  border-color: rgba(17, 24, 39, 0.08);
+  border-color: rgba(17, 24, 39, 0.04);
+}
+
+:root[data-theme="light"] .settingsPanelHeader {
+  border-bottom-color: rgba(17, 24, 39, 0.04);
 }
 
 :root[data-theme="light"] .topicPopoverHeader {
-  background: linear-gradient(180deg, rgba(252, 253, 255, 0.99), rgba(252, 253, 255, 0.97) 65%, rgba(252, 253, 255, 0.78) 86%, rgba(252, 253, 255, 0) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(255, 255, 255, 0.985) 68%, rgba(255, 255, 255, 0.82) 88%, rgba(255, 255, 255, 0) 100%);
 }
 
 :root[data-theme="light"] .settingsContentHeader {
@@ -4634,7 +4885,9 @@ select.input {
 :root[data-theme="light"] .sidebarTreeItemGhost:hover,
 :root[data-theme="light"] .sidebarGraphRowEditing,
 :root[data-theme="light"] .sidebarGraphRowActive {
-  background: rgba(17, 24, 39, 0.05);
+  background: rgba(195, 90, 44, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(195, 90, 44, 0.12);
+  border-radius: 14px;
 }
 
 :root[data-theme="light"] .sidebarTreeItemGhost {
@@ -4840,9 +5093,9 @@ select.input {
 :root[data-theme="light"] .assistantTemplateActive,
 :root[data-theme="light"] .groundingToggleActive,
 :root[data-theme="light"] .webGroundingToggle.active {
-  background: rgba(255, 214, 102, 0.18);
-  border-color: rgba(176, 134, 24, 0.22);
-  color: var(--text);
+  background: rgba(195, 90, 44, 0.1);
+  border-color: rgba(195, 90, 44, 0.24);
+  color: rgba(88, 43, 21, 0.96);
 }
 
 :root[data-theme="light"] .sessionItemNew,
@@ -4919,16 +5172,16 @@ select.input {
 
 :root[data-theme="light"] .chatBubble {
   background: rgba(255, 255, 255, 0.98);
-  border-color: rgba(203, 213, 225, 0.88);
-  box-shadow: 0 8px 18px rgba(148, 163, 184, 0.08);
-  border-radius: 18px;
+  border-color: #e8e4de;
+  box-shadow: 0 10px 24px rgba(45, 43, 40, 0.06);
+  border-radius: 22px;
 }
 
 :root[data-theme="light"] .chatMessage-user .chatBubble {
-  background: linear-gradient(180deg, rgba(236, 242, 249, 0.98), rgba(230, 237, 245, 0.98));
-  color: rgba(30, 41, 59, 0.92);
-  border-color: rgba(191, 201, 214, 0.9);
-  box-shadow: 0 8px 18px rgba(148, 163, 184, 0.06);
+  background: linear-gradient(180deg, rgba(247, 243, 237, 0.98), rgba(240, 237, 231, 0.98));
+  color: rgba(45, 43, 40, 0.94);
+  border-color: rgba(224, 213, 203, 0.96);
+  box-shadow: 0 8px 18px rgba(45, 43, 40, 0.04);
 }
 
 :root[data-theme="light"] .previewStatCard {
@@ -4951,14 +5204,172 @@ select.input {
 
 :root[data-theme="light"] .assistantInput {
   background: rgba(255, 255, 255, 0.995);
-  border-color: rgba(203, 213, 225, 0.9);
+  border-color: var(--border);
   color: var(--text);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  border-radius: 22px;
+  min-height: 108px;
+  padding: 16px 18px;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 :root[data-theme="light"] .assistantInput:focus {
-  border-color: rgba(30, 184, 102, 0.72);
+  border-color: rgba(195, 90, 44, 0.55);
+  box-shadow: 0 0 0 4px rgba(195, 90, 44, 0.08);
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionListWrap,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantThread,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap {
+  background: #ffffff;
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionListWrap::before {
+  display: block;
+  background: linear-gradient(to right, #fcfdff, transparent);
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionListWrap::after {
+  display: block;
+  background: linear-gradient(to left, #fcfdff, transparent);
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionShadow::after {
+  display: block;
+  background: linear-gradient(to bottom,
+      #fcfdff 0%,
+      rgba(252, 253, 255, 0.76) 20%,
+      rgba(252, 253, 255, 0.42) 40%,
+      rgba(252, 253, 255, 0.16) 60%,
+      rgba(252, 253, 255, 0.04) 80%,
+      transparent 100%);
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap::before {
+  display: block;
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(252, 253, 255, 0.04) 20%,
+      rgba(252, 253, 255, 0.16) 40%,
+      rgba(252, 253, 255, 0.42) 60%,
+      rgba(252, 253, 255, 0.76) 80%,
+      #fcfdff 100%);
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionList {
+  padding: 10px 14px 8px;
+  gap: 8px;
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionItem,
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionItemGroup,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantTemplate,
+:root[data-theme="light"] .workspaceShellLightDockMode .inlineQuizCard,
+:root[data-theme="light"] .workspaceShellLightDockMode .proposalInlinePending {
+  background: rgba(248, 250, 252, 0.6);
+  border-color: transparent;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionItemGroupActive,
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionItemActive {
+  background: rgba(241, 245, 249, 0.98);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: rgba(15, 23, 42, 0.94);
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .webGroundingToggle.active {
+  background: rgba(255, 214, 102, 0.18);
+  border-color: rgba(176, 134, 24, 0.22);
+  color: #6d5310;
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantDockTitle,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantDockSubtle {
+  color: rgba(15, 23, 42, 0.88);
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantThread {
+  padding: 14px;
+  gap: 12px;
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .chatBubble {
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .chatMessage-user .chatBubble {
+  background: var(--surface-1);
+  border: 1px solid transparent;
+  box-shadow: none;
+  border-radius: 8px;
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap {
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--panel2);
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposer {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  gap: 10px;
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput {
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  border-radius: 6px;
+  min-height: 80px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--text);
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput:focus {
+  border-color: var(--mm-accent-green);
+  background: var(--field-bg-focus);
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantSendButton {
+  min-width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  border: 1px solid transparent;
+  align-self: flex-end;
+  box-shadow: none;
+  font-weight: 500;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 160ms ease;
+  flex-shrink: 0;
+  margin-bottom: 4px;
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantSendButton:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantSendButton:disabled {
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 1px solid transparent;
   box-shadow: none;
 }
 
@@ -5046,6 +5457,40 @@ select.input {
   background: rgba(241, 245, 252, 0.62);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+@media (min-width: 1181px) {
+  :root[data-theme="light"] .quizOverlay.settingsOverlay {
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 86px 0 0 104px;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    pointer-events: none;
+  }
+
+  :root[data-theme="light"] .settingsOverlay .settingsModal {
+    pointer-events: auto;
+    width: min(1040px, calc(100vw - 152px));
+    height: min(820px, calc(100vh - 116px));
+    max-height: calc(100vh - 116px);
+    border-radius: 24px;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    box-shadow: 0 24px 54px rgba(15, 23, 42, 0.16), 0 0 0 1px inset rgba(255, 255, 255, 0.6);
+  }
+
+  /* Hide close button when in desktop view for light theme OS mode */
+  :root[data-theme="light"] .settingsOverlay .settingsModal .modalCloseButton {
+    display: none !important;
+  }
+
+  :root[data-theme="light"] .settingsOverlay .debugLogsModal {
+    width: min(980px, calc(100vw - 152px));
+  }
 }
 
 :root[data-theme="light"] .quizModal,
@@ -5213,9 +5658,9 @@ select.input {
 }
 
 :root[data-theme="light"] .mobileGraphChipActive {
-  background: rgba(255, 214, 102, 0.18) !important;
-  border-color: rgba(176, 134, 24, 0.22) !important;
-  color: var(--text) !important;
+  background: rgba(195, 90, 44, 0.1) !important;
+  border-color: rgba(195, 90, 44, 0.24) !important;
+  color: rgba(88, 43, 21, 0.96) !important;
 }
 
 :root[data-theme="light"] .assistantSendButton,
@@ -5223,14 +5668,17 @@ select.input {
   background: var(--mm-accent-green);
   color: var(--mm-accent-green-text);
   border: 1px solid transparent;
-  box-shadow: none;
+  box-shadow: 0 14px 28px rgba(195, 90, 44, 0.18);
+  font-weight: 700;
 }
 
 :root[data-theme="light"] .assistantSendButton:disabled,
 :root[data-theme="light"] .emptyStateAction:disabled {
-  background: rgba(17, 24, 39, 0.08);
-  color: rgba(17, 24, 39, 0.4);
-  box-shadow: none;
+  background: rgba(195, 90, 44, 0.92);
+  color: rgba(255, 250, 246, 0.98);
+  border-color: rgba(195, 90, 44, 0.92);
+  box-shadow: 0 10px 20px rgba(195, 90, 44, 0.12);
+  opacity: 0.72;
 }
 
 :root[data-theme="light"] .assistantSendButton:hover,
@@ -5240,6 +5688,4596 @@ select.input {
   color: #ffffff;
 }
 
+:root[data-theme="light"] .assistantSendButton {
+  min-width: 42px;
+  height: 42px;
+  border-radius: 999px;
+}
+
+:root[data-theme="light"] .assistantSendButton:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+:root[data-theme="light"] .workspaceUtilityButton,
+:root[data-theme="light"] .btnGhost,
+:root[data-theme="light"] .graphTabChip,
+:root[data-theme="light"] .thinkingModeChip,
+:root[data-theme="light"] .quizChoice,
+:root[data-theme="light"] .inlineQuizChoice {
+  border-radius: 16px;
+}
+
+:root[data-theme="light"] .settingsModal {
+  border-radius: 28px;
+}
+
+:root[data-theme="light"] .settingsPanel {
+  border-radius: 22px;
+}
+
 :root[data-theme="light"] .themeModeSwitch {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* DeepTutor-inspired light theme overrides for MapMind surfaces */
+:root[data-theme="light"] .sidebarGraphRowActive,
+:root[data-theme="light"] .sidebarGraphRowEditing,
+:root[data-theme="light"] .sidebarAccountTrigger:hover,
+:root[data-theme="light"] .sidebarTreeItemGhost:hover {
+  background: rgba(195, 90, 44, 0.1) !important;
+  box-shadow: inset 0 0 0 1px rgba(195, 90, 44, 0.12);
+  border-radius: 14px;
+}
+
+:root[data-theme="light"] .sessionItemGroupActive,
+:root[data-theme="light"] .sessionItemActive,
+:root[data-theme="light"] .assistantTemplateActive,
+:root[data-theme="light"] .groundingToggleActive,
+:root[data-theme="light"] .webGroundingToggle.active,
+:root[data-theme="light"] .graphTabChipActive,
+:root[data-theme="light"] .workspaceUtilityButtonActive,
+:root[data-theme="light"] .thinkingModeChipActive,
+:root[data-theme="light"] .mobileGraphChipActive,
+:root[data-theme="light"] .settingsTabActive {
+  background: rgba(195, 90, 44, 0.1) !important;
+  border-color: rgba(195, 90, 44, 0.24) !important;
+  color: rgba(145, 63, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .assistantTemplates {
+  gap: 10px;
+  padding-bottom: 2px;
+}
+
+:root[data-theme="light"] .assistantTemplate,
+:root[data-theme="light"] .webGroundingToggle,
+:root[data-theme="light"] .groundingToggle {
+  min-height: 38px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--border);
+  color: rgba(45, 43, 40, 0.74);
+  box-shadow: 0 4px 12px rgba(45, 43, 40, 0.04);
+  font-weight: 600;
+}
+
+:root[data-theme="light"] .assistantTemplate:hover,
+:root[data-theme="light"] .webGroundingToggle:hover,
+:root[data-theme="light"] .groundingToggle:hover,
+:root[data-theme="light"] .workspaceUtilityButton:hover,
+:root[data-theme="light"] .btnGhost:hover,
+:root[data-theme="light"] .mobileGraphChip:hover,
+:root[data-theme="light"] .mobileGraphCreate:hover,
+:root[data-theme="light"] .settingsTab:hover {
+  background: #ffffff !important;
+  border-color: rgba(195, 90, 44, 0.2) !important;
+  color: rgba(45, 43, 40, 0.94) !important;
+}
+
+:root[data-theme="light"] .settingsTab:hover .sidebarIcon,
+:root[data-theme="light"] .settingsTabActive .sidebarIcon {
+  color: rgba(145, 63, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .chatBubble {
+  max-width: min(100%, 420px);
+  padding: 15px 17px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #e8e4de;
+  box-shadow: 0 10px 24px rgba(45, 43, 40, 0.06);
+  border-radius: 22px;
+}
+
+:root[data-theme="light"] .chatMessage-user .chatBubble {
+  background: linear-gradient(180deg, rgba(247, 243, 237, 0.98), rgba(240, 237, 231, 0.98));
+  color: rgba(45, 43, 40, 0.94);
+  border-color: rgba(224, 213, 203, 0.96);
+  box-shadow: 0 8px 18px rgba(45, 43, 40, 0.04);
+}
+
+:root[data-theme="light"] .chatCopy {
+  font-size: 14px;
+  line-height: 1.62;
+  color: rgba(45, 43, 40, 0.88);
+}
+
+:root[data-theme="light"] .assistantComposerWrap {
+  padding: 18px 20px 20px;
+  background: transparent;
+}
+
+:root[data-theme="light"] .assistantComposerWrap::before {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(250, 249, 246, 0.08) 22%,
+    rgba(250, 249, 246, 0.24) 44%,
+    rgba(250, 249, 246, 0.56) 66%,
+    rgba(250, 249, 246, 0.86) 84%,
+    #faf9f6 100%
+  );
+}
+
+:root[data-theme="light"] .assistantComposer,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposer {
+  background: rgba(255, 255, 255, 0.985);
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  box-shadow: 0 16px 36px rgba(45, 43, 40, 0.08);
+  padding: 14px;
+  gap: 12px;
+}
+
+:root[data-theme="light"] .assistantComposerHint {
+  color: rgba(139, 133, 128, 0.9);
+}
+
+:root[data-theme="light"] .assistantInput,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput {
+  background: rgba(255, 255, 255, 0.995);
+  border: 1px solid var(--border);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  border-radius: 22px;
+  min-height: 108px;
+  padding: 16px 18px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+:root[data-theme="light"] .assistantInput:focus,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput:focus,
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] select.input:focus,
+:root[data-theme="light"] .textarea:focus {
+  border-color: rgba(195, 90, 44, 0.55) !important;
+  box-shadow: 0 0 0 4px rgba(195, 90, 44, 0.08);
+}
+
+:root[data-theme="light"] .assistantSendButton,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantSendButton,
+:root[data-theme="light"] .emptyStateAction,
+:root[data-theme="light"] .sidebarNewAction,
+:root[data-theme="light"] .btnPrimary,
+:root[data-theme="light"] .btn.btnPrimary,
+:root[data-theme="light"] .btn.btnSave,
+:root[data-theme="light"] .btn.btnStart,
+:root[data-theme="light"] .startQuizButton {
+  background: var(--mm-accent-green) !important;
+  color: var(--mm-accent-green-text) !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 14px 28px rgba(195, 90, 44, 0.18);
+  font-weight: 700;
+}
+
+:root[data-theme="light"] .assistantSendButtonIcon,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantSendButtonIcon {
+  min-width: 42px;
+  height: 42px;
+  border-radius: 999px;
+}
+
+:root[data-theme="light"] .startQuizButton {
+  min-width: max-content !important;
+  width: auto !important;
+  height: 40px !important;
+  padding: 0 16px !important;
+  border-radius: 16px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  line-height: 1.1 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizSubmitButton,
+:root[data-theme="light"] .assistantSendButton:not(.assistantSendButtonIcon) {
+  min-width: max-content !important;
+  width: auto !important;
+  height: 40px !important;
+  padding: 0 16px !important;
+  border-radius: 16px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  line-height: 1.1 !important;
+}
+
+:root[data-theme="light"] .assistantSendButton:hover,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantSendButton:hover:not(:disabled),
+:root[data-theme="light"] .emptyStateAction:hover,
+:root[data-theme="light"] .sidebarNewAction:hover,
+:root[data-theme="light"] .btnPrimary:hover,
+:root[data-theme="light"] .btn.btnPrimary:hover,
+:root[data-theme="light"] .btn.btnSave:hover,
+:root[data-theme="light"] .btn.btnStart:hover,
+:root[data-theme="light"] .startQuizButton:hover {
+  background: var(--mm-accent-green-hover) !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="light"] .assistantSendButton:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+:root[data-theme="light"] .workspaceUtilityButton,
+:root[data-theme="light"] .btnGhost,
+:root[data-theme="light"] .graphTabChip,
+:root[data-theme="light"] .thinkingModeChip,
+:root[data-theme="light"] .quizChoice,
+:root[data-theme="light"] .inlineQuizChoice {
+  border-radius: 16px;
+}
+
+:root[data-theme="light"] .workspaceUtilityButton,
+:root[data-theme="light"] .graphTabChip,
+:root[data-theme="light"] .btnGhost {
+  min-height: 40px;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+
+:root[data-theme="light"] .settingsModal {
+  border-radius: 28px;
+}
+
+:root[data-theme="light"] .settingsPanel {
+  border-radius: 22px;
+}
+
+:root[data-theme="light"] .settingsSidebar {
+  background: rgba(247, 244, 238, 0.88);
+}
+
+/* Calm light-theme pass: neutralize noisy surfaces, keep orange only as the main accent */
+:root[data-theme="light"] .sidebarTreeItem,
+:root[data-theme="light"] .sidebarSectionHeader,
+:root[data-theme="light"] .sidebarNewAction,
+:root[data-theme="light"] .workspaceUtilityButton,
+:root[data-theme="light"] .graphTabChip,
+:root[data-theme="light"] .sessionItem,
+:root[data-theme="light"] .sessionItemGroup,
+:root[data-theme="light"] .assistantTemplate,
+:root[data-theme="light"] .groundingToggle,
+:root[data-theme="light"] .webGroundingToggle,
+:root[data-theme="light"] .btnGhost,
+:root[data-theme="light"] .thinkingModeChip,
+:root[data-theme="light"] .quizChoice,
+:root[data-theme="light"] .inlineQuizChoice,
+:root[data-theme="light"] .proposalMiniItem,
+:root[data-theme="light"] .previewStatCard,
+:root[data-theme="light"] .proposalAddButton,
+:root[data-theme="light"] .proposalInlinePending,
+:root[data-theme="light"] .inlineNotice,
+:root[data-theme="light"] .settingsInlineNotice,
+:root[data-theme="light"] .settingsToggleRow,
+:root[data-theme="light"] .listItem {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: var(--border) !important;
+  color: rgba(45, 43, 40, 0.82) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .sidebarTreeItem:hover,
+:root[data-theme="light"] .sidebarSectionHeader:hover,
+:root[data-theme="light"] .workspaceUtilityButton:hover,
+:root[data-theme="light"] .graphTabChip:hover,
+:root[data-theme="light"] .sessionItem:hover,
+:root[data-theme="light"] .sessionItemGroup:hover,
+:root[data-theme="light"] .assistantTemplate:hover,
+:root[data-theme="light"] .groundingToggle:hover,
+:root[data-theme="light"] .webGroundingToggle:hover,
+:root[data-theme="light"] .btnGhost:hover,
+:root[data-theme="light"] .thinkingModeChip:hover,
+:root[data-theme="light"] .quizChoice:hover,
+:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled),
+:root[data-theme="light"] .proposalMiniItem:hover,
+:root[data-theme="light"] .proposalAddButton:hover,
+:root[data-theme="light"] .listItem:hover {
+  background: #ffffff !important;
+  border-color: rgba(195, 90, 44, 0.16) !important;
+  color: rgba(45, 43, 40, 0.94) !important;
+}
+
+:root[data-theme="light"] .sidebarTreeLabel,
+:root[data-theme="light"] .graphTabChipMeta,
+:root[data-theme="light"] .assistantModeCopy,
+:root[data-theme="light"] .assistantComposerHint,
+:root[data-theme="light"] .sessionItemNew,
+:root[data-theme="light"] .sessionDeleteBtn,
+:root[data-theme="light"] .settingsPanelEyebrow,
+:root[data-theme="light"] .settingsSidebarTitle,
+:root[data-theme="light"] .mutedSmall,
+:root[data-theme="light"] .proposalInlinePendingLabel,
+:root[data-theme="light"] .topicPopoverCopy,
+:root[data-theme="light"] .topicPopoverPath {
+  color: rgba(139, 133, 128, 0.92) !important;
+}
+
+:root[data-theme="light"] .sidebarGraphRowActive > .sidebarTreeItem,
+:root[data-theme="light"] .sessionItemGroupActive,
+:root[data-theme="light"] .sessionItemActive,
+:root[data-theme="light"] .assistantTemplateActive,
+:root[data-theme="light"] .groundingToggleActive,
+:root[data-theme="light"] .webGroundingToggle.active,
+:root[data-theme="light"] .graphTabChipActive,
+:root[data-theme="light"] .workspaceUtilityButtonActive,
+:root[data-theme="light"] .thinkingModeChipActive,
+:root[data-theme="light"] .settingsTabActive {
+  background: rgba(195, 90, 44, 0.1) !important;
+  border-color: rgba(195, 90, 44, 0.22) !important;
+  color: rgba(131, 55, 24, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .sidebarGraphRowActive {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .sidebarGraphRowActive > .sidebarTreeItem span,
+:root[data-theme="light"] .graphTabChipActive strong,
+:root[data-theme="light"] .workspaceUtilityButtonActive,
+:root[data-theme="light"] .sessionItemGroupActive .sessionItemLabel,
+:root[data-theme="light"] .sessionItemActive .sessionItemLabel {
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .chatBubble,
+:root[data-theme="light"] .workspaceShellLightDockMode .chatBubble {
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 10px 24px rgba(45, 43, 40, 0.05) !important;
+  border-radius: 22px !important;
+}
+
+:root[data-theme="light"] .chatMessage-user .chatBubble,
+:root[data-theme="light"] .workspaceShellLightDockMode .chatMessage-user .chatBubble {
+  background: rgba(244, 239, 232, 0.98) !important;
+  border-color: rgba(226, 215, 204, 0.98) !important;
+  color: rgba(45, 43, 40, 0.94) !important;
+}
+
+:root[data-theme="light"] .chatCopy,
+:root[data-theme="light"] .assistantHelloTitle,
+:root[data-theme="light"] .assistantHelloCopy,
+:root[data-theme="light"] .inlineQuizQuestion,
+:root[data-theme="light"] .proposalInlineTitle,
+:root[data-theme="light"] .chatEmphasis {
+  color: rgba(45, 43, 40, 0.88) !important;
+}
+
+:root[data-theme="light"] .assistantComposer,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposer {
+  background: rgba(255, 255, 255, 0.985) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 16px 36px rgba(45, 43, 40, 0.07) !important;
+  border-radius: 26px !important;
+}
+
+:root[data-theme="light"] .assistantComposerWrap,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap {
+  background: transparent !important;
+}
+
+:root[data-theme="light"] .assistantInput,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput {
+  background: rgba(255, 255, 255, 0.995) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .assistantInput:focus,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput:focus,
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] select.input:focus,
+:root[data-theme="light"] .textarea:focus {
+  border-color: rgba(195, 90, 44, 0.5) !important;
+  box-shadow: 0 0 0 4px rgba(195, 90, 44, 0.08) !important;
+}
+
+:root[data-theme="light"] .badge,
+:root[data-theme="light"] .badge-gray,
+:root[data-theme="light"] .badge-yellow,
+:root[data-theme="light"] .badge-blue,
+:root[data-theme="light"] .badge-green {
+  background: rgba(244, 239, 232, 0.9) !important;
+  border: 1px solid rgba(226, 215, 204, 0.98) !important;
+  color: rgba(107, 96, 86, 0.95) !important;
+  border-radius: 999px !important;
+}
+
+:root[data-theme="light"] .badge-red,
+:root[data-theme="light"] .inlineNoticeError,
+:root[data-theme="light"] .btn.btnDanger {
+  background: rgba(212, 74, 60, 0.08) !important;
+  border-color: rgba(212, 74, 60, 0.2) !important;
+  color: #a63a2f !important;
+}
+
+:root[data-theme="light"] .proposalInlineCard,
+:root[data-theme="light"] .proposalInlinePending,
+:root[data-theme="light"] .inlineQuizCard {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsModal {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 24px 54px rgba(45, 43, 40, 0.12) !important;
+}
+
+:root[data-theme="light"] .settingsSidebar {
+  background: rgba(247, 244, 238, 0.88) !important;
+}
+
+/* Final light-theme fixes for specific rejected surfaces */
+:root[data-theme="light"] .assistantComposerWrap::before,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap::before {
+  display: block !important;
+  height: 42px !important;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(250, 249, 246, 0.06) 24%,
+    rgba(250, 249, 246, 0.2) 46%,
+    rgba(250, 249, 246, 0.52) 68%,
+    rgba(250, 249, 246, 0.82) 86%,
+    #faf9f6 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .quizModalHeader::after,
+:root[data-theme="light"] .settingsContentHeader::after {
+  display: none !important;
+}
+
+:root[data-theme="light"] .settingsFooterBar {
+  background: linear-gradient(
+    180deg,
+    rgba(250, 249, 246, 0) 0%,
+    rgba(250, 249, 246, 0.66) 42%,
+    rgba(250, 249, 246, 0.94) 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .quizOverlay {
+  background: rgba(250, 249, 246, 0.36) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+@media (min-width: 1181px) {
+  :root[data-theme="light"] .quizOverlay.settingsOverlay {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+:root[data-theme="light"] .lightDockButton::before,
+:root[data-theme="light"] .lightDockButtonLink::before {
+  background: rgba(195, 90, 44, 0.14) !important;
+}
+
+:root[data-theme="light"] .lightDockButton:hover,
+:root[data-theme="light"] .lightDockButtonLink:hover,
+:root[data-theme="light"] .lightDockButtonActive {
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive::before {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+}
+
+:root[data-theme="light"] .sidebarNewAction,
+:root[data-theme="light"] .sidebarNewAction:hover {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .sidebarNewAction {
+  color: #c35a2c !important;
+}
+
+:root[data-theme="light"] .sidebarNewAction:hover {
+  color: #ab4d24 !important;
+}
+
+:root[data-theme="light"] .sidebarGraphRowActive,
+:root[data-theme="light"] .sidebarGraphRowEditing {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .sidebarGraphRowActive > .sidebarTreeItem,
+:root[data-theme="light"] .sidebarGraphRowActive > .sidebarTreeItem span,
+:root[data-theme="light"] .graphTabChipActive,
+:root[data-theme="light"] .workspaceUtilityButtonActive {
+  background: rgba(195, 90, 44, 0.1) !important;
+  border-color: rgba(195, 90, 44, 0.22) !important;
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .proposalInlineCard,
+:root[data-theme="light"] .proposalInlinePending,
+:root[data-theme="light"] .proposalMiniList,
+:root[data-theme="light"] .proposalMiniItem,
+:root[data-theme="light"] .previewStatGrid,
+:root[data-theme="light"] .previewStatCard {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding-inline: 0 !important;
+}
+
+:root[data-theme="light"] .assistantComposer,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposer {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+:root[data-theme="light"] .assistantInput,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput,
+:root[data-theme="light"] .input,
+:root[data-theme="light"] select.input,
+:root[data-theme="light"] .textarea {
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .assistantInput:focus,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput:focus,
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] select.input:focus,
+:root[data-theme="light"] .textarea:focus {
+  border-color: rgba(195, 90, 44, 0.34) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .pageStat,
+:root[data-theme="light"] .pageStatWarn,
+:root[data-theme="light"] .pageStatHint,
+:root[data-theme="light"] .pageStatGood,
+:root[data-theme="light"] .pageStatComplete,
+:root[data-theme="light"] .pageStatAssessment {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border: 1px solid var(--border) !important;
+  color: rgba(45, 43, 40, 0.82) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .pageStatControl,
+:root[data-theme="light"] .floatingStatusButton,
+:root[data-theme="light"] .snapshotsCard .btn,
+:root[data-theme="light"] .listActions .btn,
+:root[data-theme="light"] .badge-blue {
+  border-radius: 999px !important;
+}
+
+:root[data-theme="light"] .badge-blue {
+  background: rgba(195, 90, 44, 0.1) !important;
+  border: 1px solid rgba(195, 90, 44, 0.22) !important;
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .assistantSendButton,
+:root[data-theme="light"] .quizSubmitButton,
+:root[data-theme="light"] .startQuizButton {
+  min-width: max-content !important;
+  height: 40px !important;
+  padding: 0 16px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  border-radius: 999px !important;
+}
+
+:root[data-theme="light"] .lightDockButton,
+:root[data-theme="light"] .lightDockButtonLink {
+  color: rgba(131, 55, 24, 0.82) !important;
+}
+
+:root[data-theme="light"] .lightDockButton::before,
+:root[data-theme="light"] .lightDockButtonLink::before {
+  background: rgba(195, 90, 44, 0.12) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive,
+:root[data-theme="light"] .lightDockButton:hover,
+:root[data-theme="light"] .lightDockButtonLink:hover {
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizModalHeader,
+:root[data-theme="light"] .settingsContentHeader {
+  border-bottom: 0 !important;
+}
+
+:root[data-theme="light"] .quizModal,
+:root[data-theme="light"] .settingsModal,
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .settingsPanel {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Targeted cleanup based on surface review */
+:root[data-theme="light"] .proposalInlineCard,
+:root[data-theme="light"] .proposalInlinePending,
+:root[data-theme="light"] .proposalMiniItem,
+:root[data-theme="light"] .previewStatCard {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding-inline: 0 !important;
+}
+
+:root[data-theme="light"] .proposalInlineCard {
+  gap: 10px;
+  margin-top: 4px;
+}
+
+:root[data-theme="light"] .proposalAddButton {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  background: rgba(195, 90, 44, 0.1) !important;
+  border: 1px solid rgba(195, 90, 44, 0.18) !important;
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .proposalAddButton:hover {
+  background: rgba(195, 90, 44, 0.14) !important;
+  border-color: rgba(195, 90, 44, 0.26) !important;
+}
+
+:root[data-theme="light"] .assistantComposerWrap,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap {
+  padding: 14px 16px 16px !important;
+  background: transparent !important;
+  border-top: 0 !important;
+}
+
+:root[data-theme="light"] .assistantComposerWrap::before,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap::before {
+  display: none !important;
+}
+
+:root[data-theme="light"] .assistantComposer,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposer {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+:root[data-theme="light"] .assistantComposerFooter {
+  margin-top: 2px;
+}
+
+:root[data-theme="light"] .assistantInput,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput,
+:root[data-theme="light"] .input,
+:root[data-theme="light"] select.input,
+:root[data-theme="light"] .textarea {
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsContentHeader::after,
+:root[data-theme="light"] .settingsFooterBar,
+:root[data-theme="light"] .quizModalHeader::after {
+  background: linear-gradient(
+    180deg,
+    rgba(250, 249, 246, 0) 0%,
+    rgba(250, 249, 246, 0.72) 48%,
+    rgba(250, 249, 246, 0.94) 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .settingsContentHeader {
+  background: rgba(255, 255, 255, 0.98) !important;
+}
+
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .quizModal {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+:root[data-theme="light"] .pageStatControl,
+:root[data-theme="light"] .snapshotsCard .btn,
+:root[data-theme="light"] .listActions .btn {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid var(--border) !important;
+  color: rgba(45, 43, 40, 0.86) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .pageStatControl:hover,
+:root[data-theme="light"] .snapshotsCard .btn:hover,
+:root[data-theme="light"] .listActions .btn:hover {
+  border-color: rgba(195, 90, 44, 0.18) !important;
+  color: rgba(45, 43, 40, 0.94) !important;
+}
+
+:root[data-theme="light"] .badge-blue {
+  background: rgba(195, 90, 44, 0.1) !important;
+  border-color: rgba(195, 90, 44, 0.22) !important;
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .sidebarNewAction {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  color: rgba(195, 90, 44, 0.96) !important;
+  border: 0 !important;
+}
+
+:root[data-theme="light"] .sidebarNewAction:hover {
+  background: transparent !important;
+  color: rgba(171, 77, 36, 0.96) !important;
+}
+
+:root[data-theme="light"] .sidebarNewAction .sidebarIcon,
+:root[data-theme="light"] .sidebarNewAction svg {
+  color: currentColor !important;
+  opacity: 1 !important;
+}
+
+:root[data-theme="light"] .assistantSendButton,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantSendButton,
+:root[data-theme="light"] .quizSubmitButton,
+:root[data-theme="light"] .startQuizButton {
+  min-width: max-content !important;
+  height: 40px !important;
+  padding: 0 16px !important;
+  white-space: nowrap;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+:root[data-theme="light"] .assistantSendButton svg,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantSendButton svg {
+  flex-shrink: 0;
+}
+
+/* Strict DeepTutor-inspired light theme cleanup */
+:root[data-theme="light"] .pageStat,
+:root[data-theme="light"] .pageStatWarn,
+:root[data-theme="light"] .pageStatHint,
+:root[data-theme="light"] .pageStatGood,
+:root[data-theme="light"] .pageStatComplete,
+:root[data-theme="light"] .pageStatAssessment {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border: 1px solid var(--border) !important;
+  color: rgba(45, 43, 40, 0.82) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .pageStat strong,
+:root[data-theme="light"] .pageStatComplete strong,
+:root[data-theme="light"] .pageStatAssessment strong {
+  color: rgba(45, 43, 40, 0.9) !important;
+}
+
+:root[data-theme="light"] .pageStatControl,
+:root[data-theme="light"] .floatingStatusButton,
+:root[data-theme="light"] .snapshotsCard .btn,
+:root[data-theme="light"] .listActions .btn {
+  border-radius: 999px !important;
+  border: 1px solid var(--border) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: rgba(45, 43, 40, 0.84) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .pageStatControlActive,
+:root[data-theme="light"] .floatingStatusButtonActive,
+:root[data-theme="light"] .badge-blue {
+  background: rgba(195, 90, 44, 0.1) !important;
+  border: 1px solid rgba(195, 90, 44, 0.22) !important;
+  color: rgba(131, 55, 24, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .sidebarGraphRow,
+:root[data-theme="light"] .sidebarGraphRowActive,
+:root[data-theme="light"] .sidebarGraphRowEditing {
+  border-radius: 14px !important;
+}
+
+:root[data-theme="light"] .sidebarGraphRowActive > .sidebarTreeItem,
+:root[data-theme="light"] .sidebarGraphRowActive > .sidebarTreeItem span,
+:root[data-theme="light"] .sidebarTreeItemActive {
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .sidebarNewAction {
+  background: transparent !important;
+  border: 0 !important;
+  color: #c35a2c !important;
+  padding-top: 2px !important;
+  padding-bottom: 10px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .sidebarNewAction:hover {
+  background: transparent !important;
+  color: #ab4d24 !important;
+}
+
+:root[data-theme="light"] .sidebarNewAction svg,
+:root[data-theme="light"] .sidebarNewAction .sidebarIcon {
+  color: currentColor !important;
+  opacity: 1 !important;
+}
+
+:root[data-theme="light"] .lightWindowActionButton {
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #c35a2c !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+:root[data-theme="light"] .lightWindowActionButton:hover {
+  background: transparent !important;
+  border: 0 !important;
+  color: #ab4d24 !important;
+}
+
+:root[data-theme="light"] .lightDockButton,
+:root[data-theme="light"] .lightDockButtonLink {
+  color: rgba(107, 96, 86, 0.78) !important;
+}
+
+:root[data-theme="light"] .lightDockButton::before,
+:root[data-theme="light"] .lightDockButtonLink::before {
+  opacity: 0 !important;
+  transform: scale(0.82) !important;
+}
+
+:root[data-theme="light"] .lightDockButton:hover,
+:root[data-theme="light"] .lightDockButtonLink:hover {
+  color: rgba(45, 43, 40, 0.94) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive {
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive::before {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+  background: rgba(195, 90, 44, 0.12) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListItem {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListItem:hover {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(195, 90, 44, 0.12) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListItemActive {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(195, 90, 44, 0.18) !important;
+  box-shadow: inset 0 0 0 1px rgba(195, 90, 44, 0.06) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListItemActive .lightWorkspaceListTitle,
+:root[data-theme="light"] .lightWorkspaceListItemActive .lightWorkspaceListMeta {
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .proposalInlineCard,
+:root[data-theme="light"] .proposalInlinePending,
+:root[data-theme="light"] .proposalMiniList,
+:root[data-theme="light"] .proposalMiniItem,
+:root[data-theme="light"] .previewStatGrid,
+:root[data-theme="light"] .previewStatCard {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .proposalInlineCard {
+  padding: 0 !important;
+  margin-top: 6px !important;
+}
+
+:root[data-theme="light"] .proposalMiniItem,
+:root[data-theme="light"] .previewStatCard {
+  padding: 0 !important;
+  min-height: auto !important;
+}
+
+:root[data-theme="light"] .proposalInlinePendingLabel,
+:root[data-theme="light"] .proposalInlineTitle,
+:root[data-theme="light"] .previewStatCard span,
+:root[data-theme="light"] .previewStatCard strong {
+  color: rgba(45, 43, 40, 0.82) !important;
+}
+
+:root[data-theme="light"] .assistantComposerWrap,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap {
+  padding: 12px 16px 16px !important;
+  background: transparent !important;
+  border-top: 0 !important;
+}
+
+:root[data-theme="light"] .assistantComposerWrap::before,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap::before {
+  display: none !important;
+}
+
+:root[data-theme="light"] .assistantComposer,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposer {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+:root[data-theme="light"] .assistantInput,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput {
+  min-height: 96px !important;
+  border-radius: 22px !important;
+  border: 1px solid var(--border) !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .input,
+:root[data-theme="light"] select.input,
+:root[data-theme="light"] .textarea {
+  border-radius: 14px !important;
+  border: 1px solid var(--border) !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .assistantInput:focus,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput:focus,
+:root[data-theme="light"] .input:focus,
+:root[data-theme="light"] select.input:focus,
+:root[data-theme="light"] .textarea:focus {
+  border-color: rgba(195, 90, 44, 0.34) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizOverlay,
+:root[data-theme="light"] .quizOverlay.settingsOverlay {
+  background: rgba(250, 249, 246, 0.66) !important;
+}
+
+:root[data-theme="light"] .quizModal,
+:root[data-theme="light"] .settingsModal {
+  border-radius: 28px !important;
+  background: rgba(255, 255, 255, 0.985) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 24px 54px rgba(45, 43, 40, 0.1) !important;
+}
+
+:root[data-theme="light"] .quizModalHeader,
+:root[data-theme="light"] .settingsContentHeader {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-bottom: 1px solid rgba(232, 228, 222, 0.72) !important;
+}
+
+:root[data-theme="light"] .settingsContentHeader::after,
+:root[data-theme="light"] .quizModalHeader::after,
+:root[data-theme="light"] .settingsFooterBar {
+  background: linear-gradient(
+    180deg,
+    rgba(250, 249, 246, 0) 0%,
+    rgba(250, 249, 246, 0.76) 46%,
+    rgba(250, 249, 246, 0.95) 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .btn.btnImport,
+:root[data-theme="light"] .assistantSendButton,
+:root[data-theme="light"] .quizSubmitButton,
+:root[data-theme="light"] .startQuizButton {
+  border-radius: 999px !important;
+}
+
+:root[data-theme="light"] .assistantSendButton,
+:root[data-theme="light"] .quizSubmitButton,
+:root[data-theme="light"] .startQuizButton {
+  min-width: max-content !important;
+  padding: 0 16px !important;
+  height: 40px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .card {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+}
+
+/* Final direct fixes from latest review */
+:root[data-theme="light"] .quizOverlay,
+:root[data-theme="light"] .quizOverlay.settingsOverlay {
+  background: rgba(250, 249, 246, 0.12) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="light"] .settingsOverlay .settingsModal,
+:root[data-theme="light"] .debugLogsModal,
+:root[data-theme="light"] .debugLogsModal .settingsContent,
+:root[data-theme="light"] .debugLogsModal .settingsContentHeader,
+:root[data-theme="light"] .debugLogColumn {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="light"] .quizModalHeader,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .debugLogColumnHeader {
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizModalHeader::after,
+:root[data-theme="light"] .settingsContentHeader::after {
+  display: none !important;
+}
+
+:root[data-theme="light"] .settingsFooterBar {
+  background: linear-gradient(
+    180deg,
+    rgba(250, 249, 246, 0) 0%,
+    rgba(250, 249, 246, 0.58) 42%,
+    rgba(250, 249, 246, 0.94) 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .debugLogColumnHeader {
+  background: rgba(247, 244, 238, 0.92) !important;
+  color: rgba(107, 96, 86, 0.92) !important;
+}
+
+:root[data-theme="light"] .debugLogEntry {
+  background: rgba(250, 249, 246, 0.92) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListItem,
+:root[data-theme="light"] .lightWorkspaceListItem:hover {
+  background: rgba(255, 255, 255, 0.98) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListItemActive {
+  background: rgba(195, 90, 44, 0.08) !important;
+  border-color: rgba(195, 90, 44, 0.16) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListCount {
+  background: rgba(195, 90, 44, 0.1) !important;
+  border: 1px solid rgba(195, 90, 44, 0.18) !important;
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .assistantComposerWrap::before,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap::before {
+  display: block !important;
+  height: 56px !important;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(250, 249, 246, 0.06) 16%,
+    rgba(250, 249, 246, 0.18) 34%,
+    rgba(246, 241, 234, 0.44) 56%,
+    rgba(244, 236, 228, 0.74) 78%,
+    #faf9f6 100%
+  ) !important;
+  opacity: 1 !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListButton {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-template-rows: auto auto !important;
+  column-gap: 10px !important;
+  row-gap: 4px !important;
+  align-items: center !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListTitle {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListMeta {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListCount {
+  grid-column: 2 !important;
+  grid-row: 1 / span 2 !important;
+  align-self: center !important;
+  min-width: 30px !important;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListItem {
+  border-radius: 18px !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListItemActive {
+  background: rgba(195, 90, 44, 0.07) !important;
+  border-color: rgba(195, 90, 44, 0.2) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceListItemActive .lightWorkspaceListCount {
+  background: rgba(195, 90, 44, 0.16) !important;
+  border-color: rgba(195, 90, 44, 0.24) !important;
+  color: rgba(120, 46, 17, 0.98) !important;
+}
+
+/* Final override: neutral light logs + white chat glow only */
+:root[data-theme="light"] .debugLogsGrid {
+  gap: 12px !important;
+  background: transparent !important;
+}
+
+:root[data-theme="light"] .debugLogsModal,
+:root[data-theme="light"] .debugLogsModal .settingsContent,
+:root[data-theme="light"] .debugLogsModal .settingsContentHeader,
+:root[data-theme="light"] .debugLogColumn,
+:root[data-theme="light"] .debugLogColumnBody {
+  background: rgba(252, 251, 248, 0.958) !important;
+}
+
+:root[data-theme="light"] .debugLogColumn,
+:root[data-theme="light"] .debugLogColumn + .debugLogColumn {
+  border: 1px solid rgba(229, 223, 215, 0.96) !important;
+  border-left: 0 !important;
+  border-radius: 18px !important;
+  background: rgba(252, 251, 248, 0.958) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+:root[data-theme="light"] .debugLogColumnHeader {
+  background: rgba(252, 251, 248, 0.958) !important;
+  color: rgba(92, 84, 76, 0.9) !important;
+  border-bottom: 1px solid rgba(231, 225, 217, 0.92) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .debugLogColumnBody {
+  padding: 10px 12px 12px !important;
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+:root[data-theme="light"] .debugLogColumnBody::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Light workspace explorer */
+:root[data-theme="light"] .lightWorkspaceWindow {
+  border-radius: 22px !important;
+  border: 1px solid rgba(223, 214, 203, 0.96) !important;
+  background: rgba(249, 245, 239, 0.965) !important;
+  box-shadow:
+    0 20px 44px rgba(112, 84, 58, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.74) inset !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceWindow .lightFloatingWindowHeader {
+  align-items: center !important;
+  padding: 16px 18px 12px !important;
+  border-bottom: 1px solid rgba(229, 221, 212, 0.92) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 248, 0.84) 0%, rgba(249, 245, 239, 0.52) 100%) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceWindow .lightFloatingWindowTitle {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+  color: rgba(62, 49, 39, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceWindow .lightFloatingWindowSubtle {
+  margin-top: 2px !important;
+  color: rgba(132, 115, 100, 0.88) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceExplorerBody {
+  padding: 10px 10px 12px !important;
+  gap: 2px !important;
+  align-items: stretch !important;
+  background:
+    linear-gradient(180deg, rgba(248, 244, 238, 0.95) 0%, rgba(245, 240, 233, 0.94) 100%) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-height: 30px !important;
+  padding: 0 10px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(210, 127, 86, 0.18) !important;
+  background: rgba(255, 250, 244, 0.8) !important;
+  color: rgba(131, 55, 24, 0.96) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+  line-height: 1 !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:hover {
+  background: rgba(255, 248, 241, 0.9) !important;
+  border-color: rgba(195, 90, 44, 0.22) !important;
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceGlyph {
+  font-size: 16px;
+  line-height: 1;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolder {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  position: relative !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border-radius: 14px !important;
+  border: 1px solid transparent !important;
+  border-bottom-color: rgba(228, 220, 211, 0.84) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderActive {
+  background: rgba(255, 250, 245, 0.46) !important;
+  border-color: rgba(215, 184, 163, 0.3) !important;
+  border-bottom-color: rgba(215, 184, 163, 0.44) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderOpen {
+  background: rgba(255, 252, 247, 0.68) !important;
+  border-color: rgba(216, 199, 184, 0.48) !important;
+  border-bottom-color: rgba(216, 199, 184, 0.48) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolder:hover {
+  background: rgba(255, 251, 246, 0.56) !important;
+  border-color: rgba(216, 199, 184, 0.42) !important;
+  border-bottom-color: rgba(216, 199, 184, 0.46) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderRow {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  padding: 5px 6px;
+  min-height: 52px;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderMain:hover {
+  background: transparent !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderCaret,
+:root[data-theme="light"] .lightWorkspaceFolderIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(145, 63, 28, 0.92);
+  flex-shrink: 0;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderMeta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderTitleRow {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(45, 43, 40, 0.96);
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderCount {
+  flex-shrink: 0;
+  min-width: 22px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(195, 90, 44, 0.06);
+  color: rgba(141, 81, 52, 0.9);
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderSubtle {
+  font-size: 10px;
+  color: rgba(130, 117, 104, 0.82);
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderAction {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(133, 121, 111, 0.88);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderAction:hover,
+:root[data-theme="light"] .lightWorkspaceFolderActionActive {
+  background: rgba(195, 90, 44, 0.07);
+  color: rgba(131, 55, 24, 0.96);
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderActionDanger:hover {
+  background: rgba(186, 62, 44, 0.1);
+  color: rgba(147, 43, 29, 0.96);
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderInput {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(45, 43, 40, 0.96);
+  font: inherit;
+  font-weight: 700;
+  outline: none;
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 0 0 auto;
+  padding: 0 8px 8px 32px;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderOpen {
+  min-height: 0 !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 140ms ease;
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicItem:hover {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicItemActive {
+  background: rgba(195, 90, 44, 0.075);
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicBullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(201, 126, 86, 0.58);
+  flex-shrink: 0;
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicLabel {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: rgba(59, 53, 48, 0.92);
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicState {
+  flex-shrink: 0;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(138, 125, 112, 0.76);
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicEmpty {
+  padding: 8px 12px 4px;
+  font-size: 12px;
+  color: rgba(120, 111, 101, 0.82);
+}
+
+:root[data-theme="light"] .debugLogEntry {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(229, 223, 215, 0.96) !important;
+  border-bottom: 1px solid rgba(236, 231, 225, 0.92) !important;
+  box-shadow: none !important;
+  border-radius: 14px !important;
+  padding: 10px 12px !important;
+}
+
+:root[data-theme="light"] .debugLogMeta,
+:root[data-theme="light"] .debugLogBody,
+:root[data-theme="light"] .debugLogDetails,
+:root[data-theme="light"] .debugLogDetails pre {
+  color: rgba(107, 96, 86, 0.88) !important;
+}
+
+:root[data-theme="light"] .debugLogTitle {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+@media (min-width: 1181px) {
+  :root[data-theme="light"] .debugLogsOverlay {
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    padding: 86px 0 0 104px !important;
+    background: transparent !important;
+    pointer-events: none !important;
+  }
+
+  :root[data-theme="light"] .debugLogsOverlay .debugLogsModal {
+    pointer-events: auto !important;
+    width: min(980px, calc(100vw - 152px)) !important;
+  }
+
+  :root[data-theme="light"] .leftSidebar,
+  :root[data-theme="light"] .lightDock {
+    z-index: 140 !important;
+  }
+}
+
+:root[data-theme="light"] .assistantComposerWrap,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap {
+  background: transparent !important;
+  border-top: 0 !important;
+  border-right: 0 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .assistantComposerWrap::before,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap::before {
+  display: block !important;
+  height: 52px !important;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(250, 249, 246, 0.04) 18%,
+    rgba(250, 249, 246, 0.14) 36%,
+    rgba(250, 249, 246, 0.3) 58%,
+    rgba(250, 249, 246, 0.56) 80%,
+    #faf9f6 100%
+  ) !important;
+  opacity: 1 !important;
+}
+
+:root[data-theme="light"] .assistantSendButtonIcon,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantSendButtonIcon {
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  background: #c35a2c !important;
+  border: 1px solid #c35a2c !important;
+  color: #fffaf6 !important;
+  box-shadow: 0 14px 28px rgba(195, 90, 44, 0.18) !important;
+  opacity: 1 !important;
+}
+
+:root[data-theme="light"] .assistantSendButton:hover:not(:disabled),
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantSendButton:hover:not(:disabled) {
+  background: #ab4d24 !important;
+  border-color: #ab4d24 !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="light"] .assistantSendButton:disabled,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantSendButton:disabled {
+  background: rgba(195, 90, 44, 0.92) !important;
+  border-color: rgba(195, 90, 44, 0.92) !important;
+  color: rgba(255, 250, 246, 0.98) !important;
+  box-shadow: 0 10px 20px rgba(195, 90, 44, 0.12) !important;
+  opacity: 0.72 !important;
+}
+
+:root[data-theme="light"] .quizSubmitButton,
+:root[data-theme="light"] .startQuizButton,
+:root[data-theme="light"] .assistantSendButton:not(.assistantSendButtonIcon) {
+  min-width: max-content !important;
+  width: auto !important;
+  height: 40px !important;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  line-height: 1.1 !important;
+}
+
+:root[data-theme="light"] .startQuizButton,
+:root[data-theme="light"] .startQuizButton:hover,
+:root[data-theme="light"] .startQuizButton:focus-visible {
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+
+/* DeepTutor light-theme palette pass: unify chat/workspace surfaces */
+:root[data-theme="light"] {
+  --dt-light-bg: #faf9f6;
+  --dt-light-card: #ffffff;
+  --dt-light-secondary: #f0ede7;
+  --dt-light-border: #e8e4de;
+  --dt-light-muted: #8b8580;
+  --dt-light-text: #2d2b28;
+  --dt-light-primary: #c35a2c;
+}
+
+:root[data-theme="light"] .lightChatWindow,
+:root[data-theme="light"] .lightWorkspaceWindow {
+  border-color: var(--dt-light-border) !important;
+  background: rgba(250, 249, 246, 0.965) !important;
+  box-shadow:
+    0 1px 8px rgba(0, 0, 0, 0.03),
+    0 16px 34px rgba(45, 43, 40, 0.06) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader,
+:root[data-theme="light"] .lightWorkspaceWindow .lightFloatingWindowHeader {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(232, 228, 222, 0.72) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowTitle,
+:root[data-theme="light"] .lightWorkspaceWindow .lightFloatingWindowTitle,
+:root[data-theme="light"] .assistantDockTitle {
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowSubtle,
+:root[data-theme="light"] .lightWorkspaceWindow .lightFloatingWindowSubtle,
+:root[data-theme="light"] .assistantDockSubtle {
+  color: var(--dt-light-muted) !important;
+}
+
+:root[data-theme="light"] .assistantThread,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantThread,
+:root[data-theme="light"] .assistantComposerWrap,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap {
+  background: var(--dt-light-bg) !important;
+}
+
+:root[data-theme="light"] .assistantComposerWrap::before,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap::before {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(250, 249, 246, 0.08) 22%,
+    rgba(250, 249, 246, 0.2) 42%,
+    rgba(250, 249, 246, 0.44) 64%,
+    rgba(250, 249, 246, 0.72) 84%,
+    #faf9f6 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .assistantTemplates {
+  gap: 8px !important;
+  padding-bottom: 4px !important;
+}
+
+:root[data-theme="light"] .assistantTemplate,
+:root[data-theme="light"] .webGroundingToggle,
+:root[data-theme="light"] .groundingToggle,
+:root[data-theme="light"] .sessionItem,
+:root[data-theme="light"] .sessionItemGroup {
+  background: var(--dt-light-secondary) !important;
+  border: 1px solid transparent !important;
+  color: var(--dt-light-muted) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.62) !important;
+}
+
+:root[data-theme="light"] .assistantTemplate:hover,
+:root[data-theme="light"] .webGroundingToggle:hover,
+:root[data-theme="light"] .groundingToggle:hover,
+:root[data-theme="light"] .sessionItem:hover,
+:root[data-theme="light"] .sessionItemGroup:hover {
+  background: rgba(250, 249, 246, 0.92) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .assistantTemplateActive,
+:root[data-theme="light"] .groundingToggleActive,
+:root[data-theme="light"] .webGroundingToggle.active,
+:root[data-theme="light"] .sessionItemGroupActive,
+:root[data-theme="light"] .sessionItemActive {
+  background: rgba(195, 90, 44, 0.1) !important;
+  border-color: rgba(195, 90, 44, 0.18) !important;
+  color: var(--dt-light-primary) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .assistantComposer,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposer {
+  background: var(--dt-light-card) !important;
+  border: 1px solid var(--dt-light-border) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.03) !important;
+  padding: 0 !important;
+}
+
+:root[data-theme="light"] .assistantInput,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput {
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--dt-light-text) !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 16px 18px !important;
+}
+
+:root[data-theme="light"] .assistantInput::placeholder,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput::placeholder {
+  color: var(--dt-light-muted) !important;
+}
+
+:root[data-theme="light"] .assistantInput:focus,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput:focus {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .chatBubble,
+:root[data-theme="light"] .workspaceShellLightDockMode .chatBubble {
+  background: var(--dt-light-card) !important;
+  border: 1px solid var(--dt-light-border) !important;
+  color: var(--dt-light-text) !important;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.03) !important;
+}
+/* EOF real final override: light dock/chat */
+:root[data-theme="light"] .lightDockButtonActive {
+  color: rgba(62, 49, 39, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive::before {
+  background: rgba(195, 90, 44, 0.08) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow {
+  background: rgba(255, 255, 255, 0.978) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
+  border-bottom: 0 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(232, 228, 222, 0.9) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::after,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap::before {
+  display: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionList,
+:root[data-theme="light"] .lightChatWindow .assistantThread,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
+  background: rgba(252, 251, 248, 0.94) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  color: var(--dt-light-muted) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup:hover {
+  background: rgba(245, 241, 235, 0.96) !important;
+  border-color: rgba(232, 228, 222, 0.92) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItemActive,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive {
+  background: rgba(240, 237, 231, 0.98) !important;
+  border-color: rgba(232, 228, 222, 0.98) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: 999px !important;
+  color: var(--dt-light-text) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .lightDock .lightDockButtonActive::before {
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive::before {
+  box-shadow: none !important;
+}
+
+/* EOF final override: light dock/chat */
+:root[data-theme="light"] .lightDockButtonActive {
+  color: rgba(62, 49, 39, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive::before {
+  background: rgba(195, 90, 44, 0.08) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow {
+  background: rgba(255, 255, 255, 0.978) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
+  border-bottom: 0 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(232, 228, 222, 0.9) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::after,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap::before {
+  display: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionList,
+:root[data-theme="light"] .lightChatWindow .assistantThread,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
+  background: rgba(252, 251, 248, 0.94) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  color: var(--dt-light-muted) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup:hover {
+  background: rgba(245, 241, 235, 0.96) !important;
+  border-color: rgba(232, 228, 222, 0.92) !important;
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItemActive,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive {
+  background: rgba(240, 237, 231, 0.98) !important;
+  border-color: rgba(232, 228, 222, 0.98) !important;
+  border-radius: 999px !important;
+  color: var(--dt-light-text) !important;
+  box-shadow: none !important;
+}
+
+/* Final light chat/dock harmony override */
+:root[data-theme="light"] .lightDock {
+  background: rgba(246, 242, 236, 0.97) !important;
+  border-color: rgba(232, 228, 222, 0.98) !important;
+}
+
+:root[data-theme="light"] .lightDockButton,
+:root[data-theme="light"] .lightDockButtonLink {
+  color: var(--dt-light-muted) !important;
+}
+
+:root[data-theme="light"] .lightDockButton:hover,
+:root[data-theme="light"] .lightDockButtonLink:hover {
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive {
+  color: rgba(62, 49, 39, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive::before {
+  background: rgba(195, 90, 44, 0.08) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow {
+  background: rgba(255, 255, 255, 0.978) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
+  border-bottom: 0 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(232, 228, 222, 0.9) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::after,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap::before {
+  display: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionList,
+:root[data-theme="light"] .lightChatWindow .assistantThread,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
+  background: rgba(252, 251, 248, 0.94) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionList {
+  padding: 0 18px 10px 18px !important;
+  gap: 8px !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  color: var(--dt-light-muted) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup:hover {
+  background: rgba(245, 241, 235, 0.96) !important;
+  border-color: rgba(232, 228, 222, 0.92) !important;
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItemActive,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive {
+  background: rgba(240, 237, 231, 0.98) !important;
+  border-color: rgba(232, 228, 222, 0.98) !important;
+  border-radius: 999px !important;
+  color: var(--dt-light-text) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
+  border-top: 1px solid rgba(232, 228, 222, 0.9) !important;
+  padding-top: 12px !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantSendButtonIcon {
+  align-self: flex-end !important;
+  margin-right: 6px !important;
+  margin-bottom: 2px !important;
+  box-shadow: 0 10px 18px rgba(195, 90, 44, 0.12) !important;
+}
+
+/* Final light dock/chat overrides */
+:root[data-theme="light"] .lightDock .lightDockButton,
+:root[data-theme="light"] .lightDock .lightDockButtonLink {
+  color: var(--dt-light-muted) !important;
+}
+
+:root[data-theme="light"] .lightDock .lightDockButton:hover,
+:root[data-theme="light"] .lightDock .lightDockButtonLink:hover {
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive {
+  color: rgba(62, 49, 39, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive::before {
+  background: rgba(195, 90, 44, 0.08) !important;
+  box-shadow: inset 0 0 0 1px rgba(195, 90, 44, 0.1) !important;
+}
+
+/* Tight light-chat cleanup */
+:root[data-theme="light"] .lightDock {
+  background: rgba(246, 242, 236, 0.97) !important;
+  border-color: rgba(232, 228, 222, 0.98) !important;
+}
+
+:root[data-theme="light"] .lightDockButton,
+:root[data-theme="light"] .lightDockButtonLink {
+  color: var(--dt-light-muted) !important;
+}
+
+:root[data-theme="light"] .lightDockButton:hover,
+:root[data-theme="light"] .lightDockButtonLink:hover {
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive {
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive::before {
+  background: rgba(195, 90, 44, 0.12) !important;
+  box-shadow: inset 0 0 0 1px rgba(195, 90, 44, 0.12) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(232, 228, 222, 0.9) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::after,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap::before {
+  display: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionList {
+  padding: 0 18px 10px 18px !important;
+  gap: 10px !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--dt-light-muted) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup:hover {
+  background: transparent !important;
+  color: var(--dt-light-text) !important;
+  border: 0 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItemActive,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive {
+  background: transparent !important;
+  color: var(--dt-light-text) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: inset 0 -1.5px 0 rgba(195, 90, 44, 0.58) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
+  border-top: 1px solid rgba(232, 228, 222, 0.9) !important;
+  padding-top: 12px !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantComposer {
+  padding: 0 0 2px !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantSendButtonIcon {
+  align-self: flex-end !important;
+  margin-right: 6px !important;
+  margin-bottom: 2px !important;
+  box-shadow: 0 10px 18px rgba(195, 90, 44, 0.12) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive {
+  color: rgba(62, 49, 39, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive::before {
+  background: rgba(195, 90, 44, 0.08) !important;
+  box-shadow: inset 0 0 0 1px rgba(195, 90, 44, 0.1) !important;
+}
+
+:root[data-theme="light"] .chatMessage-user .chatBubble,
+:root[data-theme="light"] .workspaceShellLightDockMode .chatMessage-user .chatBubble {
+  background: linear-gradient(180deg, rgba(247, 243, 237, 0.98), rgba(240, 237, 231, 0.98)) !important;
+  border-color: rgba(224, 213, 203, 0.96) !important;
+  box-shadow: 0 1px 6px rgba(45, 43, 40, 0.03) !important;
+}
+
+:root[data-theme="light"] .lightDock {
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  background: rgba(240, 237, 231, 0.96) !important;
+  box-shadow:
+    0 1px 8px rgba(0, 0, 0, 0.03),
+    0 10px 24px rgba(45, 43, 40, 0.05) !important;
+}
+
+:root[data-theme="light"] .lightDockButton,
+:root[data-theme="light"] .lightDockButtonLink {
+  color: var(--dt-light-muted) !important;
+}
+
+:root[data-theme="light"] .lightDockButton::before,
+:root[data-theme="light"] .lightDockButtonLink::before {
+  background: rgba(250, 249, 246, 0.72) !important;
+}
+
+:root[data-theme="light"] .lightDockButton:hover,
+:root[data-theme="light"] .lightDockButtonLink:hover {
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive {
+  color: var(--dt-light-primary) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive::before {
+  background: rgba(195, 90, 44, 0.1) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceWindow {
+  background: rgba(240, 237, 231, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceExplorerBody {
+  background: transparent !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolder {
+  border-color: transparent !important;
+  border-bottom-color: rgba(232, 228, 222, 0.9) !important;
+  background: transparent !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolder:hover {
+  background: rgba(250, 249, 246, 0.68) !important;
+  border-color: rgba(232, 228, 222, 0.9) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderActive,
+:root[data-theme="light"] .lightWorkspaceFolderOpen {
+  background: rgba(250, 249, 246, 0.82) !important;
+  border-color: rgba(232, 228, 222, 0.94) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderTitle {
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderSubtle,
+:root[data-theme="light"] .lightWorkspaceTopicState,
+:root[data-theme="light"] .lightWorkspaceFolderAction {
+  color: var(--dt-light-muted) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderAction:hover,
+:root[data-theme="light"] .lightWorkspaceFolderActionActive {
+  background: rgba(250, 249, 246, 0.8) !important;
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicItem:hover {
+  background: rgba(250, 249, 246, 0.74) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicItemActive {
+  background: rgba(195, 90, 44, 0.08) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicLabel {
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderCount,
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton {
+  background: rgba(195, 90, 44, 0.08) !important;
+  border-color: rgba(195, 90, 44, 0.16) !important;
+  color: var(--dt-light-primary) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton:hover {
+  background: rgba(195, 90, 44, 0.12) !important;
+  color: #ab4d24 !important;
+}
+
+/* Chat-only harmony pass: keep workspace palette, lighten chat surfaces */
+:root[data-theme="light"] .lightDock {
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  background: rgba(240, 237, 231, 0.96) !important;
+  box-shadow:
+    0 1px 8px rgba(0, 0, 0, 0.03),
+    0 10px 24px rgba(45, 43, 40, 0.05) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceWindow {
+  border-radius: 22px !important;
+  border: 1px solid rgba(223, 214, 203, 0.96) !important;
+  background: rgba(249, 245, 239, 0.965) !important;
+  box-shadow:
+    0 20px 44px rgba(112, 84, 58, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.74) inset !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceExplorerBody {
+  background:
+    linear-gradient(180deg, rgba(248, 244, 238, 0.95) 0%, rgba(245, 240, 233, 0.94) 100%) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolder {
+  border-color: transparent !important;
+  border-bottom-color: rgba(228, 220, 211, 0.84) !important;
+  background: transparent !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolder:hover {
+  background: rgba(255, 251, 246, 0.56) !important;
+  border-color: rgba(216, 199, 184, 0.42) !important;
+  border-bottom-color: rgba(216, 199, 184, 0.46) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderActive {
+  background: rgba(255, 250, 245, 0.46) !important;
+  border-color: rgba(215, 184, 163, 0.3) !important;
+  border-bottom-color: rgba(215, 184, 163, 0.44) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderOpen {
+  background: rgba(255, 252, 247, 0.68) !important;
+  border-color: rgba(216, 199, 184, 0.48) !important;
+  border-bottom-color: rgba(216, 199, 184, 0.48) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderAction:hover,
+:root[data-theme="light"] .lightWorkspaceFolderActionActive {
+  background: rgba(250, 249, 246, 0.8) !important;
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicItem:hover {
+  background: rgba(250, 249, 246, 0.74) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceTopicItemActive {
+  background: rgba(195, 90, 44, 0.08) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow {
+  background: rgba(250, 249, 246, 0.982) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow:
+    0 1px 8px rgba(0, 0, 0, 0.03),
+    0 14px 28px rgba(45, 43, 40, 0.05) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
+  border-bottom: 1px solid rgba(232, 228, 222, 0.7) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap,
+:root[data-theme="light"] .lightChatWindow .assistantThread,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap,
+:root[data-theme="light"] .workspaceShellLightDockMode .lightChatWindow .assistantThread,
+:root[data-theme="light"] .workspaceShellLightDockMode .lightChatWindow .assistantComposerWrap {
+  background: var(--dt-light-bg) !important;
+}
+
+:root[data-theme="light"] .assistantTemplates {
+  gap: 8px !important;
+  padding-bottom: 4px !important;
+}
+
+:root[data-theme="light"] .assistantTemplate,
+:root[data-theme="light"] .webGroundingToggle,
+:root[data-theme="light"] .groundingToggle {
+  background: var(--dt-light-secondary) !important;
+  border: 1px solid transparent !important;
+  color: var(--dt-light-muted) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.62) !important;
+}
+
+:root[data-theme="light"] .assistantTemplate:hover,
+:root[data-theme="light"] .webGroundingToggle:hover,
+:root[data-theme="light"] .groundingToggle:hover {
+  background: rgba(250, 249, 246, 0.92) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  color: var(--dt-light-text) !important;
+}
+
+:root[data-theme="light"] .assistantComposerWrap,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap {
+  background: var(--dt-light-bg) !important;
+}
+
+:root[data-theme="light"] .assistantComposerWrap::before,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap::before {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(250, 249, 246, 0.08) 22%,
+    rgba(250, 249, 246, 0.2) 42%,
+    rgba(250, 249, 246, 0.44) 64%,
+    rgba(250, 249, 246, 0.72) 84%,
+    #faf9f6 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .assistantComposer,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposer {
+  background: var(--dt-light-card) !important;
+  border: 1px solid var(--dt-light-border) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.03) !important;
+}
+
+:root[data-theme="light"] .assistantInput,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput {
+  color: var(--dt-light-text) !important;
+  padding: 16px 18px !important;
+}
+
+:root[data-theme="light"] .assistantInput::placeholder,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput::placeholder {
+  color: var(--dt-light-muted) !important;
+}
+
+:root[data-theme="light"] .chatBubble,
+:root[data-theme="light"] .workspaceShellLightDockMode .chatBubble {
+  background: var(--dt-light-card) !important;
+  border: 1px solid var(--dt-light-border) !important;
+  color: var(--dt-light-text) !important;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.03) !important;
+}
+/* EOF ultimate override */
+:root[data-theme="light"] .lightDockButtonActive {
+  color: rgba(62, 49, 39, 0.96) !important;
+  background: rgba(195, 90, 44, 0.12) !important;
+  border-radius: 999px !important;
+}
+:root[data-theme="light"] .lightDockButtonActive::before {
+  opacity: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .lightChatWindow {
+  background: rgba(250, 249, 246, 0.982) !important;
+}
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
+  background: rgba(250, 249, 246, 0.982) !important;
+  border-bottom: 0 !important;
+}
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  background: rgba(250, 249, 246, 0.982) !important;
+  border-bottom: 1px solid rgba(232, 228, 222, 0.9) !important;
+}
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::after,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap::before {
+  display: none !important;
+}
+:root[data-theme="light"] .lightChatWindow .sessionList,
+:root[data-theme="light"] .lightChatWindow .assistantThread,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
+  background: rgba(252, 251, 248, 0.94) !important;
+}
+:root[data-theme="light"] .lightChatWindow .sessionItem,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  color: var(--dt-light-muted) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .lightChatWindow .sessionItem:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup:hover {
+  background: rgba(245, 241, 235, 0.96) !important;
+  border-color: rgba(232, 228, 222, 0.92) !important;
+  color: var(--dt-light-text) !important;
+}
+:root[data-theme="light"] .lightChatWindow .sessionItemActive,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive {
+  background: rgba(240, 237, 231, 0.98) !important;
+  border-color: rgba(232, 228, 222, 0.98) !important;
+  border-radius: 999px !important;
+  color: var(--dt-light-text) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .lightChatWindow .assistantComposer {
+  position: relative !important;
+}
+:root[data-theme="light"] .lightChatWindow .assistantInput {
+  min-height: 108px !important;
+  padding-right: 54px !important;
+  padding-bottom: 18px !important;
+}
+:root[data-theme="light"] .lightChatWindow .assistantSendButtonIcon {
+  position: absolute !important;
+  right: 12px !important;
+  bottom: 12px !important;
+  width: 29px !important;
+  min-width: 29px !important;
+  height: 29px !important;
+  padding: 7px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: rgb(195, 90, 44) !important;
+  color: rgb(255, 255, 255) !important;
+  box-shadow: 0 4px 12px rgba(195, 90, 44, 0.15) !important;
+  align-self: auto !important;
+}
+:root[data-theme="light"] .lightChatWindow .assistantSendButtonIcon:hover:not(:disabled) {
+  background: rgb(195, 90, 44) !important;
+  border: 0 !important;
+  box-shadow: 0 6px 16px rgba(195, 90, 44, 0.22) !important;
+}
+:root[data-theme="light"] .lightDockButtonActive::before,
+:root[data-theme="light"] .lightDock .lightDockButtonActive::before,
+:root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive::before {
+  display: none !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .lightChatWindow .assistantComposer .assistantSendButton.assistantSendButtonIcon {
+  background: rgb(195, 90, 44) !important;
+  border: 0 !important;
+  box-shadow: 0 4px 12px rgba(195, 90, 44, 0.15) !important;
+}
+:root[data-theme="light"] .lightChatWindow .assistantComposer .assistantSendButton.assistantSendButtonIcon svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChip {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  color: var(--dt-light-muted) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChip:hover {
+  background: rgba(245, 241, 235, 0.96) !important;
+  border: 1px solid rgba(232, 228, 222, 0.92) !important;
+  border-radius: 999px !important;
+  color: var(--dt-light-text) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive:hover {
+  background: rgba(240, 237, 231, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  border-radius: 999px !important;
+  color: var(--dt-light-text) !important;
+  box-shadow: none !important;
+}
+
+/* EOF cleanup: strip chat artifacts + readable topic popover */
+:root[data-theme="light"] .lightChatWindow .assistantThread {
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantThread::-webkit-scrollbar {
+  display: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionShadow::after,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap::before,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::after {
+  display: none !important;
+  background: none !important;
+}
+
+:root[data-theme="light"] .topicPopoverLinkKind,
+:root[data-theme="light"] .topicPopoverArtifactKind {
+  color: rgba(139, 133, 128, 0.92) !important;
+}
+
+:root[data-theme="light"] .topicPopoverArtifactBody {
+  color: rgba(45, 43, 40, 0.76) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceFolderAction:hover,
+:root[data-theme="light"] .lightWorkspaceFolderActionActive,
+:root[data-theme="light"] .topicPopoverInlineAddButton:hover,
+:root[data-theme="light"] .topicPopoverInlineAddButton:focus-visible,
+:root[data-theme="light"] .topicPopoverClose:hover,
+:root[data-theme="light"] .topicPopoverClose:focus-visible {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* EOF light-theme de-glass pass */
+:root[data-theme="light"] .lightChatWindow .assistantTemplate,
+:root[data-theme="light"] .lightChatWindow .webGroundingToggle,
+:root[data-theme="light"] .lightChatWindow .groundingToggle {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border: 1px solid rgba(232, 228, 222, 0.92) !important;
+  color: rgba(139, 133, 128, 0.92) !important;
+  box-shadow: none !important;
+  transition: color 140ms ease, border-color 140ms ease, background-color 140ms ease !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantTemplate:hover,
+:root[data-theme="light"] .lightChatWindow .webGroundingToggle:hover,
+:root[data-theme="light"] .lightChatWindow .groundingToggle:hover {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border-color: rgba(232, 228, 222, 0.92) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantTemplateActive,
+:root[data-theme="light"] .lightChatWindow .webGroundingToggle.active,
+:root[data-theme="light"] .lightChatWindow .groundingToggleActive {
+  background: rgba(240, 237, 231, 0.98) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .webGroundingToggle {
+  background: rgba(195, 90, 44, 0.08) !important;
+  border: 1px solid rgba(195, 90, 44, 0.16) !important;
+  color: rgba(131, 55, 24, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .webGroundingToggle:hover {
+  background: rgba(195, 90, 44, 0.12) !important;
+  border-color: rgba(195, 90, 44, 0.2) !important;
+  color: rgba(111, 44, 17, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .webGroundingToggle.active {
+  background: rgba(195, 90, 44, 0.14) !important;
+  border-color: rgba(195, 90, 44, 0.2) !important;
+  color: rgba(111, 44, 17, 0.98) !important;
+}
+
+:root[data-theme="light"] .proposalAddButton,
+:root[data-theme="light"] .proposalAddButton:hover,
+:root[data-theme="light"] .proposalAddButton[title="Applied"] {
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="light"] .proposalAddButton[title="Applied"] {
+  background: rgba(195, 90, 44, 0.08) !important;
+  border-color: rgba(195, 90, 44, 0.14) !important;
+  color: rgba(195, 90, 44, 0.96) !important;
+}
+
+:root[data-theme="light"] .assistantHello {
+  min-height: 220px !important;
+  gap: 12px !important;
+  padding: 20px 12px 6px !important;
+}
+
+:root[data-theme="light"] .assistantHelloTitle {
+  font-family: var(--heading) !important;
+  font-size: 36px !important;
+  font-weight: 500 !important;
+  line-height: 1.02 !important;
+  letter-spacing: -0.01em !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .assistantHelloCopy {
+  font-family: var(--sans) !important;
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+  max-width: 30ch !important;
+  color: rgba(139, 133, 128, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton {
+  background: rgba(240, 237, 231, 0.78) !important;
+  border: 0 !important;
+  color: rgba(62, 49, 39, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton:hover {
+  background: rgba(240, 237, 231, 0.92) !important;
+  border: 0 !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceGlyph {
+  color: rgba(195, 90, 44, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton {
+  background: rgba(240, 237, 231, 0.78) !important;
+  border: 0 !important;
+  color: rgba(62, 49, 39, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:hover {
+  background: rgba(240, 237, 231, 0.92) !important;
+  border: 0 !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantTemplate:not(.webGroundingToggle) {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border: 1px solid rgba(232, 228, 222, 0.92) !important;
+  color: rgba(139, 133, 128, 0.92) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantTemplate:not(.webGroundingToggle):hover {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border-color: rgba(232, 228, 222, 0.92) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .floatingStatusButton,
+:root[data-theme="light"] .floatingStatusButtonActive {
+  background: rgba(240, 237, 231, 0.9) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: rgba(139, 133, 128, 0.96) !important;
+}
+
+:root[data-theme="light"] .floatingStatusButton:hover,
+:root[data-theme="light"] .floatingStatusButtonActive:hover {
+  background: rgba(240, 237, 231, 0.96) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .floatingStatusButtonActive svg,
+:root[data-theme="light"] .floatingStatusButton svg {
+  color: currentColor !important;
+}
+
+/* EOF restore chat separator */
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  background: rgba(250, 249, 246, 0.98) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
+  border-bottom: 0 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  border-bottom: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: inset 0 -1px 0 rgba(232, 228, 222, 0.96) !important;
+}
+
+/* EOF modal pass: light dialogs follow chat background, not white glass */
+:root[data-theme="light"] .quizModal,
+:root[data-theme="light"] .topicAssetModal {
+  background: rgba(250, 249, 246, 0.982) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: 0 18px 40px rgba(45, 43, 40, 0.08) !important;
+}
+
+:root[data-theme="light"] .quizModalHeader,
+:root[data-theme="light"] .topicAssetModal .quizModalHeader,
+:root[data-theme="light"] .quizModalBody,
+:root[data-theme="light"] .topicAssetModalBody {
+  background: rgba(250, 249, 246, 0.982) !important;
+}
+
+:root[data-theme="light"] .quizModalHeader::after,
+:root[data-theme="light"] .topicAssetModal .quizModalHeader::after {
+  display: none !important;
+}
+
+:root[data-theme="light"] .quizModal .input,
+:root[data-theme="light"] .quizModal select.input,
+:root[data-theme="light"] .quizModal .textarea,
+:root[data-theme="light"] .topicAssetTextInput,
+:root[data-theme="light"] .topicAssetResourceInput {
+  background: rgba(250, 249, 246, 0.982) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+  font-family: var(--sans) !important;
+}
+
+:root[data-theme="light"] .topicAssetResourceInput {
+  min-height: 56px !important;
+  line-height: 1.5 !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+
+:root[data-theme="light"] .topicAssetModalBody {
+  gap: 12px !important;
+}
+
+:root[data-theme="light"] .topicAssetField {
+  gap: 4px !important;
+}
+
+:root[data-theme="light"] .topicAssetFieldLabel,
+:root[data-theme="light"] .topicAssetTopicTitle {
+  color: rgba(139, 133, 128, 0.96) !important;
+  font-family: var(--sans) !important;
+}
+
+:root[data-theme="light"] .quizModal .btn.btnImport,
+:root[data-theme="light"] .quizModal .btn.btnImportWide,
+:root[data-theme="light"] .topicAssetSaveButton {
+  background: rgba(240, 237, 231, 0.96) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  color: rgba(62, 49, 39, 0.96) !important;
+  box-shadow: none !important;
+  font-family: var(--sans) !important;
+}
+
+:root[data-theme="light"] .quizModal .btn.btnImport:hover,
+:root[data-theme="light"] .quizModal .btn.btnImportWide:hover,
+:root[data-theme="light"] .topicAssetSaveButton:hover {
+  background: rgba(245, 241, 235, 0.98) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .topicAssetModal .topicAssetSaveButton,
+:root[data-theme="light"] .topicAssetModal .topicAssetSaveButton:hover,
+:root[data-theme="light"] .topicAssetModal .topicAssetSaveButton:disabled {
+  background: rgba(240, 237, 231, 0.96) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  color: rgba(62, 49, 39, 0.96) !important;
+  box-shadow: none !important;
+}
+
+/* EOF targeted settings + snapshots tone sync */
+:root[data-theme="light"] .settingsModal,
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .settingsContentScroll,
+:root[data-theme="light"] .settingsSnapshotsCard,
+:root[data-theme="light"] .snapshotsCard,
+:root[data-theme="light"] .snapshotsCard .cardBody,
+:root[data-theme="light"] .snapshotsScrollContainer {
+  background: rgba(250, 249, 246, 0.982) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="light"] .settingsModal,
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .settingsSnapshotsCard,
+:root[data-theme="light"] .snapshotsCard {
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  box-shadow: 0 18px 40px rgba(45, 43, 40, 0.08) !important;
+}
+
+:root[data-theme="light"] .settingsContentHeader::after,
+:root[data-theme="light"] .settingsFooterBar,
+:root[data-theme="light"] .card::after {
+  display: none !important;
+  background: none !important;
+}
+
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .settingsSnapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listActions,
+:root[data-theme="light"] .settingsToggleRow,
+:root[data-theme="light"] .settingsInlineNotice,
+:root[data-theme="light"] .inlineNotice {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border-color: rgba(232, 228, 222, 0.92) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsModal .modalCloseButton,
+:root[data-theme="light"] .settingsModal .modalCloseButton:hover,
+:root[data-theme="light"] .settingsModal .modalCloseButton:focus-visible {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* EOF keep chat separator visible */
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  border-bottom: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: inset 0 -1px 0 rgba(232, 228, 222, 0.96) !important;
+}
+
+/* EOF final settings fix */
+:root[data-theme="light"] .settingsModal,
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .settingsContentScroll {
+  background: rgba(250, 249, 246, 0.982) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .settingsSnapshotsCard,
+:root[data-theme="light"] .snapshotsCard,
+:root[data-theme="light"] .snapshotsCard .cardBody,
+:root[data-theme="light"] .snapshotsScrollContainer {
+  background: rgba(250, 249, 246, 0.982) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsSnapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listActions,
+:root[data-theme="light"] .settingsToggleRow,
+:root[data-theme="light"] .settingsInlineNotice,
+:root[data-theme="light"] .inlineNotice,
+:root[data-theme="light"] .thinkingModeChip {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border-color: rgba(232, 228, 222, 0.92) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .thinkingModeChip:hover,
+:root[data-theme="light"] .listItem:hover,
+:root[data-theme="light"] .settingsToggleRow:hover {
+  background: rgba(245, 241, 235, 0.96) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .thinkingModeChipActive {
+  background: rgba(240, 237, 231, 0.98) !important;
+  border-color: rgba(232, 228, 222, 0.98) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsModal .input,
+:root[data-theme="light"] .settingsModal select.input,
+:root[data-theme="light"] .settingsModal .textarea {
+  background: rgba(250, 249, 246, 0.982) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsModal .input:focus,
+:root[data-theme="light"] .settingsModal select.input:focus,
+:root[data-theme="light"] .settingsModal .textarea:focus {
+  background: rgba(250, 249, 246, 0.982) !important;
+  border-color: rgba(195, 90, 44, 0.24) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsSnapshotsCard .btn,
+:root[data-theme="light"] .snapshotsCard .btn,
+:root[data-theme="light"] .listActions .btn,
+:root[data-theme="light"] .settingsModal .btn.btn-sm {
+  background: rgba(240, 237, 231, 0.96) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  color: rgba(62, 49, 39, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsSnapshotsCard .btn:hover,
+:root[data-theme="light"] .snapshotsCard .btn:hover,
+:root[data-theme="light"] .listActions .btn:hover,
+:root[data-theme="light"] .settingsModal .btn.btn-sm:hover {
+  background: rgba(245, 241, 235, 0.98) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+  box-shadow: none !important;
+}
+
+/* EOF restore light theme contract */
+:root[data-theme="light"] .quizOverlay.settingsOverlay,
+:root[data-theme="light"] .debugLogsOverlay,
+:root[data-theme="light"] .quizOverlay {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="light"] .topicAssetModal .modalCloseButton,
+:root[data-theme="light"] .quizModal .modalCloseButton,
+:root[data-theme="light"] .settingsModal .modalCloseButton,
+:root[data-theme="light"] .topicPopoverClose {
+  width: 22px !important;
+  height: 22px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .topicAssetModal .modalCloseButton:hover,
+:root[data-theme="light"] .topicAssetModal .modalCloseButton:focus-visible,
+:root[data-theme="light"] .quizModal .modalCloseButton:hover,
+:root[data-theme="light"] .quizModal .modalCloseButton:focus-visible,
+:root[data-theme="light"] .settingsModal .modalCloseButton:hover,
+:root[data-theme="light"] .settingsModal .modalCloseButton:focus-visible,
+:root[data-theme="light"] .topicPopoverClose:hover,
+:root[data-theme="light"] .topicPopoverClose:focus-visible {
+  background: transparent !important;
+  box-shadow: none !important;
+  outline-color: rgba(195, 90, 44, 0.22) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow,
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap,
+:root[data-theme="light"] .lightChatWindow .assistantThread,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap,
+:root[data-theme="light"] .topicPopover,
+:root[data-theme="light"] .topicPopoverHeader {
+  background: var(--light-flat-bg) !important;
+}
+
+:root[data-theme="light"] .topicPopover {
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  box-shadow: 0 18px 40px rgba(45, 43, 40, 0.08) !important;
+}
+
+:root[data-theme="light"] .topicPopover::after {
+  background: var(--light-flat-bg) !important;
+  border-top-color: rgba(232, 228, 222, 0.96) !important;
+  border-right-color: rgba(232, 228, 222, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  border-bottom: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: inset 0 -1px 0 rgba(232, 228, 222, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton,
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(32, 174, 104, 0.28) !important;
+  background: rgba(32, 174, 104, 0.12) !important;
+  color: #235f41 !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton:hover,
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:hover {
+  border-color: rgba(32, 174, 104, 0.38) !important;
+  background: rgba(32, 174, 104, 0.18) !important;
+  color: #184831 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceGlyph {
+  color: inherit !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+}
+
+:root[data-theme="light"] .settingsModal,
+:root[data-theme="light"] .settingsContent,
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .settingsContentScroll,
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .settingsPanelHeader,
+:root[data-theme="light"] .settingsPanelBody,
+:root[data-theme="light"] .snapshotsScrollContainer {
+  background: var(--light-soft-bg) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="light"] .settingsSnapshotsCard,
+:root[data-theme="light"] .snapshotsCard {
+  background: var(--light-flat-bg) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .snapshotsCard .cardBody {
+  background: var(--light-flat-bg) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsContentHeader::after,
+:root[data-theme="light"] .settingsFooterBar,
+:root[data-theme="light"] .card::after,
+:root[data-theme="light"] .quizModalHeader::after {
+  display: none !important;
+  background: none !important;
+}
+
+:root[data-theme="light"] .settingsModal .input,
+:root[data-theme="light"] .settingsModal select.input,
+:root[data-theme="light"] .settingsModal .textarea,
+:root[data-theme="light"] .settingsModal .btn,
+:root[data-theme="light"] .settingsModal .btn.btn-sm,
+:root[data-theme="light"] .settingsModal .thinkingModeChip,
+:root[data-theme="light"] .settingsModal .settingsToggleRow,
+:root[data-theme="light"] .settingsModal .settingsInlineNotice,
+:root[data-theme="light"] .settingsModal .inlineNotice,
+:root[data-theme="light"] .settingsSnapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listActions {
+  background: var(--light-soft-bg) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsSnapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listActions,
+:root[data-theme="light"] .settingsSnapshotsCard .btn,
+:root[data-theme="light"] .snapshotsCard .btn {
+  background: var(--light-soft-bg) !important;
+}
+
+:root[data-theme="light"] .settingsModal .input:focus,
+:root[data-theme="light"] .settingsModal select.input:focus,
+:root[data-theme="light"] .settingsModal .textarea:focus,
+:root[data-theme="light"] .settingsModal .btn:hover,
+:root[data-theme="light"] .settingsModal .btn.btn-sm:hover,
+:root[data-theme="light"] .settingsModal .thinkingModeChip:hover,
+:root[data-theme="light"] .settingsSnapshotsCard .listItem:hover,
+:root[data-theme="light"] .snapshotsCard .listItem:hover {
+  background: var(--light-soft-hover) !important;
+  border-color: rgba(232, 228, 222, 0.98) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsSnapshotsCard .listItem:hover,
+:root[data-theme="light"] .snapshotsCard .listItem:hover,
+:root[data-theme="light"] .settingsSnapshotsCard .btn:hover,
+:root[data-theme="light"] .snapshotsCard .btn:hover {
+  background: var(--light-soft-bg) !important;
+}
+
+/* EOF hover stability + workspace button parity */
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton,
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton {
+  width: auto !important;
+  height: 34px !important;
+  min-width: 0 !important;
+  justify-content: center !important;
+  padding: 0 12px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  background: rgba(240, 237, 231, 0.96) !important;
+  color: rgba(62, 49, 39, 0.96) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  transform: none !important;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton:hover,
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:hover {
+  background: rgba(245, 241, 235, 0.98) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+  transform: none !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceGlyph {
+  color: inherit !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChip {
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 30px !important;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  box-sizing: border-box !important;
+  line-height: 1.1 !important;
+  transform: none !important;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItemLabel,
+:root[data-theme="light"] .lightChatWindow .sessionItemInline,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChip {
+  transform: none !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.01em !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup:hover,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChip:hover {
+  transform: none !important;
+}
+
+/* EOF settings background restore + no-hover-drift */
+:root[data-theme="light"] .settingsModal,
+:root[data-theme="light"] .settingsContent,
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .settingsContentScroll {
+  background: var(--light-flat-bg) !important;
+}
+
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .settingsPanelHeader,
+:root[data-theme="light"] .settingsPanelBody {
+  background: var(--light-soft-bg) !important;
+}
+
+:root[data-theme="light"] .settingsSnapshotsCard,
+:root[data-theme="light"] .snapshotsCard,
+:root[data-theme="light"] .snapshotsScrollContainer {
+  background: var(--light-soft-bg) !important;
+}
+
+:root[data-theme="light"] .snapshotsCard .cardBody,
+:root[data-theme="light"] .settingsSnapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listActions,
+:root[data-theme="light"] .settingsSnapshotsCard .btn,
+:root[data-theme="light"] .snapshotsCard .btn {
+  background: var(--light-flat-bg) !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton,
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  min-width: 0 !important;
+  padding: 0 12px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  justify-content: center !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  background: rgba(240, 237, 231, 0.96) !important;
+  color: rgba(62, 49, 39, 0.96) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  line-height: 1 !important;
+  transform: none !important;
+  box-shadow: none !important;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton:hover,
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:hover {
+  background: rgba(245, 241, 235, 0.98) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+  transform: none !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceGlyph {
+  color: inherit !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceWindow,
+:root[data-theme="light"] .lightWorkspaceWindowBody,
+:root[data-theme="light"] .lightWorkspaceExplorerBody {
+  background: var(--light-flat-bg) !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceWindowBody {
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+}
+
+:root[data-theme="light"] .lightWorkspaceWindowBody::-webkit-scrollbar,
+:root[data-theme="light"] .lightWorkspaceExplorerBody::-webkit-scrollbar {
+  display: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChip,
+:root[data-theme="light"] .lightChatWindow .sessionItemInline,
+:root[data-theme="light"] .lightChatWindow .sessionItemLabel,
+:root[data-theme="light"] .lightChatWindow .sessionItemNew {
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.1 !important;
+  transform: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup:hover,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChip:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemActive,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive {
+  transform: none !important;
+}
+
+/* Final light-theme pass: unify chat top strip + freeze workspace CTA hover */
+:root[data-theme="light"] .lightChatWindow {
+  background: var(--light-flat-bg) !important;
+  position: absolute !important;
+}
+
+:root[data-theme="light"] .lightChatWindow::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 0 auto 0 !important;
+  height: 112px !important;
+  background: #faf9f6 !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap,
+:root[data-theme="light"] .lightChatWindow .sessionList {
+  position: relative !important;
+  z-index: 1 !important;
+  background: #faf9f6 !important;
+  background-image: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  border-bottom: 1px solid rgba(232, 228, 222, 0.98) !important;
+  box-shadow: inset 0 -1px 0 rgba(232, 228, 222, 0.98) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::after {
+  background: linear-gradient(to right, #faf9f6, transparent) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::after {
+  background: linear-gradient(to left, #faf9f6, transparent) !important;
+}
+
+:root[data-theme="light"] .lightDock {
+  background: var(--light-flat-bg) !important;
+  border-color: rgba(232, 228, 222, 0.98) !important;
+  box-shadow:
+    0 1px 8px rgba(45, 43, 40, 0.04),
+    0 14px 28px rgba(45, 43, 40, 0.06) !important;
+}
+
+:root[data-theme="light"] .workspaceShellLightDockMode {
+  isolation: auto !important;
+}
+
+:root[data-theme="light"] .lightDockButton,
+:root[data-theme="light"] .lightDockButtonLink {
+  color: rgba(114, 108, 101, 0.92) !important;
+}
+
+:root[data-theme="light"] .lightDockButton:hover,
+:root[data-theme="light"] .lightDockButtonLink:hover {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightDockButton::before,
+:root[data-theme="light"] .lightDockButtonLink::before {
+  background: rgba(195, 90, 44, 0.1) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive,
+:root[data-theme="light"] .lightDockButtonActive:hover {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive::before,
+:root[data-theme="light"] .lightDock .lightDockButtonActive::before,
+:root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive::before {
+  background: rgba(195, 90, 44, 0.12) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton,
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  background: rgba(240, 237, 231, 0.96) !important;
+  color: rgba(62, 49, 39, 0.96) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+  font-family: var(--sans) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  transition: none !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton:hover,
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton:active,
+:root[data-theme="light"] .lightWindowCreateWorkspaceButton:focus-visible,
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:hover,
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:active,
+:root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:focus-visible {
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  background: rgba(240, 237, 231, 0.96) !important;
+  color: rgba(62, 49, 39, 0.96) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+  transition: none !important;
+}
+
+:root[data-theme="light"] .lightWindowCreateWorkspaceGlyph {
+  color: inherit !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+:root[data-theme="light"] .emptyStateShell::before {
+  background: linear-gradient(180deg, rgba(250, 249, 246, 0.02) 0%, rgba(250, 249, 246, 0.12) 72%, rgba(250, 249, 246, 0.2) 100%) !important;
+}
+
+:root[data-theme="light"] .emptyStateCanvas {
+  background: #faf9f6 !important;
+}
+
+:root[data-theme="light"] .emptyStateContent h2 {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .emptyStateContent p {
+  color: rgba(139, 133, 128, 0.96) !important;
+}
+
+:root[data-theme="light"] .emptyStateAction {
+  background: transparent !important;
+  color: var(--mm-accent-green) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .emptyStateAction:hover {
+  background: transparent !important;
+  color: var(--mm-accent-green-hover) !important;
+  border-color: transparent !important;
+}
+
+:root[data-theme="light"] .emptyStateAction:disabled {
+  background: transparent !important;
+  color: rgba(195, 90, 44, 0.56) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Final settings swap: section cards use the former background, shell uses the former card color */
+:root[data-theme="light"] .settingsModal,
+:root[data-theme="light"] .settingsContent,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .settingsContentScroll {
+  background: var(--light-soft-bg) !important;
+}
+
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .settingsPanelHeader,
+:root[data-theme="light"] .settingsPanelBody {
+  background: var(--light-flat-bg) !important;
+}
+
+/* Revert settings tabs to a neutral light style */
+:root[data-theme="light"] .settingsTab,
+:root[data-theme="light"] .settingsTab .sidebarIcon {
+  background: transparent !important;
+  color: rgba(17, 24, 39, 0.68) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsTab:hover {
+  background: rgba(17, 24, 39, 0.04) !important;
+  color: rgba(17, 24, 39, 0.9) !important;
+  border-color: transparent !important;
+}
+
+:root[data-theme="light"] .settingsTab:hover .sidebarIcon {
+  color: rgba(17, 24, 39, 0.82) !important;
+}
+
+:root[data-theme="light"] .settingsTabActive {
+  background: rgba(17, 24, 39, 0.06) !important;
+  color: rgba(17, 24, 39, 0.94) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsTabActive .sidebarIcon {
+  color: rgba(17, 24, 39, 0.88) !important;
+}
+
+/* Final settings/logs coexist + snapshot swap */
+:root[data-theme="light"] .settingsModal,
+:root[data-theme="light"] .settingsContent,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .settingsContentScroll {
+  background: var(--light-flat-bg) !important;
+}
+
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .settingsPanelHeader,
+:root[data-theme="light"] .settingsPanelBody,
+:root[data-theme="light"] .settingsSnapshotsCard,
+:root[data-theme="light"] .snapshotsCard,
+:root[data-theme="light"] .snapshotsScrollContainer {
+  background: var(--light-soft-bg) !important;
+}
+
+:root[data-theme="light"] .snapshotsCard .cardBody,
+:root[data-theme="light"] .settingsSnapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listActions,
+:root[data-theme="light"] .settingsSnapshotsCard .btn,
+:root[data-theme="light"] .snapshotsCard .btn {
+  background: var(--light-flat-bg) !important;
+}
+
+@media (min-width: 981px) {
+  :root[data-theme="light"] .settingsOverlayCoexisting {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    align-items: flex-start !important;
+    pointer-events: none !important;
+    padding-top: 28px !important;
+  }
+
+  :root[data-theme="light"] .settingsOverlayCoexisting .settingsModal {
+    pointer-events: auto !important;
+  }
+
+  :root[data-theme="light"] .settingsOverlaySettings {
+    justify-content: flex-start !important;
+    padding-left: 28px !important;
+    padding-right: min(50vw, 560px) !important;
+  }
+
+  :root[data-theme="light"] .settingsOverlayLogs {
+    justify-content: flex-end !important;
+    padding-left: min(50vw, 560px) !important;
+    padding-right: 28px !important;
+  }
+
+  :root[data-theme="light"] .settingsOverlayLogs .debugLogsModal {
+    width: min(920px, calc(100vw - 72px)) !important;
+    height: min(82vh, 760px) !important;
+  }
+}
+
+/* Absolute final settings color lock */
+:root[data-theme="light"] .settingsModal,
+:root[data-theme="light"] .settingsContent,
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .settingsContentScroll {
+  background: var(--light-flat-bg) !important;
+}
+
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .settingsPanelHeader,
+:root[data-theme="light"] .settingsPanelBody,
+:root[data-theme="light"] .settingsSnapshotsCard,
+:root[data-theme="light"] .snapshotsCard,
+:root[data-theme="light"] .snapshotsScrollContainer,
+:root[data-theme="light"] .snapshotsCard .cardBody,
+:root[data-theme="light"] .settingsSnapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listActions,
+:root[data-theme="light"] .settingsSnapshotsCard .btn,
+:root[data-theme="light"] .snapshotsCard .btn {
+  background: var(--light-flat-bg) !important;
+}
+
+:root[data-theme="light"] .settingsTab,
+:root[data-theme="light"] .settingsTab:hover,
+:root[data-theme="light"] .settingsTabActive {
+  background: var(--light-flat-bg) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsTab,
+:root[data-theme="light"] .settingsTab .sidebarIcon {
+  color: rgba(17, 24, 39, 0.68) !important;
+}
+
+:root[data-theme="light"] .settingsTab:hover,
+:root[data-theme="light"] .settingsTabActive {
+  color: rgba(17, 24, 39, 0.94) !important;
+}
+
+:root[data-theme="light"] .settingsTab:hover .sidebarIcon,
+:root[data-theme="light"] .settingsTabActive .sidebarIcon {
+  color: rgba(17, 24, 39, 0.88) !important;
+}
+
+/* DeepTutor settings light tokens for inputs/background */
+:root[data-theme="light"] .settingsModal,
+:root[data-theme="light"] .settingsContent,
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .settingsContentScroll,
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .settingsPanelHeader,
+:root[data-theme="light"] .settingsPanelBody {
+  background: #faf9f6 !important;
+}
+
+:root[data-theme="light"] .settingsModal .input,
+:root[data-theme="light"] .settingsModal select.input,
+:root[data-theme="light"] .settingsModal .textarea {
+  background: transparent !important;
+  color: #2d2b28 !important;
+  border: 1px solid #e8e4de !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsModal .input::placeholder,
+:root[data-theme="light"] .settingsModal .textarea::placeholder {
+  color: #8b8580 !important;
+}
+
+:root[data-theme="light"] .settingsModal .input:focus,
+:root[data-theme="light"] .settingsModal select.input:focus,
+:root[data-theme="light"] .settingsModal .textarea:focus {
+  background: transparent !important;
+  color: #2d2b28 !important;
+  border-color: #e8e4de !important;
+  box-shadow: none !important;
+}
+
+/* EOF final quiz swap for light theme */
+:root[data-theme="light"] .quizQuestion {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizPrompt,
+:root[data-theme="light"] .quizChoiceText,
+:root[data-theme="light"] .inlineQuizQuestion {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoice,
+:root[data-theme="light"] .inlineQuizChoice {
+  background: rgba(244, 239, 233, 0.82) !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  color: rgba(71, 85, 105, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizChoice:hover,
+:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled) {
+  background: rgba(246, 241, 236, 0.96) !important;
+  border-color: rgba(195, 90, 44, 0.22) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoiceSelected,
+:root[data-theme="light"] .quizChoiceSelected:hover {
+  background: rgba(195, 90, 44, 0.14) !important;
+  border-color: rgba(195, 90, 44, 0.3) !important;
+  color: rgba(120, 46, 17, 0.98) !important;
+}
+
+:root[data-theme="light"] .inlineQuizCard {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .inlineQuizCorrect {
+  background: rgba(45, 102, 72, 0.1) !important;
+  border-color: rgba(45, 102, 72, 0.22) !important;
+  color: rgba(45, 102, 72, 0.96) !important;
+}
+
+:root[data-theme="light"] .inlineQuizWrong {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .inlineQuizDimmed {
+  background: rgba(244, 239, 233, 0.54) !important;
+  border-color: rgba(232, 228, 222, 0.8) !important;
+  color: rgba(139, 133, 128, 0.9) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeSuccess {
+  background: rgba(45, 102, 72, 0.1) !important;
+  border-color: rgba(45, 102, 72, 0.22) !important;
+  color: rgba(45, 102, 72, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeError {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizReviewLine {
+  color: rgba(71, 85, 105, 0.92) !important;
+}
+
+:root[data-theme="light"] .quizReviewWrong {
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+/* True final quiz swap for light theme */
+:root[data-theme="light"] .quizQuestion {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizPrompt,
+:root[data-theme="light"] .quizChoiceText,
+:root[data-theme="light"] .inlineQuizQuestion {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoice,
+:root[data-theme="light"] .inlineQuizChoice {
+  background: rgba(244, 239, 233, 0.82) !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  color: rgba(71, 85, 105, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizChoice:hover,
+:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled) {
+  background: rgba(246, 241, 236, 0.96) !important;
+  border-color: rgba(195, 90, 44, 0.22) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoiceSelected,
+:root[data-theme="light"] .quizChoiceSelected:hover {
+  background: rgba(195, 90, 44, 0.14) !important;
+  border-color: rgba(195, 90, 44, 0.3) !important;
+  color: rgba(120, 46, 17, 0.98) !important;
+}
+
+:root[data-theme="light"] .inlineQuizCard {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .inlineQuizCorrect {
+  background: rgba(45, 102, 72, 0.1) !important;
+  border-color: rgba(45, 102, 72, 0.22) !important;
+  color: rgba(45, 102, 72, 0.96) !important;
+}
+
+:root[data-theme="light"] .inlineQuizWrong {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .inlineQuizDimmed {
+  background: rgba(244, 239, 233, 0.54) !important;
+  border-color: rgba(232, 228, 222, 0.8) !important;
+  color: rgba(139, 133, 128, 0.9) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeSuccess {
+  background: rgba(45, 102, 72, 0.1) !important;
+  border-color: rgba(45, 102, 72, 0.22) !important;
+  color: rgba(45, 102, 72, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeError {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizReviewLine {
+  color: rgba(71, 85, 105, 0.92) !important;
+}
+
+:root[data-theme="light"] .quizReviewWrong {
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+/* Absolute final quiz swap for light theme */
+:root[data-theme="light"] .quizQuestion {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizPrompt,
+:root[data-theme="light"] .quizChoiceText,
+:root[data-theme="light"] .inlineQuizQuestion {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoice,
+:root[data-theme="light"] .inlineQuizChoice {
+  background: rgba(244, 239, 233, 0.82) !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  color: rgba(71, 85, 105, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizChoice:hover,
+:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled) {
+  background: rgba(246, 241, 236, 0.96) !important;
+  border-color: rgba(195, 90, 44, 0.22) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoiceSelected,
+:root[data-theme="light"] .quizChoiceSelected:hover {
+  background: rgba(195, 90, 44, 0.14) !important;
+  border-color: rgba(195, 90, 44, 0.3) !important;
+  color: rgba(120, 46, 17, 0.98) !important;
+}
+
+:root[data-theme="light"] .inlineQuizCard {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .inlineQuizCorrect {
+  background: rgba(45, 102, 72, 0.1) !important;
+  border-color: rgba(45, 102, 72, 0.22) !important;
+  color: rgba(45, 102, 72, 0.96) !important;
+}
+
+:root[data-theme="light"] .inlineQuizWrong {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .inlineQuizDimmed {
+  background: rgba(244, 239, 233, 0.54) !important;
+  border-color: rgba(232, 228, 222, 0.8) !important;
+  color: rgba(139, 133, 128, 0.9) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeSuccess {
+  background: rgba(45, 102, 72, 0.1) !important;
+  border-color: rgba(45, 102, 72, 0.22) !important;
+  color: rgba(45, 102, 72, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeError {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizReviewLine {
+  color: rgba(71, 85, 105, 0.92) !important;
+}
+
+:root[data-theme="light"] .quizReviewWrong {
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+/* Absolute final quiz colors for light theme */
+:root[data-theme="light"] .quizQuestion {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizPrompt,
+:root[data-theme="light"] .quizChoiceText,
+:root[data-theme="light"] .inlineQuizQuestion {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoice,
+:root[data-theme="light"] .inlineQuizChoice {
+  background: rgba(244, 239, 233, 0.82) !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  color: rgba(71, 85, 105, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizChoice:hover,
+:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled) {
+  background: rgba(246, 241, 236, 0.96) !important;
+  border-color: rgba(195, 90, 44, 0.22) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoiceSelected,
+:root[data-theme="light"] .quizChoiceSelected:hover {
+  background: rgba(195, 90, 44, 0.14) !important;
+  border-color: rgba(195, 90, 44, 0.3) !important;
+  color: rgba(120, 46, 17, 0.98) !important;
+}
+
+:root[data-theme="light"] .inlineQuizCard {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .inlineQuizCorrect {
+  background: rgba(45, 102, 72, 0.1) !important;
+  border-color: rgba(45, 102, 72, 0.22) !important;
+  color: rgba(45, 102, 72, 0.96) !important;
+}
+
+:root[data-theme="light"] .inlineQuizWrong {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .inlineQuizDimmed {
+  background: rgba(244, 239, 233, 0.54) !important;
+  border-color: rgba(232, 228, 222, 0.8) !important;
+  color: rgba(139, 133, 128, 0.9) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeSuccess {
+  background: rgba(45, 102, 72, 0.1) !important;
+  border-color: rgba(45, 102, 72, 0.22) !important;
+  color: rgba(45, 102, 72, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeError {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizReviewLine {
+  color: rgba(71, 85, 105, 0.92) !important;
+}
+
+:root[data-theme="light"] .quizReviewWrong {
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+/* Final light-theme quiz pass: swap prompt/choice tones and keep review readable */
+:root[data-theme="light"] .quizQuestion {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizPrompt,
+:root[data-theme="light"] .quizChoiceText,
+:root[data-theme="light"] .inlineQuizQuestion {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoice,
+:root[data-theme="light"] .inlineQuizChoice {
+  background: rgba(244, 239, 233, 0.82) !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  color: rgba(71, 85, 105, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizChoice:hover,
+:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled) {
+  background: rgba(246, 241, 236, 0.96) !important;
+  border-color: rgba(195, 90, 44, 0.22) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoiceSelected,
+:root[data-theme="light"] .quizChoiceSelected:hover {
+  background: rgba(195, 90, 44, 0.14) !important;
+  border-color: rgba(195, 90, 44, 0.3) !important;
+  color: rgba(120, 46, 17, 0.98) !important;
+}
+
+:root[data-theme="light"] .inlineQuizCard {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .inlineQuizCorrect {
+  background: rgba(45, 102, 72, 0.1) !important;
+  border-color: rgba(45, 102, 72, 0.22) !important;
+  color: rgba(45, 102, 72, 0.96) !important;
+}
+
+:root[data-theme="light"] .inlineQuizWrong {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .inlineQuizDimmed {
+  background: rgba(244, 239, 233, 0.54) !important;
+  border-color: rgba(232, 228, 222, 0.8) !important;
+  color: rgba(139, 133, 128, 0.9) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeSuccess,
+:root[data-theme="light"] .quizModal .inlineNoticeError,
+:root[data-theme="light"] .quizReviewLine,
+:root[data-theme="light"] .quizReviewWrong {
+  color: inherit !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeSuccess {
+  background: rgba(45, 102, 72, 0.1) !important;
+  border-color: rgba(45, 102, 72, 0.22) !important;
+  color: rgba(45, 102, 72, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeError {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizReviewLine {
+  color: rgba(71, 85, 105, 0.92) !important;
+}
+
+:root[data-theme="light"] .quizReviewWrong {
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+/* Final logs pass: one flat list, no grouped columns/cards, no clipped top glow */
+.debugLogsModal {
+  width: min(1080px, calc(100vw - 56px)) !important;
+}
+
+.debugLogsList {
+  min-height: 0;
+  max-height: min(72vh, 780px);
+  overflow: auto;
+  padding: 14px 18px 18px !important;
+  display: block !important;
+}
+
+.debugLogsFlatList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.debugLogRow {
+  padding: 10px 0 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.debugLogRowLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.debugLogRowSource {
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.debugLogRowMethod,
+.debugLogRowStatus,
+.debugLogRowDuration {
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.debugLogRowPath {
+  color: rgba(255, 255, 255, 0.82);
+  word-break: break-word;
+}
+
+.debugLogRowTitle {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.debugLogRowMessage,
+.debugLogRowDetails pre {
+  margin: 6px 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.debugLogRowDetails {
+  margin-top: 6px;
+}
+
+.debugLogRowDetails summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.52);
+  text-transform: lowercase;
+}
+
+.debugLogRowDetailBlock {
+  margin-top: 8px;
+}
+
+.debugLogRowDetailLabel {
+  margin-bottom: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+:root[data-theme="light"] .debugLogsModal .settingsContentHeader::after {
+  display: none !important;
+}
+
+:root[data-theme="light"] .debugLogsModal,
+:root[data-theme="light"] .debugLogsModal .settingsContent,
+:root[data-theme="light"] .debugLogsModal .settingsContentHeader,
+:root[data-theme="light"] .debugLogsList {
+  background: #faf9f6 !important;
+}
+
+:root[data-theme="light"] .debugLogRow {
+  border-bottom-color: rgba(232, 228, 222, 0.92) !important;
+}
+
+:root[data-theme="light"] .debugLogRowLine {
+  color: rgba(139, 133, 128, 0.92) !important;
+}
+
+:root[data-theme="light"] .debugLogRowSource {
+  border-color: rgba(232, 228, 222, 0.98) !important;
+  background: rgba(244, 239, 233, 0.92) !important;
+  color: rgba(114, 108, 101, 0.96) !important;
+}
+
+:root[data-theme="light"] .debugLogRowMethod,
+:root[data-theme="light"] .debugLogRowStatus,
+:root[data-theme="light"] .debugLogRowDuration {
+  color: rgba(114, 108, 101, 0.92) !important;
+}
+
+:root[data-theme="light"] .debugLogRowPath,
+:root[data-theme="light"] .debugLogRowTitle {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .debugLogRowMessage,
+:root[data-theme="light"] .debugLogRowDetails pre {
+  color: rgba(71, 85, 105, 0.88) !important;
+}
+
+:root[data-theme="light"] .debugLogRowDetails summary,
+:root[data-theme="light"] .debugLogRowDetailLabel {
+  color: rgba(139, 133, 128, 0.88) !important;
+}
+
+/* Final quiz modal pass for light theme */
+:root[data-theme="light"] .quizModal {
+  background: #faf9f6 !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  box-shadow: 0 18px 38px rgba(45, 43, 40, 0.08) !important;
+}
+
+:root[data-theme="light"] .quizModalHeader,
+:root[data-theme="light"] .quizModalBody {
+  background: #faf9f6 !important;
+}
+
+:root[data-theme="light"] .quizModalHeader::after {
+  background: linear-gradient(
+    180deg,
+    rgba(250, 249, 246, 0.96) 0%,
+    rgba(250, 249, 246, 0.58) 56%,
+    rgba(250, 249, 246, 0) 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .quizModal .cardTitle,
+:root[data-theme="light"] .quizModal .quizPrompt,
+:root[data-theme="light"] .quizModal .badge,
+:root[data-theme="light"] .quizModal .badge-gray {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizQuestion {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizPrompt {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoice {
+  background: rgba(244, 239, 233, 0.82) !important;
+  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  color: rgba(71, 85, 105, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizChoice .quizChoiceText {
+  color: inherit !important;
+}
+
+:root[data-theme="light"] .quizChoice:hover {
+  background: rgba(246, 241, 236, 0.96) !important;
+  border-color: rgba(195, 90, 44, 0.22) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoiceSelected,
+:root[data-theme="light"] .quizChoiceSelected:hover {
+  background: rgba(195, 90, 44, 0.12) !important;
+  border-color: rgba(195, 90, 44, 0.3) !important;
+  color: rgba(120, 46, 17, 0.98) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNotice,
+:root[data-theme="light"] .quizModal .inlineNoticeNeutral {
+  background: rgba(244, 239, 233, 0.72) !important;
+  border-color: rgba(232, 228, 222, 0.98) !important;
+  color: rgba(71, 85, 105, 0.92) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeError {
+  background: rgba(220, 38, 38, 0.08) !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizModal .inlineNoticeSuccess {
+  background: rgba(45, 102, 72, 0.1) !important;
+  border-color: rgba(45, 102, 72, 0.22) !important;
+  color: rgba(45, 102, 72, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizReviewLine {
+  color: rgba(71, 85, 105, 0.92) !important;
+}
+
+:root[data-theme="light"] .quizReviewWrong {
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+/* Final logs redesign: flat grouped list instead of cards */
+.debugLogsModal {
+  width: min(1080px, calc(100vw - 56px)) !important;
+}
+
+.debugLogsList {
+  min-height: 0;
+  max-height: min(72vh, 780px);
+  overflow: auto;
+  padding: 4px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.debugLogsSection {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.debugLogsSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 0 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.58);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.debugLogsSectionCount {
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.debugLogsSectionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.debugLogRow {
+  padding: 10px 0 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.debugLogRowLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.debugLogRowMethod,
+.debugLogRowStatus,
+.debugLogRowDuration {
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.debugLogRowPath {
+  color: rgba(255, 255, 255, 0.8);
+  word-break: break-word;
+}
+
+.debugLogRowTitle {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.debugLogRowMessage,
+.debugLogRowDetails pre {
+  margin: 6px 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.debugLogRowDetails {
+  margin-top: 6px;
+}
+
+.debugLogRowDetails summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.52);
+  text-transform: lowercase;
+}
+
+.debugLogRowDetailBlock {
+  margin-top: 8px;
+}
+
+.debugLogRowDetailLabel {
+  margin-bottom: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+:root[data-theme="light"] .debugLogsModal,
+:root[data-theme="light"] .debugLogsModal .settingsContent,
+:root[data-theme="light"] .debugLogsModal .settingsContentHeader,
+:root[data-theme="light"] .debugLogsList {
+  background: #faf9f6 !important;
+}
+
+:root[data-theme="light"] .debugLogsSectionHeader {
+  color: rgba(114, 108, 101, 0.88) !important;
+  border-bottom-color: rgba(232, 228, 222, 0.98) !important;
+}
+
+:root[data-theme="light"] .debugLogsSectionCount {
+  color: rgba(139, 133, 128, 0.72) !important;
+}
+
+:root[data-theme="light"] .debugLogRow {
+  border-bottom-color: rgba(232, 228, 222, 0.92) !important;
+}
+
+:root[data-theme="light"] .debugLogRowLine {
+  color: rgba(139, 133, 128, 0.92) !important;
+}
+
+:root[data-theme="light"] .debugLogRowMethod,
+:root[data-theme="light"] .debugLogRowStatus,
+:root[data-theme="light"] .debugLogRowDuration {
+  color: rgba(114, 108, 101, 0.92) !important;
+}
+
+:root[data-theme="light"] .debugLogRowPath,
+:root[data-theme="light"] .debugLogRowTitle {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .debugLogRowMessage,
+:root[data-theme="light"] .debugLogRowDetails pre {
+  color: rgba(71, 85, 105, 0.88) !important;
+}
+
+:root[data-theme="light"] .debugLogRowDetails summary,
+:root[data-theme="light"] .debugLogRowDetailLabel {
+  color: rgba(139, 133, 128, 0.88) !important;
+}
+
+/* Final chat/session stability */
+:root[data-theme="light"] .lightChatWindow .sessionItemNew {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border: 1px dashed rgba(232, 228, 222, 0.96) !important;
+  color: rgba(17, 24, 39, 0.46) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: color 140ms ease !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItemNew:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemNew:focus-visible {
+  background: rgba(240, 237, 231, 0.88) !important;
+  border: 1px dashed rgba(232, 228, 222, 0.96) !important;
+  color: rgba(17, 24, 39, 0.84) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+:root[data-theme="light"] .lightDock {
+  z-index: 120 !important;
+}
+
+/* Restore settings top/bottom glow + visible save bar */
+:root[data-theme="light"] .settingsContentHeader::after {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: -18px !important;
+  height: 24px !important;
+  background: linear-gradient(
+    180deg,
+    rgba(250, 249, 246, 0.9) 0%,
+    rgba(250, 249, 246, 0.46) 58%,
+    rgba(250, 249, 246, 0) 100%
+  ) !important;
+  pointer-events: none !important;
+}
+
+:root[data-theme="light"] .settingsFooterBar {
+  display: flex !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 8 !important;
+  background: linear-gradient(
+    180deg,
+    rgba(250, 249, 246, 0) 0%,
+    rgba(250, 249, 246, 0.66) 42%,
+    rgba(250, 249, 246, 0.94) 100%
+  ) !important;
+}
+
+/* Final settings/snapshots stability */
+:root[data-theme="light"] .settingsContentHeader {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 12 !important;
+}
+
+:root[data-theme="light"] .settingsContentHeader::after {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: -20px !important;
+  height: 28px !important;
+  background: linear-gradient(
+    180deg,
+    rgba(250, 249, 246, 0.96) 0%,
+    rgba(250, 249, 246, 0.58) 54%,
+    rgba(250, 249, 246, 0) 100%
+  ) !important;
+  pointer-events: none !important;
+}
+
+:root[data-theme="light"] .settingsFooterBar {
+  z-index: 12 !important;
+}
+
+:root[data-theme="light"] .snapshotsCard .cardBody,
+:root[data-theme="light"] .snapshotsScrollContainer {
+  position: relative !important;
+}
+
+:root[data-theme="light"] .snapshotsScrollContainer {
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black calc(100% - 18px),
+    transparent 100%
+  ) !important;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black calc(100% - 18px),
+    transparent 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .snapshotsScrollContainer.snapshotsScrollContainerScrolledTop {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 18px,
+    black calc(100% - 18px),
+    transparent 100%
+  ) !important;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 18px,
+    black calc(100% - 18px),
+    transparent 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .snapshotsScrollContainer:not(.snapshotsScrollContainerScrolledBottom) {
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 100%
+  ) !important;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .snapshotsScrollContainer.snapshotsScrollContainerScrolledTop:not(.snapshotsScrollContainerScrolledBottom) {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 18px,
+    black 100%
+  ) !important;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 18px,
+    black 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .settingsSnapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listItem {
+  background: rgba(250, 249, 246, 0.98) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+:root[data-theme="light"] .settingsSnapshotsCard .listItem:hover,
+:root[data-theme="light"] .snapshotsCard .listItem:hover {
+  background: rgba(250, 249, 246, 0.98) !important;
+  border-color: rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Absolute final DeepTutor light settings input/background match */
+:root[data-theme="light"] .settingsModal,
+:root[data-theme="light"] .settingsContent,
+:root[data-theme="light"] .settingsSidebar,
+:root[data-theme="light"] .settingsContentHeader,
+:root[data-theme="light"] .settingsContentScroll,
+:root[data-theme="light"] .settingsPanel,
+:root[data-theme="light"] .settingsPanelHeader,
+:root[data-theme="light"] .settingsPanelBody {
+  background: #faf9f6 !important;
+}
+
+:root[data-theme="light"] .settingsModal .input,
+:root[data-theme="light"] .settingsModal select.input,
+:root[data-theme="light"] .settingsModal .textarea {
+  background: transparent !important;
+  color: #2d2b28 !important;
+  border: 1px solid #e8e4de !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .settingsModal .input::placeholder,
+:root[data-theme="light"] .settingsModal .textarea::placeholder {
+  color: #8b8580 !important;
+}
+
+:root[data-theme="light"] .settingsModal .input:focus,
+:root[data-theme="light"] .settingsModal select.input:focus,
+:root[data-theme="light"] .settingsModal .textarea:focus {
+  background: transparent !important;
+  color: #2d2b28 !important;
+  border-color: #e8e4de !important;
+  box-shadow: none !important;
 }

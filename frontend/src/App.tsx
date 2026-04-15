@@ -71,9 +71,13 @@ import type {
 } from "./lib/types";
 
 const VIEWPORT_CENTERED_ZOOM_STORAGE_KEY = "knowledge_graph_viewport_centered_zoom_v1";
+const CURVED_EDGE_LINES_STORAGE_KEY = "knowledge_graph_curved_edge_lines_v1";
 const COMPACT_TOP_OVERLAY_THRESHOLD = 960;
 const ACTIVE_CHAT_SESSION_STORAGE_KEY = "knowledge_graph_active_chat_session_v1";
 const THEME_MODE_STORAGE_KEY = "knowledge_graph_theme_mode_v1";
+const LEFT_SIDEBAR_OPEN_STORAGE_KEY = "knowledge_graph_left_sidebar_open_v1";
+const SETTINGS_OPEN_STORAGE_KEY = "knowledge_graph_settings_open_v1";
+const LOGS_OPEN_STORAGE_KEY = "knowledge_graph_logs_open_v1";
 const MOBILE_LAYOUT_BREAKPOINT = 1180;
 
 function activeChatSessionStorageKey(graphId: string): string {
@@ -86,6 +90,40 @@ function readStoredActiveChatSession(graphId: string): string | null {
     return raw && raw.trim() ? raw : null;
   } catch {
     return null;
+  }
+}
+
+function readStoredBoolean(key: string, fallback: boolean): boolean {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === "1") return true;
+    if (raw === "0") return false;
+  } catch {
+    // Ignore invalid stored boolean values.
+  }
+  return fallback;
+}
+
+function readStoredAssistantWidth(): number {
+  try {
+    const saved = localStorage.getItem(ASSISTANT_WIDTH_STORAGE_KEY);
+    if (!saved) return 390;
+    const width = Number.parseInt(saved, 10);
+    if (Number.isFinite(width)) {
+      const normalized = Math.max(0, Math.min(ASSISTANT_MAX_WIDTH, width));
+      return normalized < ASSISTANT_MIN_WIDTH ? 0 : normalized;
+    }
+  } catch {
+    // Ignore invalid persisted width values.
+  }
+  return 390;
+}
+
+function readStoredViewportCenteredZoom(): boolean {
+  try {
+    return localStorage.getItem(VIEWPORT_CENTERED_ZOOM_STORAGE_KEY) === "1";
+  } catch {
+    return false;
   }
 }
 
@@ -127,6 +165,17 @@ function readInitialThemeMode(): ThemeMode {
   const mode = readStoredThemeMode();
   document.documentElement.dataset.theme = mode;
   return mode;
+}
+
+function readStoredCurvedEdgeLines(): boolean {
+  try {
+    const raw = localStorage.getItem(CURVED_EDGE_LINES_STORAGE_KEY);
+    if (raw === "0") return false;
+    if (raw === "1") return true;
+    return false;
+  } catch {
+    return false;
+  }
 }
 
 export default function App(): React.JSX.Element {
@@ -173,6 +222,7 @@ export default function App(): React.JSX.Element {
   const [selectedTopicAnchor, setSelectedTopicAnchor] = useState<TopicAnchorPoint | null>(null);
   const [popoverPosition, setPopoverPosition] = useState<PopoverPosition | null>(null);
   const [popoverDragOffset, setPopoverDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [popoverFollowAnchor, setPopoverFollowAnchor] = useState(true);
   const [chatByGraph, setChatByGraph] = useState<Record<string, GraphChatState>>({});
   const [chatLoading, setChatLoading] = useState(false);
   const [chatThreadLoading, setChatThreadLoading] = useState(false);
@@ -182,15 +232,15 @@ export default function App(): React.JSX.Element {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [applyLoadingMessageId, setApplyLoadingMessageId] = useState<string | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [assistantWidth, setAssistantWidth] = useState<number>(390);
+  const [assistantWidth, setAssistantWidth] = useState<number>(readStoredAssistantWidth);
   const [assistantResizing, setAssistantResizing] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [viewportWidth, setViewportWidth] = useState<number>(() => (typeof window === "undefined" ? 1440 : window.innerWidth));
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(() => readStoredBoolean(LEFT_SIDEBAR_OPEN_STORAGE_KEY, true));
   const [leftSidebarClosing, setLeftSidebarClosing] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isSettingsOpen, setSettingsOpen] = useState(false);
-  const [isLogsOpen, setLogsOpen] = useState(false);
+  const [isSettingsOpen, setSettingsOpen] = useState(() => readStoredBoolean(SETTINGS_OPEN_STORAGE_KEY, false));
+  const [isLogsOpen, setLogsOpen] = useState(() => readStoredBoolean(LOGS_OPEN_STORAGE_KEY, false));
   const [configSaving, setConfigSaving] = useState(false);
   const [providerDraft, setProviderDraft] = useState("gemini");
   const [modelDraft, setModelDraft] = useState("gemini-2.5-pro");
@@ -230,7 +280,9 @@ export default function App(): React.JSX.Element {
   const [debugLogsLoading, setDebugLogsLoading] = useState(false);
   const [debugLogsError, setDebugLogsError] = useState<string | null>(null);
   const [composerUseGrounding, setComposerUseGrounding] = useState(true);
-  const [viewportCenteredZoom, setViewportCenteredZoom] = useState(false);
+  const [viewportCenteredZoom, setViewportCenteredZoom] = useState(readStoredViewportCenteredZoom);
+  const [curvedEdgeLinesEnabled, setCurvedEdgeLinesEnabled] = useState<boolean>(readStoredCurvedEdgeLines);
+  const [curvedEdgeLinesDraft, setCurvedEdgeLinesDraft] = useState<boolean>(readStoredCurvedEdgeLines);
   const [themeModeDraft, setThemeModeDraft] = useState<ThemeMode>(readInitialThemeMode);
   const graphShellRef = useRef<HTMLDivElement | null>(null);
   const topicPopoverRef = useRef<HTMLDivElement | null>(null);
@@ -361,30 +413,6 @@ export default function App(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(ASSISTANT_WIDTH_STORAGE_KEY);
-      if (!saved) return;
-      const width = Number.parseInt(saved, 10);
-      if (Number.isFinite(width)) {
-        const normalized = Math.max(0, Math.min(ASSISTANT_MAX_WIDTH, width));
-        setAssistantWidth(normalized < ASSISTANT_MIN_WIDTH ? 0 : normalized);
-      }
-    } catch {
-      // Ignore invalid persisted width values.
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(VIEWPORT_CENTERED_ZOOM_STORAGE_KEY);
-      if (saved === "1") setViewportCenteredZoom(true);
-      else if (saved === "0") setViewportCenteredZoom(false);
-    } catch {
-      // Ignore invalid persisted zoom values.
-    }
-  }, []);
-
-  useEffect(() => {
     if (typeof window === "undefined") return;
     const media = window.matchMedia(`(max-width: ${MOBILE_LAYOUT_BREAKPOINT}px)`);
     const sync = () => {
@@ -421,11 +449,43 @@ export default function App(): React.JSX.Element {
 
   useEffect(() => {
     try {
+      localStorage.setItem(LEFT_SIDEBAR_OPEN_STORAGE_KEY, leftSidebarOpen ? "1" : "0");
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [leftSidebarOpen]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SETTINGS_OPEN_STORAGE_KEY, isSettingsOpen ? "1" : "0");
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [isSettingsOpen]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOGS_OPEN_STORAGE_KEY, isLogsOpen ? "1" : "0");
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [isLogsOpen]);
+
+  useEffect(() => {
+    try {
       localStorage.setItem(VIEWPORT_CENTERED_ZOOM_STORAGE_KEY, viewportCenteredZoom ? "1" : "0");
     } catch {
       // Ignore localStorage write failures.
     }
   }, [viewportCenteredZoom]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CURVED_EDGE_LINES_STORAGE_KEY, curvedEdgeLinesEnabled ? "1" : "0");
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [curvedEdgeLinesEnabled]);
 
   useEffect(() => {
     try {
@@ -521,6 +581,11 @@ export default function App(): React.JSX.Element {
     setQuizQuestionCountDraft(c.quiz_question_count);
     setQuizPassCountDraft(requiredCorrectAnswers(c.pass_threshold, c.quiz_question_count));
   }, [data?.workspace.config]);
+
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+    setCurvedEdgeLinesDraft(curvedEdgeLinesEnabled);
+  }, [isSettingsOpen, curvedEdgeLinesEnabled]);
 
   useEffect(() => {
     if (!isMobileViewport) return;
@@ -646,7 +711,7 @@ export default function App(): React.JSX.Element {
       ? `${memoryHistoryLimitDraft} recent messages · graph ${memoryIncludeGraphContextDraft ? "on" : "off"} · progress ${memoryIncludeProgressContextDraft ? "on" : "off"} · quiz ${memoryIncludeQuizContextDraft ? "on" : "off"} · frontier ${memoryIncludeFrontierContextDraft ? "on" : "off"} · selected topic ${memoryIncludeSelectedTopicContextDraft ? "on" : "off"}`
       : activeMemoryOption.description;
   const settingsDirty = Boolean(
-    currentConfig && (
+    (currentConfig && (
       providerDraft !== currentConfig.ai_provider ||
       modelDraft !== currentConfig.default_model ||
       (!geminiKeyLockedByEnv && geminiApiKeyDraft !== (currentConfig.gemini_api_key ?? "")) ||
@@ -679,16 +744,18 @@ export default function App(): React.JSX.Element {
       personaDraft !== (currentConfig.persona_rules ?? "") ||
       quizQuestionCountDraft !== currentConfig.quiz_question_count ||
       quizPassCountDraft !== currentQuizPassCount
-    )
+    )) ||
+    curvedEdgeLinesDraft !== curvedEdgeLinesEnabled
   );
   const showGraphLoadingState = loading && !activeGraph;
   const showGraphEmptyState = !loading && !activeGraph;
 
   useEffect(() => {
+    setPopoverFollowAnchor(true);
+    setPopoverDragOffset({ x: 0, y: 0 });
     if (!selectedTopicId) {
       setSelectedTopicAnchor(null);
       setPopoverPosition(null);
-      setPopoverDragOffset({ x: 0, y: 0 });
     }
   }, [selectedTopicId]);
 
@@ -700,15 +767,17 @@ export default function App(): React.JSX.Element {
   const handleSelectedTopicAnchorChange = useCallback((next: TopicAnchorPoint | null) => {
     const current = selectedTopicAnchorRef.current;
     if (isMobileViewport && current && next) return;
+    if (!popoverFollowAnchor && current && next) return;
     if (shouldKeepCurrentAnchor(current, next)) return;
     const now = typeof performance !== "undefined" ? performance.now() : Date.now();
     const elapsed = now - lastAnchorCommitAtRef.current;
     if (!shouldCommitAnchorUpdate(current, next, elapsed)) return;
     lastAnchorCommitAtRef.current = now;
     setSelectedTopicAnchor(next);
-  }, [isMobileViewport]);
+  }, [isMobileViewport, popoverFollowAnchor]);
 
   useLayoutEffect(() => {
+    if (!popoverFollowAnchor) return;
     if (!selectedTopic || !selectedTopicAnchor) {
       setPopoverPosition(null);
       return;
@@ -732,6 +801,7 @@ export default function App(): React.JSX.Element {
         side: base.side,
       } satisfies PopoverPosition;
       setPopoverPosition((current) => (samePopoverPosition(current, next) ? current : next));
+      setPopoverFollowAnchor(false);
     };
 
     const frame = window.requestAnimationFrame(updatePosition);
@@ -752,11 +822,12 @@ export default function App(): React.JSX.Element {
     // Recreate the observer only when the selected topic changes.
     // Anchor coordinates are read through refs inside the callback.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTopic?.id]);
+  }, [popoverFollowAnchor, selectedTopic?.id]);
 
   // Update the popover position without recreating the observer.
   useEffect(() => {
     if (!selectedTopic || !selectedTopicAnchor) return;
+    if (!popoverFollowAnchor) return;
     const base = computePopoverPosition(selectedTopicAnchor, graphShellRef.current, topicPopoverRef.current);
     if (!base) return;
     const next = {
@@ -765,7 +836,7 @@ export default function App(): React.JSX.Element {
       side: base.side,
     } satisfies PopoverPosition;
     setPopoverPosition((current) => (samePopoverPosition(current, next) ? current : next));
-  }, [selectedTopic, selectedTopicAnchor, popoverDragOffset]);
+  }, [popoverFollowAnchor, selectedTopic, selectedTopicAnchor, popoverDragOffset]);
 
   useEffect(() => {
     function stopDrag(): void {
@@ -782,11 +853,14 @@ export default function App(): React.JSX.Element {
       const nextTop = drag.startY + (event.clientY - drag.pointerY);
       const boundedLeft = Math.max(16, Math.min(shellRect.width - popover.offsetWidth - 16, nextLeft));
       const boundedTop = Math.max(16, Math.min(shellRect.height - popover.offsetHeight - 16, nextTop));
-      const currentBase = computePopoverPosition(selectedTopicAnchor, shell, popover);
-      if (!currentBase) return;
-      setPopoverDragOffset({
-        x: boundedLeft - currentBase.left,
-        y: boundedTop - currentBase.top,
+      setPopoverFollowAnchor(false);
+      setPopoverPosition((current) => {
+        const next = {
+          left: boundedLeft,
+          top: boundedTop,
+          side: current?.side ?? "right",
+        } satisfies PopoverPosition;
+        return samePopoverPosition(current, next) ? current : next;
       });
     }
 
@@ -1236,6 +1310,9 @@ export default function App(): React.JSX.Element {
     if (quizPassCountDraft !== currentQuizPassCount || quizQuestionCountDraft !== currentConfig.quiz_question_count) {
       patch.pass_threshold = quizPassCountDraft / quizQuestionCountDraft;
     }
+    if (curvedEdgeLinesDraft !== curvedEdgeLinesEnabled) {
+      setCurvedEdgeLinesEnabled(curvedEdgeLinesDraft);
+    }
     if (Object.keys(patch).length > 0) void updateWorkspaceConfig(patch);
   }
 
@@ -1557,6 +1634,8 @@ export default function App(): React.JSX.Element {
     { id: "expand", label: "Expand graph" as const, value: templatePrompt("expand") },
     { id: "ingest", label: "Ingest topics" as const, value: templatePrompt("ingest") },
   ];
+  const suspendedSurfaceStateRef = useRef<{ leftSidebarOpen: boolean; assistantWidth: number } | null>(null);
+  const overlayWasOpenRef = useRef(false);
   const assistantOpen = assistantWidth >= ASSISTANT_MIN_WIDTH;
   const hasInlinePlanningWidget = currentChatState.messages.some((message) => Boolean(message.planning_status));
   const overlayLeftOffset = leftSidebarOpen ? 280 : 68;
@@ -1590,9 +1669,46 @@ export default function App(): React.JSX.Element {
   }, [leftSidebarClosing, leftSidebarOpen]);
 
   const openConfigurationSettings = useCallback(() => {
-    setSettingsOpen(true);
+    setSettingsOpen((prev) => {
+      const next = !prev;
+      if (next) setLogsOpen(false);
+      return next;
+    });
     setMobileMenuOpen(false);
   }, []);
+
+  const toggleDebugLogs = useCallback(() => {
+    setLogsOpen((prev) => {
+      const next = !prev;
+      if (next) setSettingsOpen(false);
+      return next;
+    });
+    setMobileMenuOpen(false);
+  }, []);
+
+  useEffect(() => {
+    const overlayOpen = isSettingsOpen || isLogsOpen;
+    if (overlayOpen && !overlayWasOpenRef.current) {
+      suspendedSurfaceStateRef.current = {
+        leftSidebarOpen,
+        assistantWidth,
+      };
+      if (sidebarCloseTimerRef.current) {
+        window.clearTimeout(sidebarCloseTimerRef.current);
+        sidebarCloseTimerRef.current = null;
+      }
+      setLeftSidebarClosing(false);
+      setLeftSidebarOpen(false);
+      setAssistantWidth(0);
+    } else if (!overlayOpen && overlayWasOpenRef.current && suspendedSurfaceStateRef.current) {
+      const suspendedState = suspendedSurfaceStateRef.current;
+      setLeftSidebarClosing(false);
+      setLeftSidebarOpen(suspendedState.leftSidebarOpen);
+      setAssistantWidth(suspendedState.assistantWidth);
+      suspendedSurfaceStateRef.current = null;
+    }
+    overlayWasOpenRef.current = overlayOpen;
+  }, [assistantWidth, isLogsOpen, isSettingsOpen, leftSidebarOpen]);
 
   const loadDebugLogs = useCallback(async () => {
     setDebugLogsLoading((current) => current || debugLogs === null);
@@ -1652,7 +1768,8 @@ export default function App(): React.JSX.Element {
         setCreateGraphOpen={setCreateGraphOpen}
         setCreateGraphError={setCreateGraphError}
         openConfigurationSettings={openConfigurationSettings}
-        openDebugLogs={() => setLogsOpen(true)}
+        openDebugLogs={toggleDebugLogs}
+        isLogsOpen={isLogsOpen}
         isMobileViewport={isMobileViewport}
         leftSidebarOpen={leftSidebarOpen}
         openSidebar={openSidebar}
@@ -1661,6 +1778,7 @@ export default function App(): React.JSX.Element {
         assistantWidth={assistantWidth}
         viewportCenteredZoom={viewportCenteredZoom}
         setViewportCenteredZoom={setViewportCenteredZoom}
+        curvedEdgeLinesEnabled={curvedEdgeLinesEnabled}
         topOverlayCompact={topOverlayCompact}
         overlayLeftOffset={overlayLeftOffset}
         overlayRightOffset={overlayRightOffset}
@@ -1746,6 +1864,7 @@ export default function App(): React.JSX.Element {
 
       <SettingsModal
         isSettingsOpen={isSettingsOpen}
+        logsOpen={isLogsOpen}
         copy={copy}
         setSettingsOpen={setSettingsOpen}
         currentConfig={currentConfig}
@@ -1812,6 +1931,8 @@ export default function App(): React.JSX.Element {
         setEnableClosureTestsDraft={setEnableClosureTestsDraft}
         debugModeEnabledDraft={debugModeEnabledDraft}
         setDebugModeEnabledDraft={setDebugModeEnabledDraft}
+        curvedEdgeLinesDraft={curvedEdgeLinesDraft}
+        setCurvedEdgeLinesDraft={setCurvedEdgeLinesDraft}
         themeModeDraft={themeModeDraft}
         setThemeModeDraft={setThemeModeDraft}
         quizQuestionCountDraft={quizQuestionCountDraft}
@@ -1826,6 +1947,7 @@ export default function App(): React.JSX.Element {
       <DebugLogsModal
         copy={copy}
         open={isLogsOpen}
+        settingsOpen={isSettingsOpen}
         onClose={() => setLogsOpen(false)}
         logs={debugLogs}
         loading={debugLogsLoading}
