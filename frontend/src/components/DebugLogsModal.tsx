@@ -30,7 +30,7 @@ function flattenLogs(copy: AppCopy, logs: DebugLogSnapshot | null): FlatLogEntry
   return rows;
 }
 
-function renderEntry({ source, entry }: FlatLogEntry): React.JSX.Element {
+function renderEntry(copy: AppCopy, { source, entry }: FlatLogEntry): React.JSX.Element {
   const hasDetails = Boolean(entry.request_excerpt || entry.response_excerpt || entry.stack);
 
   return (
@@ -47,22 +47,22 @@ function renderEntry({ source, entry }: FlatLogEntry): React.JSX.Element {
       {entry.message ? <pre className="debugLogRowMessage">{entry.message}</pre> : null}
       {hasDetails ? (
         <details className="debugLogRowDetails">
-          <summary>details</summary>
+          <summary>{copy.settingsPanel.logsDetails}</summary>
           {entry.request_excerpt ? (
             <div className="debugLogRowDetailBlock">
-              <div className="debugLogRowDetailLabel">request</div>
+              <div className="debugLogRowDetailLabel">{copy.settingsPanel.logsRequest}</div>
               <pre>{entry.request_excerpt}</pre>
             </div>
           ) : null}
           {entry.response_excerpt ? (
             <div className="debugLogRowDetailBlock">
-              <div className="debugLogRowDetailLabel">response</div>
+              <div className="debugLogRowDetailLabel">{copy.settingsPanel.logsResponse}</div>
               <pre>{entry.response_excerpt}</pre>
             </div>
           ) : null}
           {entry.stack ? (
             <div className="debugLogRowDetailBlock">
-              <div className="debugLogRowDetailLabel">stack</div>
+              <div className="debugLogRowDetailLabel">{copy.settingsPanel.logsStack}</div>
               <pre>{entry.stack}</pre>
             </div>
           ) : null}
@@ -118,8 +118,8 @@ export function DebugLogsModal({
           <div className="debugLogsList">
             {loading && !logs ? <div className="debugLogPlaceholder">{copy.settingsPanel.refreshing}</div> : null}
             {error ? <div className="inlineNotice inlineNoticeError">{error}</div> : null}
-            {!loading && !error && entries.length === 0 ? <div className="debugLogPlaceholder">No log entries yet</div> : null}
-            {entries.length > 0 ? <ul className="debugLogsFlatList">{entries.map((entry) => renderEntry(entry))}</ul> : null}
+            {!loading && !error && entries.length === 0 ? <div className="debugLogPlaceholder">{copy.settingsPanel.logsEmpty}</div> : null}
+            {entries.length > 0 ? <ul className="debugLogsFlatList">{entries.map((entry) => renderEntry(copy, entry))}</ul> : null}
           </div>
         </div>
       </div>

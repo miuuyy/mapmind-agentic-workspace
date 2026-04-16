@@ -6,6 +6,7 @@ import type {
   Topic,
   TopicClosureStatus,
 } from "./types";
+import type { AppCopy } from "./appCopy";
 
 export function formatTopicState(state: Topic["state"]): string {
   return state
@@ -14,8 +15,14 @@ export function formatTopicState(state: Topic["state"]): string {
     .join(" ");
 }
 
-export function formatMinutes(minutes: number): string {
-  if (minutes <= 0) return "Time not set";
+export function getTopicStateTone(state: Topic["state"]): "neutral" | "good" | "warn" {
+  if (state === "solid" || state === "mastered") return "good";
+  if (state === "not_started") return "neutral";
+  return "warn";
+}
+
+export function formatMinutes(minutes: number, copy: AppCopy): string {
+  if (minutes <= 0) return copy.graphText.timeNotSet;
   if (minutes < 60) return `${minutes} min`;
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
@@ -56,7 +63,7 @@ export function computeGraphSummary(graph: GraphEnvelope | null): {
   };
 }
 
-export function buildFallbackAssessment(graph: GraphEnvelope | null): {
+export function buildFallbackAssessment(graph: GraphEnvelope | null, copy: AppCopy): {
   cards: Array<{ label: string; value: string; tone: "neutral" | "good" | "warn"; rationale: string }>;
 } {
   if (!graph) return { cards: [] };
@@ -65,16 +72,16 @@ export function buildFallbackAssessment(graph: GraphEnvelope | null): {
   return {
     cards: [
       {
-        label: "Roadmap",
-        value: maxLevel >= 4 ? "ML runway" : maxLevel >= 2 ? "Usable runway" : "Thin runway",
+        label: copy.graphText.roadmapLabel,
+        value: maxLevel >= 4 ? copy.graphText.roadmapMlRunway : maxLevel >= 2 ? copy.graphText.roadmapUsableRunway : copy.graphText.roadmapThinRunway,
         tone: maxLevel >= 4 ? "good" : maxLevel >= 2 ? "neutral" : "warn",
-        rationale: "Fallback assessment derived from graph depth.",
+        rationale: copy.graphText.roadmapRationale,
       },
       {
-        label: "Level Achieved",
-        value: closed > 0 ? "Foundation moving" : "No baseline",
+        label: copy.graphText.levelAchievedLabel,
+        value: closed > 0 ? copy.graphText.levelAchievedFoundationMoving : copy.graphText.levelAchievedNoBaseline,
         tone: closed > 0 ? "neutral" : "warn",
-        rationale: "Fallback assessment derived from closed topics.",
+        rationale: copy.graphText.levelAchievedRationale,
       },
     ],
   };
@@ -226,21 +233,21 @@ export function describeOperationTarget(operation: GraphOperation): string {
   return operation.op_id;
 }
 
-export function summarizePreviewCounts(result: ProposalGenerateResponse): Array<{ label: string; value: number }> {
+export function summarizePreviewCounts(result: ProposalGenerateResponse, copy: AppCopy): Array<{ label: string; value: number }> {
   const preview = result.apply_plan.preview;
   return [
-    { label: "Topics", value: preview.topic_add_count },
-    { label: "Edges", value: preview.edge_add_count },
-    { label: "New zones", value: preview.zone_add_count },
-    { label: "Zone updates", value: preview.zone_update_count },
-    { label: "Mastery", value: preview.mastery_update_count },
+    { label: copy.graphText.previewTopics, value: preview.topic_add_count },
+    { label: copy.graphText.previewEdges, value: preview.edge_add_count },
+    { label: copy.graphText.previewNewZones, value: preview.zone_add_count },
+    { label: copy.graphText.previewZoneUpdates, value: preview.zone_update_count },
+    { label: copy.graphText.previewMastery, value: preview.mastery_update_count },
   ].filter((item) => item.value > 0);
 }
 
-export function summarizeTopOperations(result: ProposalGenerateResponse): Array<{ label: string; target: string }> {
+export function summarizeTopOperations(result: ProposalGenerateResponse, copy: AppCopy): Array<{ label: string; target: string }> {
   const highlights = result.display.highlights;
   if (highlights.length > 0) {
-    return highlights.map((item) => ({ label: "Expand", target: item }));
+    return highlights.map((item) => ({ label: copy.graphText.previewExpand, target: item }));
   }
   return result.apply_plan.patch_groups
     .flatMap((group) =>
@@ -304,7 +311,7 @@ export function firstProposedTopicId(result: ProposalGenerateResponse): string |
   );
 }
 
-export function templatePrompt(kind: "expand" | "ingest"): string {
-  if (kind === "expand") return "Expand graph toward target: ";
-  return "Ingest dirty topic dump: ";
+export function templatePrompt(kind: "expand" | "ingest", copy: AppCopy): string {
+  if (kind === "expand") return copy.graphText.templateExpandPrompt;
+  return copy.graphText.templateIngestPrompt;
 }

@@ -9,10 +9,10 @@ import { API_BASE } from "./lib/api";
 import { APP_COPY } from "./lib/appCopy";
 import { setDebugModeEnabled } from "./lib/debugLogs";
 import {
+  ASSISTANT_WIDTH_STORAGE_KEY,
   ASSISTANT_COLLAPSE_THRESHOLD,
   ASSISTANT_MAX_WIDTH,
   ASSISTANT_MIN_WIDTH,
-  ASSISTANT_WIDTH_STORAGE_KEY,
   MEMORY_MODE_OPTIONS,
   THINKING_MODE_OPTIONS,
   type AuthSessionPayload,
@@ -22,6 +22,24 @@ import {
   type ThinkingMode,
   type WorkspaceSurfacePayload,
 } from "./lib/appContracts";
+import {
+  COMPACT_TOP_OVERLAY_THRESHOLD,
+  CURVED_EDGE_LINES_STORAGE_KEY,
+  LEFT_SIDEBAR_OPEN_STORAGE_KEY,
+  LOGS_OPEN_STORAGE_KEY,
+  MOBILE_LAYOUT_BREAKPOINT,
+  SETTINGS_OPEN_STORAGE_KEY,
+  THEME_MODE_STORAGE_KEY,
+  VIEWPORT_CENTERED_ZOOM_STORAGE_KEY,
+  activeChatSessionStorageKey,
+  readInitialThemeMode,
+  readStoredActiveChatSession,
+  readStoredAssistantWidth,
+  readStoredBoolean,
+  readStoredCurvedEdgeLines,
+  readStoredViewportCenteredZoom,
+  reconcileThreadMessages,
+} from "./lib/appStatePersistence";
 import {
   apiFetch,
   computePopoverPosition,
@@ -70,115 +88,8 @@ import type {
   WorkspaceEnvelope,
 } from "./lib/types";
 
-const VIEWPORT_CENTERED_ZOOM_STORAGE_KEY = "knowledge_graph_viewport_centered_zoom_v1";
-const CURVED_EDGE_LINES_STORAGE_KEY = "knowledge_graph_curved_edge_lines_v1";
-const COMPACT_TOP_OVERLAY_THRESHOLD = 960;
-const ACTIVE_CHAT_SESSION_STORAGE_KEY = "knowledge_graph_active_chat_session_v1";
-const THEME_MODE_STORAGE_KEY = "knowledge_graph_theme_mode_v1";
-const LEFT_SIDEBAR_OPEN_STORAGE_KEY = "knowledge_graph_left_sidebar_open_v1";
-const SETTINGS_OPEN_STORAGE_KEY = "knowledge_graph_settings_open_v1";
-const LOGS_OPEN_STORAGE_KEY = "knowledge_graph_logs_open_v1";
-const MOBILE_LAYOUT_BREAKPOINT = 1180;
-
-function activeChatSessionStorageKey(graphId: string): string {
-  return `${ACTIVE_CHAT_SESSION_STORAGE_KEY}:${graphId}`;
-}
-
-function readStoredActiveChatSession(graphId: string): string | null {
-  try {
-    const raw = localStorage.getItem(activeChatSessionStorageKey(graphId));
-    return raw && raw.trim() ? raw : null;
-  } catch {
-    return null;
-  }
-}
-
-function readStoredBoolean(key: string, fallback: boolean): boolean {
-  try {
-    const raw = localStorage.getItem(key);
-    if (raw === "1") return true;
-    if (raw === "0") return false;
-  } catch {
-    // Ignore invalid stored boolean values.
-  }
-  return fallback;
-}
-
-function readStoredAssistantWidth(): number {
-  try {
-    const saved = localStorage.getItem(ASSISTANT_WIDTH_STORAGE_KEY);
-    if (!saved) return 390;
-    const width = Number.parseInt(saved, 10);
-    if (Number.isFinite(width)) {
-      const normalized = Math.max(0, Math.min(ASSISTANT_MAX_WIDTH, width));
-      return normalized < ASSISTANT_MIN_WIDTH ? 0 : normalized;
-    }
-  } catch {
-    // Ignore invalid persisted width values.
-  }
-  return 390;
-}
-
-function readStoredViewportCenteredZoom(): boolean {
-  try {
-    return localStorage.getItem(VIEWPORT_CENTERED_ZOOM_STORAGE_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function messagesEquivalent(left: ChatMessage, right: ChatMessage): boolean {
-  return left.role === right.role && left.content === right.content && (left.hidden ?? false) === (right.hidden ?? false);
-}
-
-function serverThreadIsStaleSubset(serverMessages: ChatMessage[], localMessages: ChatMessage[]): boolean {
-  if (serverMessages.length >= localMessages.length) return false;
-  let localIndex = 0;
-  for (const serverMessage of serverMessages) {
-    while (localIndex < localMessages.length && !messagesEquivalent(localMessages[localIndex], serverMessage)) {
-      localIndex += 1;
-    }
-    if (localIndex >= localMessages.length) return false;
-    localIndex += 1;
-  }
-  return true;
-}
-
-function reconcileThreadMessages(serverMessages: ChatMessage[], localMessages: ChatMessage[]): ChatMessage[] {
-  if (localMessages.length === 0) return serverMessages;
-  if (serverMessages.length === 0) return localMessages;
-  if (serverThreadIsStaleSubset(serverMessages, localMessages)) return localMessages;
-  return serverMessages;
-}
-
-function readStoredThemeMode(): ThemeMode {
-  try {
-    const raw = localStorage.getItem(THEME_MODE_STORAGE_KEY);
-    return raw === "light" ? "light" : "dark";
-  } catch {
-    return "dark";
-  }
-}
-
-function readInitialThemeMode(): ThemeMode {
-  if (typeof window === "undefined") return "dark";
-  const mode = readStoredThemeMode();
-  document.documentElement.dataset.theme = mode;
-  return mode;
-}
-
-function readStoredCurvedEdgeLines(): boolean {
-  try {
-    const raw = localStorage.getItem(CURVED_EDGE_LINES_STORAGE_KEY);
-    if (raw === "0") return false;
-    if (raw === "1") return true;
-    return false;
-  } catch {
-    return false;
-  }
-}
-
 export default function App(): React.JSX.Element {
+  const copy = APP_COPY;
   const [data, setData] = useState<WorkspaceEnvelope | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -663,7 +574,7 @@ export default function App(): React.JSX.Element {
 
   const focusData = useMemo(() => computeFocusData(activeGraph, selectedTopicId), [activeGraph, selectedTopicId]);
   const graphSummary = useMemo(() => computeGraphSummary(activeGraph), [activeGraph]);
-  const fallbackAssessment = useMemo(() => buildFallbackAssessment(activeGraph), [activeGraph]);
+  const fallbackAssessment = useMemo(() => buildFallbackAssessment(activeGraph, copy), [activeGraph, copy]);
   const zoneTitlesById = useMemo(() => new Map((activeGraph?.zones ?? []).map((zone) => [zone.id, zone.title])), [activeGraph]);
   const topicTitlesById = useMemo(() => new Map((activeGraph?.topics ?? []).map((topic) => [topic.id, topic.title])), [activeGraph]);
   const selectedZoneTitles = useMemo(
@@ -679,7 +590,6 @@ export default function App(): React.JSX.Element {
     [assessment?.cards, fallbackAssessment.cards],
   );
   const sessionUser = sessionInfo?.user ?? null;
-  const copy = APP_COPY;
   const onboardingNeedsFirstGraph = !activeGraph && workspaceSurface?.onboarding_state === "needs_first_graph";
   const currentConfig = data?.workspace.config ?? null;
   const geminiKeyLockedByEnv = currentConfig?.gemini_api_key_source === "env";
@@ -1646,8 +1556,8 @@ export default function App(): React.JSX.Element {
   }
 
   const assistantTemplates = [
-    { id: "expand", label: "Expand graph" as const, value: templatePrompt("expand") },
-    { id: "ingest", label: "Ingest topics" as const, value: templatePrompt("ingest") },
+    { id: "expand", label: copy.graphText.expandGraphAction, value: templatePrompt("expand", copy) },
+    { id: "ingest", label: copy.graphText.ingestTopicsAction, value: templatePrompt("ingest", copy) },
   ];
   const suspendedSurfaceStateRef = useRef<{ leftSidebarOpen: boolean; assistantWidth: number } | null>(null);
   const overlayWasOpenRef = useRef(false);
@@ -1860,8 +1770,8 @@ export default function App(): React.JSX.Element {
         sendChat={sendChat}
         applyLoadingMessageId={applyLoadingMessageId}
         applyProposalFromMessage={applyProposalFromMessage}
-        summarizePreviewCounts={summarizePreviewCounts}
-        summarizeTopOperations={summarizeTopOperations}
+        summarizePreviewCounts={(proposal) => summarizePreviewCounts(proposal, copy)}
+        summarizeTopOperations={(proposal) => summarizeTopOperations(proposal, copy)}
         setSessionDeleteConfirm={setSessionDeleteConfirm}
         applyError={applyError}
         assistantTemplates={assistantTemplates}

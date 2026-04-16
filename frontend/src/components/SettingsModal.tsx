@@ -242,17 +242,17 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                   <section className="settingsPanel settingsPanelWide">
                     <div className="settingsPanelHeader">
                       <div>
-                        <div className="settingsPanelEyebrow">Providers</div>
-                        <div className="settingsPanelTitle">Model provider</div>
+                        <div className="settingsPanelEyebrow">{copy.settingsPanel.providersEyebrow}</div>
+                        <div className="settingsPanelTitle">{copy.settingsPanel.modelProviderTitle}</div>
                       </div>
                     </div>
                     <div className="settingsPanelBody">
                       <div className="settingsLead">
-                        MapMind runs locally. Choose the active provider and model, then keep credentials in workspace config so the shell stays provider-agnostic.
+                        {copy.settingsPanel.modelProviderLead}
                       </div>
                       <div className="settingsInlineFields">
                         <label className="field">
-                          <span className="fieldLabel">Provider</span>
+                          <span className="fieldLabel">{copy.settingsPanel.providerLabel}</span>
                           <select
                             className="input"
                             value={providerDraft}
@@ -270,7 +270,7 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                           </select>
                         </label>
                         <label className="field">
-                          <span className="fieldLabel">Model</span>
+                          <span className="fieldLabel">{copy.settingsPanel.modelLabel}</span>
                           <select
                             className="input"
                             value={modelPresetDraft}
@@ -285,13 +285,13 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                             {providerModelOptions.map((modelId) => (
                               <option key={modelId} value={modelId}>{modelId}</option>
                             ))}
-                            <option value="__custom__">Custom…</option>
+                            <option value="__custom__">{copy.settingsPanel.customModelOption}</option>
                           </select>
                         </label>
                       </div>
                       {modelPresetDraft === "__custom__" ? (
                         <label className="field">
-                          <span className="fieldLabel">Custom model id</span>
+                          <span className="fieldLabel">{copy.settingsPanel.customModelId}</span>
                           <input
                             className="input"
                             value={modelDraft}
@@ -301,33 +301,33 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                         </label>
                       ) : null}
                       <label className="field">
-                        <span className="fieldLabel">Gemini API key</span>
+                        <span className="fieldLabel">{copy.settingsPanel.geminiApiKey}</span>
                         <input
                           className="input"
-                          value={geminiKeyLockedByEnv ? "Provided by .env" : geminiApiKeyDraft}
+                          value={geminiKeyLockedByEnv ? copy.settingsPanel.providedByEnv : geminiApiKeyDraft}
                           onChange={(event) => setGeminiApiKeyDraft(event.target.value)}
-                          placeholder="AIza..."
+                          placeholder={copy.settingsPanel.geminiApiKeyPlaceholder}
                           disabled={geminiKeyLockedByEnv}
                         />
                       </label>
                       {geminiKeyLockedByEnv ? (
                         <div className="settingsInlineNotice">
-                          Gemini key is coming from `.env`, so it has higher priority than workspace config and cannot be changed here.
+                          {copy.settingsPanel.geminiApiKeyEnvNotice}
                         </div>
                       ) : null}
                       <label className="field">
-                        <span className="fieldLabel">OpenAI API key</span>
+                        <span className="fieldLabel">{copy.settingsPanel.openaiApiKey}</span>
                         <input
                           className="input"
-                          value={openaiKeyLockedByEnv ? "Provided by .env" : openaiApiKeyDraft}
+                          value={openaiKeyLockedByEnv ? copy.settingsPanel.providedByEnv : openaiApiKeyDraft}
                           onChange={(event) => setOpenaiApiKeyDraft(event.target.value)}
-                          placeholder="sk-..."
+                          placeholder={copy.settingsPanel.openaiApiKeyPlaceholder}
                           disabled={openaiKeyLockedByEnv}
                         />
                       </label>
                       {openaiKeyLockedByEnv ? (
                         <div className="settingsInlineNotice">
-                          OpenAI key is coming from `.env`, so it has higher priority than workspace config and cannot be changed here.
+                          {copy.settingsPanel.openaiApiKeyEnvNotice}
                         </div>
                       ) : null}
                       {providerDraft === "openai" ? (
@@ -348,13 +348,13 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                                 textUnderlineOffset: "3px",
                               }}
                             >
-                              {showOpenAIEndpointDraft ? "Hide custom endpoint" : "Use custom endpoint"}
+                              {showOpenAIEndpointDraft ? copy.settingsPanel.hideCustomEndpoint : copy.settingsPanel.useCustomEndpoint}
                             </button>
                           </div>
                           {showOpenAIEndpointDraft ? (
                             <>
                               <label className="field">
-                                <span className="fieldLabel">OpenAI-compatible endpoint (advanced)</span>
+                                <span className="fieldLabel">{copy.settingsPanel.openaiEndpointLabel}</span>
                                 <input
                                   className="input"
                                   value={openaiBaseUrlDraft}
@@ -364,13 +364,13 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                                 />
                               </label>
                               <div className="settingsInlineNotice">
-                                You do not need this for the official OpenAI API. Use it only for OpenAI-compatible gateways or local proxies.
+                                {copy.settingsPanel.openaiEndpointHelp}
                               </div>
                             </>
                           ) : null}
                           {openaiBaseUrlLockedByEnv ? (
                             <div className="settingsInlineNotice">
-                              OpenAI endpoint is coming from `.env`, so it has higher priority than workspace config and cannot be changed here.
+                              {copy.settingsPanel.openaiEndpointEnvNotice}
                             </div>
                           ) : null}
                         </>
@@ -407,23 +407,23 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                       {thinkingModeDraft === "custom" ? (
                         <div className="settingsInlineFields">
                           <label className="field">
-                            <span className="fieldLabel">Planner max output tokens</span>
+                            <span className="fieldLabel">{copy.settingsPanel.plannerMaxOutputTokens}</span>
                             <input className="input" type="number" min={100} step={100} value={plannerMaxTokensDraft} onChange={(event) => setPlannerMaxTokensDraft(Number(event.target.value) || 100)} />
                           </label>
                           <label className="field">
-                            <span className="fieldLabel">Planner thinking budget</span>
+                            <span className="fieldLabel">{copy.settingsPanel.plannerThinkingBudget}</span>
                             <input className="input" type="number" min={100} step={100} value={plannerThinkingBudgetDraft} onChange={(event) => setPlannerThinkingBudgetDraft(Number(event.target.value) || 100)} />
                           </label>
                           <label className="field">
-                            <span className="fieldLabel">Chat orchestrator max output tokens</span>
+                            <span className="fieldLabel">{copy.settingsPanel.orchestratorMaxOutputTokens}</span>
                             <input className="input" type="number" min={100} step={100} value={orchestratorMaxTokensDraft} onChange={(event) => setOrchestratorMaxTokensDraft(Number(event.target.value) || 100)} />
                           </label>
                           <label className="field">
-                            <span className="fieldLabel">Quiz max output tokens</span>
+                            <span className="fieldLabel">{copy.settingsPanel.quizMaxOutputTokens}</span>
                             <input className="input" type="number" min={100} step={100} value={quizMaxTokensDraft} onChange={(event) => setQuizMaxTokensDraft(Number(event.target.value) || 100)} />
                           </label>
                           <label className="field">
-                            <span className="fieldLabel">Assistant max output tokens</span>
+                            <span className="fieldLabel">{copy.settingsPanel.assistantMaxOutputTokens}</span>
                             <input className="input" type="number" min={100} step={100} value={assistantMaxTokensDraft} onChange={(event) => setAssistantMaxTokensDraft(Number(event.target.value) || 100)} />
                           </label>
                         </div>
