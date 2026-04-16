@@ -436,7 +436,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     themeMode,
     setThemeMode,
   } = props;
-  const experimentalLightDesktop = themeMode === "light" && !isMobileViewport;
+  const experimentalLightDesktop = !isMobileViewport;
   const shellSurfaceRef = React.useRef<HTMLDivElement | null>(null);
   const dockRef = React.useRef<HTMLDivElement | null>(null);
   const workspaceWindowRef = React.useRef<HTMLDivElement | null>(null);
@@ -1880,15 +1880,12 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                               .join(" · ")}
                           </div>
                         ) : null}
-                        <div className="row" style={{ justifyContent: "flex-end", gap: "8px" }}>
+                        <div className="row topicClosureActions" style={{ justifyContent: "flex-end", gap: "8px" }}>
                           {quizError ? <span className="badge badge-red">{quizError}</span> : null}
                           {quizSuccess ? (
                             <span className={`badge ${quizSuccess === copy.closure.markAsFinished ? "badge-yellow" : "badge-green"}`}>
                               {quizSuccess}
                             </span>
-                          ) : null}
-                          {closureTestsEnabled && !selectedClosureStatus.can_award_completion ? (
-                            <span className="badge badge-yellow">{copy.closure.closePrerequisitesFirst}</span>
                           ) : null}
                           {!(selectedTopicClosed && !closureTestsEnabled) ? (
                             <button
@@ -1901,6 +1898,9 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                                 ? (closureTestsEnabled ? copy.closure.generatingQuiz : copy.closure.markingAsFinished)
                                 : (closureTestsEnabled ? copy.closure.startClosureQuiz : copy.closure.markAsFinished)}
                             </button>
+                          ) : null}
+                          {closureTestsEnabled && !selectedClosureStatus.can_award_completion ? (
+                            <div className="topicClosureBlockedHint">{copy.closure.closePrerequisitesFirst}</div>
                           ) : null}
                         </div>
                       </div>
@@ -2388,7 +2388,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
         ) : null}
       </main>
       {topicAssetDialog ? (
-        <div className="quizOverlay">
+        <div className={`quizOverlay topicAssetOverlay ${themeMode === "light" ? "topicAssetOverlayLight" : "topicAssetOverlayDark"}`}>
           <div
             ref={topicAssetModalRef}
             className="quizModal topicAssetModal"

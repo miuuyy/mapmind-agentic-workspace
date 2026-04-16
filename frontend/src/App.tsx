@@ -773,6 +773,21 @@ export default function App(): React.JSX.Element {
     const elapsed = now - lastAnchorCommitAtRef.current;
     if (!shouldCommitAnchorUpdate(current, next, elapsed)) return;
     lastAnchorCommitAtRef.current = now;
+    if (!current && next) {
+      setSelectedTopicAnchor(next);
+      const base = computePopoverPosition(next, graphShellRef.current, topicPopoverRef.current);
+      if (base) {
+        const drag = popoverDragOffsetRef.current;
+        const positioned = {
+          left: base.left + drag.x,
+          top: base.top + drag.y,
+          side: base.side,
+        } satisfies PopoverPosition;
+        setPopoverPosition((existing) => (samePopoverPosition(existing, positioned) ? existing : positioned));
+      }
+      setPopoverFollowAnchor(false);
+      return;
+    }
     setSelectedTopicAnchor(next);
   }, [isMobileViewport, popoverFollowAnchor]);
 
