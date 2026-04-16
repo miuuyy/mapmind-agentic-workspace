@@ -75,7 +75,6 @@ function renderEntry({ source, entry }: FlatLogEntry): React.JSX.Element {
 export function DebugLogsModal({
   copy,
   open,
-  settingsOpen,
   onClose,
   logs,
   loading,
@@ -83,7 +82,6 @@ export function DebugLogsModal({
 }: {
   copy: AppCopy;
   open: boolean;
-  settingsOpen: boolean;
   onClose(): void;
   logs: DebugLogSnapshot | null;
   loading: boolean;
@@ -95,7 +93,7 @@ export function DebugLogsModal({
 
   return (
     <div
-      className={`quizOverlay settingsOverlay ${settingsOpen ? "settingsOverlayCoexisting settingsOverlayLogs" : ""}`}
+      className="quizOverlay settingsOverlay"
       style={{ zIndex: 110 }}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();

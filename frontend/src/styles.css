@@ -9172,38 +9172,6 @@ select.input {
   background: var(--light-flat-bg) !important;
 }
 
-@media (min-width: 981px) {
-  :root[data-theme="light"] .settingsOverlayCoexisting {
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    align-items: flex-start !important;
-    pointer-events: none !important;
-    padding-top: 28px !important;
-  }
-
-  :root[data-theme="light"] .settingsOverlayCoexisting .settingsModal {
-    pointer-events: auto !important;
-  }
-
-  :root[data-theme="light"] .settingsOverlaySettings {
-    justify-content: flex-start !important;
-    padding-left: 28px !important;
-    padding-right: min(50vw, 560px) !important;
-  }
-
-  :root[data-theme="light"] .settingsOverlayLogs {
-    justify-content: flex-end !important;
-    padding-left: min(50vw, 560px) !important;
-    padding-right: 28px !important;
-  }
-
-  :root[data-theme="light"] .settingsOverlayLogs .debugLogsModal {
-    width: min(920px, calc(100vw - 72px)) !important;
-    height: min(82vh, 760px) !important;
-  }
-}
-
 /* Absolute final settings color lock */
 :root[data-theme="light"] .settingsModal,
 :root[data-theme="light"] .settingsContent,
@@ -9284,48 +9252,6 @@ select.input {
   color: #2d2b28 !important;
   border-color: #e8e4de !important;
   box-shadow: none !important;
-}
-
-/* REAL EOF dark parity: actions, proposal sizing, settings/logs */
-@media (min-width: 981px) {
-  :root[data-theme="dark"] .settingsOverlayCoexisting {
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    align-items: flex-start !important;
-    pointer-events: none !important;
-    padding-top: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayCoexisting .settingsModal {
-    pointer-events: auto !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlaySettings {
-    justify-content: flex-start !important;
-    padding-left: 28px !important;
-    padding-right: calc(50vw + 24px) !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs {
-    justify-content: flex-end !important;
-    padding-left: calc(50vw + 24px) !important;
-    padding-right: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlaySettings .settingsModal {
-    width: min(620px, calc(50vw - 56px)) !important;
-    height: min(85vh, 800px) !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs .debugLogsModal,
-  :root[data-theme="dark"] .settingsOverlayLogs .settingsModal.debugLogsModal {
-    width: min(620px, calc(50vw - 56px)) !important;
-    min-width: min(620px, calc(50vw - 56px)) !important;
-    max-width: min(620px, calc(50vw - 56px)) !important;
-    flex: 0 0 min(620px, calc(50vw - 56px)) !important;
-    height: min(82vh, 760px) !important;
-  }
 }
 
 :root[data-theme="dark"] .lightWorkspaceFolderAction,
@@ -9798,38 +9724,6 @@ select.input {
   }
 }
 
-/* Absolute final dark parity: actions, proposal sizing, settings/logs */
-@media (min-width: 981px) {
-  :root[data-theme="dark"] .settingsOverlayCoexisting {
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    align-items: flex-start !important;
-    pointer-events: none !important;
-    padding-top: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayCoexisting .settingsModal {
-    pointer-events: auto !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlaySettings {
-    justify-content: flex-start !important;
-    padding-left: 28px !important;
-    padding-right: min(50vw, 560px) !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs {
-    justify-content: flex-end !important;
-    padding-left: min(50vw, 560px) !important;
-    padding-right: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs .debugLogsModal {
-    width: min(920px, calc(100vw - 72px)) !important;
-    height: min(82vh, 760px) !important;
-  }
-}
 
 :root[data-theme="dark"] .lightWorkspaceFolderAction,
 :root[data-theme="dark"] .sidebarRenameBtn,
@@ -9991,38 +9885,6 @@ select.input {
   color: rgba(255, 255, 255, 0.74) !important;
 }
 
-/* REAL EOF dark fixes */
-@media (min-width: 981px) {
-  :root[data-theme="dark"] .settingsOverlayCoexisting {
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    align-items: flex-start !important;
-    pointer-events: none !important;
-    padding-top: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayCoexisting .settingsModal {
-    pointer-events: auto !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlaySettings {
-    justify-content: flex-start !important;
-    padding-left: 28px !important;
-    padding-right: min(50vw, 560px) !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs {
-    justify-content: flex-end !important;
-    padding-left: min(50vw, 560px) !important;
-    padding-right: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs .debugLogsModal {
-    width: min(920px, calc(100vw - 72px)) !important;
-    height: min(82vh, 760px) !important;
-  }
-}
 
 :root[data-theme="dark"] .badge,
 :root[data-theme="dark"] .badge-blue,
@@ -10136,38 +9998,6 @@ select.input {
   border-radius: 16px !important;
 }
 
-/* Absolute EOF dark checklist pass */
-@media (min-width: 981px) {
-  :root[data-theme="dark"] .settingsOverlayCoexisting {
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    align-items: flex-start !important;
-    pointer-events: none !important;
-    padding-top: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayCoexisting .settingsModal {
-    pointer-events: auto !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlaySettings {
-    justify-content: flex-start !important;
-    padding-left: 28px !important;
-    padding-right: min(50vw, 560px) !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs {
-    justify-content: flex-end !important;
-    padding-left: min(50vw, 560px) !important;
-    padding-right: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs .debugLogsModal {
-    width: min(920px, calc(100vw - 72px)) !important;
-    height: min(82vh, 760px) !important;
-  }
-}
 
 :root[data-theme="dark"] .badge,
 :root[data-theme="dark"] .badge-blue,
@@ -10290,38 +10120,6 @@ select.input {
   color: rgba(248, 113, 113, 0.98) !important;
 }
 
-/* Absolute EOF dark-theme final targeted pass */
-@media (min-width: 981px) {
-  :root[data-theme="dark"] .settingsOverlayCoexisting {
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    align-items: flex-start !important;
-    pointer-events: none !important;
-    padding-top: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayCoexisting .settingsModal {
-    pointer-events: auto !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlaySettings {
-    justify-content: flex-start !important;
-    padding-left: 28px !important;
-    padding-right: min(50vw, 560px) !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs {
-    justify-content: flex-end !important;
-    padding-left: min(50vw, 560px) !important;
-    padding-right: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs .debugLogsModal {
-    width: min(920px, calc(100vw - 72px)) !important;
-    height: min(82vh, 760px) !important;
-  }
-}
 
 :root[data-theme="dark"] .badge-gray,
 :root[data-theme="dark"] .badge-yellow,
@@ -10477,38 +10275,6 @@ select.input {
   border-radius: 999px !important;
 }
 
-/* Absolute EOF dark pass: settings/logs template + chat composer geometry */
-@media (min-width: 981px) {
-  :root[data-theme="dark"] .settingsOverlayCoexisting {
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    align-items: flex-start !important;
-    pointer-events: none !important;
-    padding-top: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayCoexisting .settingsModal {
-    pointer-events: auto !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlaySettings {
-    justify-content: flex-start !important;
-    padding-left: 28px !important;
-    padding-right: min(50vw, 560px) !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs {
-    justify-content: flex-end !important;
-    padding-left: min(50vw, 560px) !important;
-    padding-right: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs .debugLogsModal {
-    width: min(920px, calc(100vw - 72px)) !important;
-    height: min(82vh, 760px) !important;
-  }
-}
 
 :root[data-theme="dark"] .settingsModal,
 :root[data-theme="dark"] .settingsContent,
@@ -11025,86 +10791,6 @@ select.input {
   border-bottom-color: rgba(255, 255, 255, 0.06) !important;
 }
 
-/* EOF final quiz swap for light theme */
-:root[data-theme="light"] .quizQuestion {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border: 1px solid rgba(232, 228, 222, 0.98) !important;
-  border-radius: 18px !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .quizPrompt,
-:root[data-theme="light"] .quizChoiceText,
-:root[data-theme="light"] .inlineQuizQuestion {
-  color: rgba(45, 43, 40, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizChoice,
-:root[data-theme="light"] .inlineQuizChoice {
-  background: rgba(244, 239, 233, 0.82) !important;
-  border: 1px solid rgba(232, 228, 222, 0.98) !important;
-  color: rgba(71, 85, 105, 0.96) !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .quizChoice:hover,
-:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled) {
-  background: rgba(246, 241, 236, 0.96) !important;
-  border-color: rgba(195, 90, 44, 0.22) !important;
-  color: rgba(45, 43, 40, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizChoiceSelected,
-:root[data-theme="light"] .quizChoiceSelected:hover {
-  background: rgba(195, 90, 44, 0.14) !important;
-  border-color: rgba(195, 90, 44, 0.3) !important;
-  color: rgba(120, 46, 17, 0.98) !important;
-}
-
-:root[data-theme="light"] .inlineQuizCard {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .inlineQuizCorrect {
-  background: rgba(45, 102, 72, 0.1) !important;
-  border-color: rgba(45, 102, 72, 0.22) !important;
-  color: rgba(45, 102, 72, 0.96) !important;
-}
-
-:root[data-theme="light"] .inlineQuizWrong {
-  background: rgba(220, 38, 38, 0.08) !important;
-  border-color: rgba(220, 38, 38, 0.22) !important;
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
-:root[data-theme="light"] .inlineQuizDimmed {
-  background: rgba(244, 239, 233, 0.54) !important;
-  border-color: rgba(232, 228, 222, 0.8) !important;
-  color: rgba(139, 133, 128, 0.9) !important;
-}
-
-:root[data-theme="light"] .quizModal .inlineNoticeSuccess {
-  background: rgba(45, 102, 72, 0.1) !important;
-  border-color: rgba(45, 102, 72, 0.22) !important;
-  color: rgba(45, 102, 72, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizModal .inlineNoticeError {
-  background: rgba(220, 38, 38, 0.08) !important;
-  border-color: rgba(220, 38, 38, 0.22) !important;
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizReviewLine {
-  color: rgba(71, 85, 105, 0.92) !important;
-}
-
-:root[data-theme="light"] .quizReviewWrong {
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
 /* Dark theme on the same floating desktop template */
 :root[data-theme="dark"] .workspaceShellLightDockMode {
   isolation: auto !important;
@@ -11428,246 +11114,6 @@ select.input {
     #050505 100%
   ) !important;
   opacity: 1 !important;
-}
-
-/* True final quiz swap for light theme */
-:root[data-theme="light"] .quizQuestion {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border: 1px solid rgba(232, 228, 222, 0.98) !important;
-  border-radius: 18px !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .quizPrompt,
-:root[data-theme="light"] .quizChoiceText,
-:root[data-theme="light"] .inlineQuizQuestion {
-  color: rgba(45, 43, 40, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizChoice,
-:root[data-theme="light"] .inlineQuizChoice {
-  background: rgba(244, 239, 233, 0.82) !important;
-  border: 1px solid rgba(232, 228, 222, 0.98) !important;
-  color: rgba(71, 85, 105, 0.96) !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .quizChoice:hover,
-:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled) {
-  background: rgba(246, 241, 236, 0.96) !important;
-  border-color: rgba(195, 90, 44, 0.22) !important;
-  color: rgba(45, 43, 40, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizChoiceSelected,
-:root[data-theme="light"] .quizChoiceSelected:hover {
-  background: rgba(195, 90, 44, 0.14) !important;
-  border-color: rgba(195, 90, 44, 0.3) !important;
-  color: rgba(120, 46, 17, 0.98) !important;
-}
-
-:root[data-theme="light"] .inlineQuizCard {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .inlineQuizCorrect {
-  background: rgba(45, 102, 72, 0.1) !important;
-  border-color: rgba(45, 102, 72, 0.22) !important;
-  color: rgba(45, 102, 72, 0.96) !important;
-}
-
-:root[data-theme="light"] .inlineQuizWrong {
-  background: rgba(220, 38, 38, 0.08) !important;
-  border-color: rgba(220, 38, 38, 0.22) !important;
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
-:root[data-theme="light"] .inlineQuizDimmed {
-  background: rgba(244, 239, 233, 0.54) !important;
-  border-color: rgba(232, 228, 222, 0.8) !important;
-  color: rgba(139, 133, 128, 0.9) !important;
-}
-
-:root[data-theme="light"] .quizModal .inlineNoticeSuccess {
-  background: rgba(45, 102, 72, 0.1) !important;
-  border-color: rgba(45, 102, 72, 0.22) !important;
-  color: rgba(45, 102, 72, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizModal .inlineNoticeError {
-  background: rgba(220, 38, 38, 0.08) !important;
-  border-color: rgba(220, 38, 38, 0.22) !important;
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizReviewLine {
-  color: rgba(71, 85, 105, 0.92) !important;
-}
-
-:root[data-theme="light"] .quizReviewWrong {
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
-/* Absolute final quiz swap for light theme */
-:root[data-theme="light"] .quizQuestion {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border: 1px solid rgba(232, 228, 222, 0.98) !important;
-  border-radius: 18px !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .quizPrompt,
-:root[data-theme="light"] .quizChoiceText,
-:root[data-theme="light"] .inlineQuizQuestion {
-  color: rgba(45, 43, 40, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizChoice,
-:root[data-theme="light"] .inlineQuizChoice {
-  background: rgba(244, 239, 233, 0.82) !important;
-  border: 1px solid rgba(232, 228, 222, 0.98) !important;
-  color: rgba(71, 85, 105, 0.96) !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .quizChoice:hover,
-:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled) {
-  background: rgba(246, 241, 236, 0.96) !important;
-  border-color: rgba(195, 90, 44, 0.22) !important;
-  color: rgba(45, 43, 40, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizChoiceSelected,
-:root[data-theme="light"] .quizChoiceSelected:hover {
-  background: rgba(195, 90, 44, 0.14) !important;
-  border-color: rgba(195, 90, 44, 0.3) !important;
-  color: rgba(120, 46, 17, 0.98) !important;
-}
-
-:root[data-theme="light"] .inlineQuizCard {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .inlineQuizCorrect {
-  background: rgba(45, 102, 72, 0.1) !important;
-  border-color: rgba(45, 102, 72, 0.22) !important;
-  color: rgba(45, 102, 72, 0.96) !important;
-}
-
-:root[data-theme="light"] .inlineQuizWrong {
-  background: rgba(220, 38, 38, 0.08) !important;
-  border-color: rgba(220, 38, 38, 0.22) !important;
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
-:root[data-theme="light"] .inlineQuizDimmed {
-  background: rgba(244, 239, 233, 0.54) !important;
-  border-color: rgba(232, 228, 222, 0.8) !important;
-  color: rgba(139, 133, 128, 0.9) !important;
-}
-
-:root[data-theme="light"] .quizModal .inlineNoticeSuccess {
-  background: rgba(45, 102, 72, 0.1) !important;
-  border-color: rgba(45, 102, 72, 0.22) !important;
-  color: rgba(45, 102, 72, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizModal .inlineNoticeError {
-  background: rgba(220, 38, 38, 0.08) !important;
-  border-color: rgba(220, 38, 38, 0.22) !important;
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizReviewLine {
-  color: rgba(71, 85, 105, 0.92) !important;
-}
-
-:root[data-theme="light"] .quizReviewWrong {
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
-/* Absolute final quiz colors for light theme */
-:root[data-theme="light"] .quizQuestion {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border: 1px solid rgba(232, 228, 222, 0.98) !important;
-  border-radius: 18px !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .quizPrompt,
-:root[data-theme="light"] .quizChoiceText,
-:root[data-theme="light"] .inlineQuizQuestion {
-  color: rgba(45, 43, 40, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizChoice,
-:root[data-theme="light"] .inlineQuizChoice {
-  background: rgba(244, 239, 233, 0.82) !important;
-  border: 1px solid rgba(232, 228, 222, 0.98) !important;
-  color: rgba(71, 85, 105, 0.96) !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .quizChoice:hover,
-:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled) {
-  background: rgba(246, 241, 236, 0.96) !important;
-  border-color: rgba(195, 90, 44, 0.22) !important;
-  color: rgba(45, 43, 40, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizChoiceSelected,
-:root[data-theme="light"] .quizChoiceSelected:hover {
-  background: rgba(195, 90, 44, 0.14) !important;
-  border-color: rgba(195, 90, 44, 0.3) !important;
-  color: rgba(120, 46, 17, 0.98) !important;
-}
-
-:root[data-theme="light"] .inlineQuizCard {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .inlineQuizCorrect {
-  background: rgba(45, 102, 72, 0.1) !important;
-  border-color: rgba(45, 102, 72, 0.22) !important;
-  color: rgba(45, 102, 72, 0.96) !important;
-}
-
-:root[data-theme="light"] .inlineQuizWrong {
-  background: rgba(220, 38, 38, 0.08) !important;
-  border-color: rgba(220, 38, 38, 0.22) !important;
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
-:root[data-theme="light"] .inlineQuizDimmed {
-  background: rgba(244, 239, 233, 0.54) !important;
-  border-color: rgba(232, 228, 222, 0.8) !important;
-  color: rgba(139, 133, 128, 0.9) !important;
-}
-
-:root[data-theme="light"] .quizModal .inlineNoticeSuccess {
-  background: rgba(45, 102, 72, 0.1) !important;
-  border-color: rgba(45, 102, 72, 0.22) !important;
-  color: rgba(45, 102, 72, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizModal .inlineNoticeError {
-  background: rgba(220, 38, 38, 0.08) !important;
-  border-color: rgba(220, 38, 38, 0.22) !important;
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizReviewLine {
-  color: rgba(71, 85, 105, 0.92) !important;
-}
-
-:root[data-theme="light"] .quizReviewWrong {
-  color: rgba(185, 28, 28, 0.96) !important;
 }
 
 /* Final light-theme quiz pass: swap prompt/choice tones and keep review readable */
@@ -12005,38 +11451,6 @@ select.input {
   gap: 14px;
 }
 
-.debugLogsSection {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.debugLogsSectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 0 8px;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.58);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.debugLogsSectionCount {
-  color: rgba(255, 255, 255, 0.34);
-}
-
-.debugLogsSectionList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
 .debugLogRow {
   padding: 10px 0 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -12112,15 +11526,6 @@ select.input {
 :root[data-theme="light"] .debugLogsModal .settingsContentHeader,
 :root[data-theme="light"] .debugLogsList {
   background: #faf9f6 !important;
-}
-
-:root[data-theme="light"] .debugLogsSectionHeader {
-  color: rgba(114, 108, 101, 0.88) !important;
-  border-bottom-color: rgba(232, 228, 222, 0.98) !important;
-}
-
-:root[data-theme="light"] .debugLogsSectionCount {
-  color: rgba(139, 133, 128, 0.72) !important;
 }
 
 :root[data-theme="light"] .debugLogRow {
@@ -12349,39 +11754,6 @@ select.input {
   color: #2d2b28 !important;
   border-color: #e8e4de !important;
   box-shadow: none !important;
-}
-
-/* TRUE EOF dark parity: actions, proposal sizing, settings/logs */
-@media (min-width: 981px) {
-  :root[data-theme="dark"] .settingsOverlayCoexisting {
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    align-items: flex-start !important;
-    pointer-events: none !important;
-    padding-top: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayCoexisting .settingsModal {
-    pointer-events: auto !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlaySettings {
-    justify-content: flex-start !important;
-    padding-left: 28px !important;
-    padding-right: min(50vw, 560px) !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs {
-    justify-content: flex-end !important;
-    padding-left: min(50vw, 560px) !important;
-    padding-right: 28px !important;
-  }
-
-  :root[data-theme="dark"] .settingsOverlayLogs .debugLogsModal {
-    width: min(920px, calc(100vw - 72px)) !important;
-    height: min(82vh, 760px) !important;
-  }
 }
 
 :root[data-theme="dark"] .lightWorkspaceFolderAction,

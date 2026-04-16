@@ -22,7 +22,6 @@ type ModeOption<T extends string> = {
 
 type SettingsModalProps = {
   isSettingsOpen: boolean;
-  logsOpen: boolean;
   copy: AppCopy;
   setSettingsOpen: StateSetter<boolean>;
   currentConfig: WorkspaceConfig | null;
@@ -105,7 +104,6 @@ type SettingsModalProps = {
 export function SettingsModal(props: SettingsModalProps): React.JSX.Element | null {
   const {
     isSettingsOpen,
-    logsOpen,
     copy,
     setSettingsOpen,
     currentConfig,
@@ -220,7 +218,7 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
 
   return (
     <div
-      className={`quizOverlay settingsOverlay ${logsOpen ? "settingsOverlayCoexisting settingsOverlaySettings" : ""}`}
+      className="quizOverlay settingsOverlay"
       style={{ zIndex: 100 }}
     >
       <div className="settingsModal">

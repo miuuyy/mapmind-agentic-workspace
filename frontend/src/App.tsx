@@ -1879,7 +1879,6 @@ export default function App(): React.JSX.Element {
 
       <SettingsModal
         isSettingsOpen={isSettingsOpen}
-        logsOpen={isLogsOpen}
         copy={copy}
         setSettingsOpen={setSettingsOpen}
         currentConfig={currentConfig}
@@ -1962,7 +1961,6 @@ export default function App(): React.JSX.Element {
       <DebugLogsModal
         copy={copy}
         open={isLogsOpen}
-        settingsOpen={isSettingsOpen}
         onClose={() => setLogsOpen(false)}
         logs={debugLogs}
         loading={debugLogsLoading}
