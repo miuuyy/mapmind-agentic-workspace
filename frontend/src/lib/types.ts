@@ -33,6 +33,7 @@ export type Topic = {
   zones: string[];
   resources: ResourceLink[];
   artifacts: Artifact[];
+  metadata?: Record<string, unknown>;
 };
 
 export type QuizAttempt = {

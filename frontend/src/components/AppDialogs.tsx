@@ -4,6 +4,7 @@ import { UploadSimple } from "@phosphor-icons/react";
 import { API_BASE } from "../lib/api";
 import type { AppCopy } from "../lib/appCopy";
 import type { apiFetch, readErrorMessage } from "../lib/appUiHelpers";
+import type { ObsidianImportOptions, ObsidianImportPreview } from "../lib/obsidianImport";
 import type {
   CreateGraphRequest,
   GraphEnvelope,
@@ -48,6 +49,7 @@ type AppDialogsProps = {
   setCreateGraphDraft: StateSetter<CreateGraphRequest>;
   createGraphError: string | null;
   openImportGraphModal: () => void;
+  openImportObsidianModal: () => void;
   createGraphLoading: boolean;
   createGraph: () => Promise<void>;
   importGraphOpen: boolean;
@@ -65,6 +67,19 @@ type AppDialogsProps = {
   importGraphError: string | null;
   importGraphLoading: boolean;
   importGraphFromPackage: () => Promise<void>;
+  importObsidianOpen: boolean;
+  importObsidianModalRef: React.RefObject<HTMLDivElement | null>;
+  closeImportObsidianModal: () => void;
+  importObsidianFolderInputRef: React.RefObject<HTMLInputElement | null>;
+  importObsidianFolderButtonRef: React.RefObject<HTMLButtonElement | null>;
+  handleObsidianVaultFiles: (files: FileList | null) => Promise<void>;
+  obsidianVaultName: string | null;
+  obsidianImportDraft: Omit<ObsidianImportOptions, "vaultName">;
+  setObsidianImportDraft: StateSetter<Omit<ObsidianImportOptions, "vaultName">>;
+  obsidianImportPreview: ObsidianImportPreview | null;
+  importObsidianError: string | null;
+  importObsidianLoading: boolean;
+  importGraphFromObsidian: () => Promise<void>;
   exportGraphTarget: GraphEnvelope | null;
   exportGraphModalRef: React.RefObject<HTMLDivElement | null>;
   closeExportGraphModal: () => void;
@@ -122,6 +137,7 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
     setCreateGraphDraft,
     createGraphError,
     openImportGraphModal,
+    openImportObsidianModal,
     createGraphLoading,
     createGraph,
     importGraphOpen,
@@ -139,6 +155,19 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
     importGraphError,
     importGraphLoading,
     importGraphFromPackage,
+    importObsidianOpen,
+    importObsidianModalRef,
+    closeImportObsidianModal,
+    importObsidianFolderInputRef,
+    importObsidianFolderButtonRef,
+    handleObsidianVaultFiles,
+    obsidianVaultName,
+    obsidianImportDraft,
+    setObsidianImportDraft,
+    obsidianImportPreview,
+    importObsidianError,
+    importObsidianLoading,
+    importGraphFromObsidian,
     exportGraphTarget,
     exportGraphModalRef,
     closeExportGraphModal,
@@ -162,6 +191,10 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
     quizLoading,
     submitQuiz,
   } = props;
+
+  const obsidianIssues = obsidianImportPreview?.issues ?? [];
+  const obsidianErrors = obsidianIssues.filter((issue) => issue.level === "error");
+  const obsidianWarnings = obsidianIssues.filter((issue) => issue.level === "warning");
 
   function patchCreateGraphDraft(patch: Partial<CreateGraphRequest>): void {
     setCreateGraphDraft((current) => ({ ...current, ...patch }));
@@ -352,6 +385,14 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
                   <span>{copy.dialogs.importFromDisk}</span>
                 </button>
                 <button
+                  className="btn btnImport"
+                  onClick={openImportObsidianModal}
+                  type="button"
+                >
+                  <ObsidianMark />
+                  <span>{copy.dialogs.importFromObsidian}</span>
+                </button>
+                <button
                   className="assistantSendButton quizSubmitButton"
                   disabled={createGraphLoading || !createGraphDraft.title.trim() || !createGraphDraft.subject.trim()}
                   onClick={() => void createGraph()}
@@ -445,6 +486,244 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
                   type="button"
                 >
                   {importGraphLoading ? copy.dialogs.importingGraph : copy.dialogs.importGraph}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {importObsidianOpen ? (
+        <div className="quizOverlay">
+          <div
+            ref={importObsidianModalRef}
+            className="quizModal quizModalWide"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="import-obsidian-dialog-title"
+            aria-describedby="import-obsidian-dialog-description"
+            tabIndex={-1}
+          >
+            <div className="quizModalHeader">
+              <div>
+                <div id="import-obsidian-dialog-title" className="cardTitle">{copy.dialogs.importObsidianTitle}</div>
+                <div id="import-obsidian-dialog-description" className="mutedSmall">{copy.dialogs.importObsidianBody}</div>
+              </div>
+              <button className="modalCloseButton" onClick={closeImportObsidianModal} type="button" aria-label={copy.dialogs.cancel}>×</button>
+            </div>
+            <div className="quizModalBody stack">
+              <input
+                ref={importObsidianFolderInputRef}
+                type="file"
+                style={{ display: "none" }}
+                onChange={(event) => {
+                  void handleObsidianVaultFiles(event.target.files);
+                  event.currentTarget.value = "";
+                }}
+              />
+              <div className="stack" style={{ gap: 10 }}>
+                <button
+                  ref={importObsidianFolderButtonRef}
+                  className="btn btnImport btnImportWide"
+                  type="button"
+                  onClick={() => importObsidianFolderInputRef.current?.click()}
+                >
+                  <ObsidianMark />
+                  <span>{copy.dialogs.chooseVaultFolder}</span>
+                </button>
+                <div className={`inlineNotice ${obsidianVaultName ? "inlineNoticeSuccess" : "inlineNoticeWarn"}`}>
+                  {obsidianVaultName ?? copy.dialogs.noVaultChosen}
+                </div>
+              </div>
+
+              {obsidianVaultName ? (
+                <>
+                  <div className="obsidianImportGrid">
+                    <label className="field">
+                      <span className="fieldLabel">{copy.dialogs.graphTitle}</span>
+                      <input
+                        className="input"
+                        value={obsidianImportDraft.graphTitle}
+                        onChange={(event) => setObsidianImportDraft((current) => ({ ...current, graphTitle: event.target.value }))}
+                        placeholder={copy.dialogs.graphTitlePlaceholder}
+                      />
+                    </label>
+                    <label className="field">
+                      <span className="fieldLabel">{copy.dialogs.obsidianSubject}</span>
+                      <input
+                        className="input"
+                        value={obsidianImportDraft.subject}
+                        onChange={(event) => setObsidianImportDraft((current) => ({ ...current, subject: event.target.value }))}
+                        placeholder={copy.dialogs.obsidianSubjectPlaceholder}
+                      />
+                    </label>
+                    <label className="field">
+                      <span className="fieldLabel">{copy.dialogs.language}</span>
+                      <select
+                        className="input"
+                        value={obsidianImportDraft.language}
+                        onChange={(event) =>
+                          setObsidianImportDraft((current) => ({
+                            ...current,
+                            language: event.target.value as CreateGraphRequest["language"],
+                          }))
+                        }
+                      >
+                        <option value="uk">{copy.dialogs.languageOptions.uk}</option>
+                        <option value="ru">{copy.dialogs.languageOptions.ru}</option>
+                        <option value="en">{copy.dialogs.languageOptions.en}</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span className="fieldLabel">{copy.dialogs.obsidianRelation}</span>
+                      <select
+                        className="input"
+                        value={obsidianImportDraft.relation}
+                        onChange={(event) =>
+                          setObsidianImportDraft((current) => ({
+                            ...current,
+                            relation: event.target.value as ObsidianImportOptions["relation"],
+                          }))
+                        }
+                      >
+                        <option value="requires">{copy.dialogs.obsidianRelationOptions.requires}</option>
+                        <option value="supports">{copy.dialogs.obsidianRelationOptions.supports}</option>
+                        <option value="bridges">{copy.dialogs.obsidianRelationOptions.bridges}</option>
+                        <option value="extends">{copy.dialogs.obsidianRelationOptions.extends}</option>
+                        <option value="reviews">{copy.dialogs.obsidianRelationOptions.reviews}</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className="obsidianSettingsGrid">
+                    <label className="settingsToggleRow">
+                      <input
+                        type="checkbox"
+                        checked={obsidianImportDraft.useFoldersAsZones}
+                        onChange={(event) =>
+                          setObsidianImportDraft((current) => ({
+                            ...current,
+                            useFoldersAsZones: event.target.checked,
+                          }))
+                        }
+                      />
+                      <div className="settingsToggleCopy">
+                        <strong>{copy.dialogs.obsidianFoldersAsZones}</strong>
+                        <span>{copy.dialogs.obsidianFoldersAsZonesHelp}</span>
+                      </div>
+                    </label>
+                    <label className="settingsToggleRow">
+                      <input
+                        type="checkbox"
+                        checked={obsidianImportDraft.autofillDescriptions}
+                        onChange={(event) =>
+                          setObsidianImportDraft((current) => ({
+                            ...current,
+                            autofillDescriptions: event.target.checked,
+                          }))
+                        }
+                      />
+                      <div className="settingsToggleCopy">
+                        <strong>{copy.dialogs.obsidianAutofillDescriptions}</strong>
+                        <span>{copy.dialogs.obsidianAutofillDescriptionsHelp}</span>
+                      </div>
+                    </label>
+                    <label className="settingsToggleRow">
+                      <input
+                        type="checkbox"
+                        checked={obsidianImportDraft.createArtifactsFromNotes}
+                        onChange={(event) =>
+                          setObsidianImportDraft((current) => ({
+                            ...current,
+                            createArtifactsFromNotes: event.target.checked,
+                          }))
+                        }
+                      />
+                      <div className="settingsToggleCopy">
+                        <strong>{copy.dialogs.obsidianCreateArtifacts}</strong>
+                        <span>{copy.dialogs.obsidianCreateArtifactsHelp}</span>
+                      </div>
+                    </label>
+                    <label className="settingsToggleRow">
+                      <input
+                        type="checkbox"
+                        checked={obsidianImportDraft.createPlaceholderTopics}
+                        onChange={(event) =>
+                          setObsidianImportDraft((current) => ({
+                            ...current,
+                            createPlaceholderTopics: event.target.checked,
+                          }))
+                        }
+                      />
+                      <div className="settingsToggleCopy">
+                        <strong>{copy.dialogs.obsidianCreatePlaceholders}</strong>
+                        <span>{copy.dialogs.obsidianCreatePlaceholdersHelp}</span>
+                      </div>
+                    </label>
+                  </div>
+
+                  {obsidianImportPreview ? (
+                    <>
+                      <div className={`inlineNotice ${obsidianErrors.length > 0 ? "inlineNoticeError" : "inlineNoticeNeutral"}`}>
+                        {obsidianErrors.length > 0
+                          ? copy.dialogs.obsidianImportBlocked
+                          : copy.dialogs.obsidianImportReady(
+                              obsidianImportPreview.topicCount,
+                              obsidianImportPreview.edgeCount,
+                              obsidianImportPreview.zoneCount,
+                            )}
+                      </div>
+                      <div className="obsidianPreviewStats">
+                        <div className="previewStatCard">
+                          <strong>{obsidianImportPreview.noteCount}</strong>
+                          <span>{copy.dialogs.obsidianNotesCount}</span>
+                        </div>
+                        <div className="previewStatCard">
+                          <strong>{obsidianWarnings.length}</strong>
+                          <span>{copy.dialogs.obsidianWarningsCount}</span>
+                        </div>
+                        <div className="previewStatCard">
+                          <strong>{obsidianErrors.length}</strong>
+                          <span>{copy.dialogs.obsidianErrorsCount}</span>
+                        </div>
+                      </div>
+                      <div className="stack" style={{ gap: 8 }}>
+                        <div className="fieldLabel">{copy.dialogs.obsidianIssues}</div>
+                        {obsidianIssues.length === 0 ? (
+                          <div className="inlineNotice inlineNoticeSuccess">{copy.dialogs.obsidianNoIssues}</div>
+                        ) : (
+                          <div className="obsidianIssueList">
+                            {obsidianIssues.map((issue, index) => (
+                              <div
+                                key={`${issue.code}-${index}`}
+                                className={`inlineNotice ${issue.level === "error" ? "inlineNoticeError" : "inlineNoticeWarn"}`}
+                              >
+                                {issue.message}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : null}
+                </>
+              ) : null}
+
+              {importObsidianError ? <div className="inlineNotice inlineNoticeError">{importObsidianError}</div> : null}
+              <div className="quizActions quizActionsRight">
+                <button className="btn btnGhost" onClick={closeImportObsidianModal} type="button">{copy.dialogs.cancel}</button>
+                <button
+                  className="assistantSendButton quizSubmitButton"
+                  disabled={
+                    importObsidianLoading ||
+                    !obsidianImportPreview?.package ||
+                    !obsidianImportDraft.graphTitle.trim() ||
+                    !obsidianImportDraft.subject.trim()
+                  }
+                  onClick={() => void importGraphFromObsidian()}
+                  type="button"
+                >
+                  {importObsidianLoading ? copy.dialogs.importingObsidian : copy.dialogs.importFromObsidian}
                 </button>
               </div>
             </div>
@@ -579,5 +858,13 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
         </div>
       ) : null}
     </>
+  );
+}
+
+function ObsidianMark(): React.JSX.Element {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+      <path d="M15.16 2.23c-1.08-.63-2.57-.18-3.08.96L7.04 12.1c-.24.42-.45.6-.86.78-1.86.82-3.02 2.54-3.02 4.5 0 2.66 2.18 4.62 5.08 4.62 1.83 0 3.46-.8 4.44-2.17l6.12-8.53c1.58-2.2.84-5.63-1.61-7.06L15.16 2.23Zm-3.58 13.13c.51.29.69.94.4 1.45l-.56.98c-.57.99-1.66 1.58-2.93 1.58-1.58 0-2.67-.95-2.67-2.3 0-.95.5-1.72 1.38-2.13.78-.36 1.32-.86 1.78-1.66l3.54-6.17c.29-.51.94-.69 1.45-.4.51.29.69.94.4 1.45l-3.54 6.17c-.51.88-.75 1.2-1.25 1.59l.31.18Zm5.3-5.47-4.31 6c-.29.41-.87.51-1.29.22-.41-.3-.51-.87-.22-1.29l4.31-6c.65-.91.39-2.36-.56-2.91l-.45-.26c-.44-.25-.59-.81-.34-1.25.25-.44.81-.59 1.25-.34l.45.26c2.04 1.19 2.57 4.01 1.16 5.97Z" />
+    </svg>
   );
 }

@@ -2,6 +2,37 @@
   position: relative;
 }
 
+.quizModalWide {
+  width: min(920px, calc(100vw - 32px));
+  max-width: min(920px, calc(100vw - 32px));
+}
+
+.obsidianImportGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.obsidianSettingsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.obsidianPreviewStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.obsidianIssueList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow: auto;
+}
+
 .modalCloseButton {
   appearance: none;
   width: 22px;
@@ -914,6 +945,13 @@
     padding-bottom: 8px;
   }
 
+  .quizModalWide,
+  .obsidianImportGrid,
+  .obsidianSettingsGrid,
+  .obsidianPreviewStats {
+    grid-template-columns: 1fr;
+  }
+
   .settingsModal {
     width: 100%;
     height: min(92vh, 100vh);
@@ -1084,4 +1122,3 @@
   border-radius: 8px;
   box-shadow: none !important;
 }
-

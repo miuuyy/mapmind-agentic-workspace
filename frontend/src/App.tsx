@@ -66,6 +66,11 @@ import {
   summarizeTopOperations,
   templatePrompt,
 } from "./lib/graph";
+import {
+  buildObsidianImportPreview,
+  type ObsidianImportOptions,
+  type ObsidianVaultEntry,
+} from "./lib/obsidianImport";
 import { useModalAccessibility } from "./lib/useModalAccessibility";
 import type {
   Artifact,
@@ -115,6 +120,21 @@ export default function App(): React.JSX.Element {
   const [importGraphPayload, setImportGraphPayload] = useState<GraphExportPackagePayload | null>(null);
   const [importGraphTitleDraft, setImportGraphTitleDraft] = useState("");
   const [importGraphIncludeProgressDraft, setImportGraphIncludeProgressDraft] = useState(true);
+  const [importObsidianOpen, setImportObsidianOpen] = useState(false);
+  const [importObsidianLoading, setImportObsidianLoading] = useState(false);
+  const [importObsidianError, setImportObsidianError] = useState<string | null>(null);
+  const [obsidianVaultName, setObsidianVaultName] = useState<string | null>(null);
+  const [obsidianVaultEntries, setObsidianVaultEntries] = useState<ObsidianVaultEntry[] | null>(null);
+  const [obsidianImportDraft, setObsidianImportDraft] = useState<Omit<ObsidianImportOptions, "vaultName">>({
+    graphTitle: "",
+    subject: "",
+    language: "en",
+    relation: "bridges",
+    useFoldersAsZones: true,
+    autofillDescriptions: true,
+    createArtifactsFromNotes: false,
+    createPlaceholderTopics: false,
+  });
   const [exportGraphTarget, setExportGraphTarget] = useState<GraphEnvelope | null>(null);
   const [exportGraphLoading, setExportGraphLoading] = useState(false);
   const [exportGraphError, setExportGraphError] = useState<string | null>(null);
@@ -205,9 +225,12 @@ export default function App(): React.JSX.Element {
   const createGraphTitleInputRef = useRef<HTMLInputElement | null>(null);
   const importGraphModalRef = useRef<HTMLDivElement | null>(null);
   const importGraphFileButtonRef = useRef<HTMLButtonElement | null>(null);
+  const importObsidianModalRef = useRef<HTMLDivElement | null>(null);
+  const importObsidianFolderButtonRef = useRef<HTMLButtonElement | null>(null);
   const exportGraphModalRef = useRef<HTMLDivElement | null>(null);
   const exportGraphTitleInputRef = useRef<HTMLInputElement | null>(null);
   const importGraphFileInputRef = useRef<HTMLInputElement | null>(null);
+  const importObsidianFolderInputRef = useRef<HTMLInputElement | null>(null);
   const quizModalRef = useRef<HTMLDivElement | null>(null);
   const quizCloseButtonRef = useRef<HTMLButtonElement | null>(null);
   const popoverDragRef = useRef<{ pointerX: number; pointerY: number; startX: number; startY: number } | null>(null);
@@ -234,6 +257,23 @@ export default function App(): React.JSX.Element {
     setImportGraphTitleDraft("");
     setImportGraphIncludeProgressDraft(true);
   }, []);
+  const closeImportObsidianModal = useCallback(() => {
+    setImportObsidianOpen(false);
+    setImportObsidianError(null);
+    setImportObsidianLoading(false);
+    setObsidianVaultName(null);
+    setObsidianVaultEntries(null);
+    setObsidianImportDraft({
+      graphTitle: "",
+      subject: "",
+      language: "en",
+      relation: "bridges",
+      useFoldersAsZones: true,
+      autofillDescriptions: true,
+      createArtifactsFromNotes: false,
+      createPlaceholderTopics: false,
+    });
+  }, []);
   const closeExportGraphModal = useCallback(() => {
     setExportGraphTarget(null);
     setExportGraphError(null);
@@ -245,6 +285,11 @@ export default function App(): React.JSX.Element {
     setCreateGraphOpen(false);
     setImportGraphOpen(true);
     setImportGraphError(null);
+  }, []);
+  const openImportObsidianModal = useCallback(() => {
+    setCreateGraphOpen(false);
+    setImportObsidianOpen(true);
+    setImportObsidianError(null);
   }, []);
   const openExportGraphModal = useCallback((graph: GraphEnvelope) => {
     setExportGraphTarget(graph);
@@ -282,6 +327,12 @@ export default function App(): React.JSX.Element {
     initialFocusRef: importGraphFileButtonRef,
   });
   useModalAccessibility({
+    isOpen: importObsidianOpen,
+    modalRef: importObsidianModalRef,
+    onClose: closeImportObsidianModal,
+    initialFocusRef: importObsidianFolderButtonRef,
+  });
+  useModalAccessibility({
     isOpen: Boolean(exportGraphTarget),
     modalRef: exportGraphModalRef,
     onClose: closeExportGraphModal,
@@ -293,6 +344,14 @@ export default function App(): React.JSX.Element {
     onClose: closeQuizModal,
     initialFocusRef: quizCloseButtonRef,
   });
+
+  useEffect(() => {
+    const input = importObsidianFolderInputRef.current;
+    if (!input) return;
+    input.setAttribute("webkitdirectory", "");
+    input.setAttribute("directory", "");
+    input.multiple = true;
+  }, [importObsidianOpen]);
 
   useEffect(() => {
     if (bootstrapStartedRef.current) return;
@@ -314,6 +373,14 @@ export default function App(): React.JSX.Element {
     void load();
     void loadSnapshots();
   }, []);
+
+  const obsidianImportPreview = useMemo(() => {
+    if (!obsidianVaultEntries || !obsidianVaultName) return null;
+    return buildObsidianImportPreview(obsidianVaultEntries, {
+      vaultName: obsidianVaultName,
+      ...obsidianImportDraft,
+    });
+  }, [obsidianImportDraft, obsidianVaultEntries, obsidianVaultName]);
 
   useEffect(() => {
     return () => {
@@ -999,6 +1066,85 @@ export default function App(): React.JSX.Element {
       setImportGraphPayload(null);
       setImportGraphFileName(file.name);
       setImportGraphError(parseError instanceof Error ? parseError.message : copy.errors.importGraph);
+    }
+  }
+
+  async function handleObsidianVaultFiles(files: FileList | null): Promise<void> {
+    const fileList = files ? Array.from(files) : [];
+    if (fileList.length === 0) return;
+    setImportObsidianLoading(true);
+    setImportObsidianError(null);
+    try {
+      const relativePaths = fileList
+        .map((file) => file.webkitRelativePath || file.name)
+        .filter(Boolean);
+      const vaultRoot = relativePaths[0]?.split("/")[0] ?? "Obsidian Vault";
+      const markdownFiles = fileList.filter((file) => {
+        const relativePath = file.webkitRelativePath || file.name;
+        return relativePath.toLowerCase().endsWith(".md");
+      });
+      const entries = await Promise.all(
+        markdownFiles.map(async (file) => {
+          const relativePath = file.webkitRelativePath || file.name;
+          const [, ...segments] = relativePath.split("/");
+          return {
+            path: segments.join("/") || file.name,
+            content: await file.text(),
+          } satisfies ObsidianVaultEntry;
+        }),
+      );
+      if (entries.length === 0) {
+        throw new Error(copy.dialogs.obsidianNoMarkdown);
+      }
+      setObsidianVaultName(vaultRoot);
+      setObsidianVaultEntries(entries);
+      setObsidianImportDraft((current) => ({
+        ...current,
+        graphTitle: vaultRoot,
+        subject: vaultRoot,
+      }));
+    } catch (loadError) {
+      setObsidianVaultName(null);
+      setObsidianVaultEntries(null);
+      setImportObsidianError(loadError instanceof Error ? loadError.message : copy.errors.importGraph);
+    } finally {
+      setImportObsidianLoading(false);
+    }
+  }
+
+  async function importGraphFromObsidian(): Promise<void> {
+    if (!obsidianImportPreview?.package) {
+      setImportObsidianError(copy.dialogs.obsidianImportBlocked);
+      return;
+    }
+    setImportObsidianLoading(true);
+    setImportObsidianError(null);
+    try {
+      const response = await apiFetch(`${API_BASE}/api/v1/workspace/graphs/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          package: obsidianImportPreview.package,
+          title: obsidianImportDraft.graphTitle.trim() || undefined,
+          include_progress: false,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response, copy.errors.importGraph));
+      }
+      const payload = (await response.json()) as WorkspaceEnvelope;
+      setData(payload);
+      clearChatStateForGraph(payload.workspace.active_graph_id ?? payload.workspace.graphs[0]?.graph_id ?? null);
+      setActiveGraphId(payload.workspace.active_graph_id ?? payload.workspace.graphs[0]?.graph_id ?? null);
+      setSelectedTopicId(null);
+      setSelectedTopicAnchor(null);
+      closeImportObsidianModal();
+      setCreateGraphOpen(false);
+      await Promise.all([loadSnapshots(), loadSessionInfo()]);
+    } catch (importError) {
+      setImportObsidianError(importError instanceof Error ? importError.message : copy.errors.importGraph);
+    } finally {
+      setImportObsidianLoading(false);
     }
   }
 
@@ -1867,6 +2013,7 @@ export default function App(): React.JSX.Element {
         setCreateGraphDraft={setCreateGraphDraft}
         createGraphError={createGraphError}
         openImportGraphModal={openImportGraphModal}
+        openImportObsidianModal={openImportObsidianModal}
         createGraphLoading={createGraphLoading}
         createGraph={createGraph}
         importGraphOpen={importGraphOpen}
@@ -1884,6 +2031,19 @@ export default function App(): React.JSX.Element {
         importGraphError={importGraphError}
         importGraphLoading={importGraphLoading}
         importGraphFromPackage={importGraphFromPackage}
+        importObsidianOpen={importObsidianOpen}
+        importObsidianModalRef={importObsidianModalRef}
+        closeImportObsidianModal={closeImportObsidianModal}
+        importObsidianFolderInputRef={importObsidianFolderInputRef}
+        importObsidianFolderButtonRef={importObsidianFolderButtonRef}
+        handleObsidianVaultFiles={handleObsidianVaultFiles}
+        obsidianVaultName={obsidianVaultName}
+        obsidianImportDraft={obsidianImportDraft}
+        setObsidianImportDraft={setObsidianImportDraft}
+        obsidianImportPreview={obsidianImportPreview}
+        importObsidianError={importObsidianError}
+        importObsidianLoading={importObsidianLoading}
+        importGraphFromObsidian={importGraphFromObsidian}
         exportGraphTarget={exportGraphTarget}
         exportGraphModalRef={exportGraphModalRef}
         closeExportGraphModal={closeExportGraphModal}
