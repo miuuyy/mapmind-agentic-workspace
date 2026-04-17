@@ -39,6 +39,8 @@ import type {
 
 type StateSetter<T> = React.Dispatch<React.SetStateAction<T>>;
 
+const noop = () => {};
+
 type GraphSummary = {
   topicCount: number;
   completedPercent: number;
@@ -95,7 +97,7 @@ type WorkspaceShellProps = {
   assistantWidth: number;
   viewportCenteredZoom: boolean;
   setViewportCenteredZoom: StateSetter<boolean>;
-  curvedEdgeLinesEnabled: boolean;
+  straightEdgeLinesEnabled: boolean;
   topOverlayCompact: boolean;
   overlayLeftOffset: number;
   overlayRightOffset: number;
@@ -214,7 +216,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     assistantWidth,
     viewportCenteredZoom,
     setViewportCenteredZoom,
-    curvedEdgeLinesEnabled,
+    straightEdgeLinesEnabled,
     topOverlayCompact,
     overlayLeftOffset,
     overlayRightOffset,
@@ -1105,15 +1107,15 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                     onNodePositionsChange={setGraphLayoutDraft}
                     disableIdleAnimations={liveDisableIdleAnimations}
                     viewportCenteredWheelZoom={viewportCenteredZoom}
-                    curvedEdgeLinesEnabled={!curvedEdgeLinesEnabled}
+                    curvedEdgeLinesEnabled={!straightEdgeLinesEnabled}
                     themeMode={themeMode}
                     backgroundFill={graphCanvasBackgroundFill}
                   />
-                ) : showGraphLoadingState ? (
+                ) : showGraphLoadingState || showGraphEmptyState ? (
                   <div className="emptyStateShell">
                     <div className="emptyStateCanvas" aria-hidden="true">
                       <GraphCanvas
-                        key="graph:loading"
+                        key={showGraphLoadingState ? "graph:loading" : "graph:empty"}
                         topics={[]}
                         edges={[]}
                         zones={[]}
@@ -1122,66 +1124,42 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                         ancestorIds={new Set()}
                         pathNodeIds={new Set()}
                         pathEdgeIds={new Set()}
-                        onSelectTopic={() => {}}
-                        onSelectedTopicAnchorChange={() => {}}
+                        onSelectTopic={noop}
+                        onSelectedTopicAnchorChange={noop}
                         initialZoom={2.2}
                         targetZoom={2.2}
                         centerOnNodeId={null}
-                        graphCacheKey="graph:loading"
-                        disableIdleAnimations
+                        graphCacheKey={showGraphLoadingState ? "graph:loading" : "graph:empty"}
+                        disableIdleAnimations={showGraphLoadingState}
                         viewportCenteredWheelZoom={viewportCenteredZoom}
-                        curvedEdgeLinesEnabled={!curvedEdgeLinesEnabled}
+                        curvedEdgeLinesEnabled={!straightEdgeLinesEnabled}
                         themeMode={themeMode}
                         backgroundFill={graphCanvasBackgroundFill}
                       />
                     </div>
-                  </div>
-                ) : showGraphEmptyState ? (
-                  <div className="emptyStateShell">
-                    <div className="emptyStateCanvas" aria-hidden="true">
-                      <GraphCanvas
-                        key="graph:empty"
-                        topics={[]}
-                        edges={[]}
-                        zones={[]}
-                        selectedTopicId={null}
-                        rootIds={new Set()}
-                        ancestorIds={new Set()}
-                        pathNodeIds={new Set()}
-                        pathEdgeIds={new Set()}
-                        onSelectTopic={() => {}}
-                        onSelectedTopicAnchorChange={() => {}}
-                        initialZoom={2.2}
-                        targetZoom={2.2}
-                        centerOnNodeId={null}
-                        graphCacheKey="graph:empty"
-                        viewportCenteredWheelZoom={viewportCenteredZoom}
-                        curvedEdgeLinesEnabled={!curvedEdgeLinesEnabled}
-                        themeMode={themeMode}
-                        backgroundFill={graphCanvasBackgroundFill}
-                      />
-                    </div>
-                    <div className="emptyStateContent">
-                      <h2>{onboardingNeedsFirstGraph ? copy.emptyState.onboardingTitle : copy.emptyState.emptyTitle}</h2>
-                      <p>
-                        {onboardingNeedsFirstGraph
-                          ? copy.emptyState.onboardingBody
-                          : copy.emptyState.emptyBody}
-                      </p>
-                      <div className="emptyStateActions">
-                        <button
-                          className="emptyStateAction"
-                          disabled={workspaceSurface ? !workspaceSurface.can_create_graph : false}
-                          onClick={() => {
-                            setCreateGraphOpen(true);
-                            setCreateGraphError(null);
-                          }}
-                          type="button"
-                        >
-                          {copy.emptyState.createGraph}
-                        </button>
+                    {showGraphEmptyState ? (
+                      <div className="emptyStateContent">
+                        <h2>{onboardingNeedsFirstGraph ? copy.emptyState.onboardingTitle : copy.emptyState.emptyTitle}</h2>
+                        <p>
+                          {onboardingNeedsFirstGraph
+                            ? copy.emptyState.onboardingBody
+                            : copy.emptyState.emptyBody}
+                        </p>
+                        <div className="emptyStateActions">
+                          <button
+                            className="emptyStateAction"
+                            disabled={workspaceSurface ? !workspaceSurface.can_create_graph : false}
+                            onClick={() => {
+                              setCreateGraphOpen(true);
+                              setCreateGraphError(null);
+                            }}
+                            type="button"
+                          >
+                            {copy.emptyState.createGraph}
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : null}
                   </div>
                 ) : null}
 

@@ -12,7 +12,6 @@ These files are not engineering setup docs. They are the source material for the
 - [Features](features.md)
 - [Why special](why-special.md)
 - [How to use](how-to-use.md)
-- [Why created](why-created.md)
 - [How it works](how-works.md)
 - [Community](community.md)
 

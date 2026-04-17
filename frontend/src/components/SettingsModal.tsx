@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Card } from "./Card";
-import { MEMORY_MODE_OPTIONS, THINKING_MODE_OPTIONS, type MemoryMode, type ThemeMode, type ThinkingMode } from "../lib/appContracts";
+import { MEMORY_MODE_OPTIONS, THINKING_MODE_OPTIONS, type MemoryMode, type SettingsDraftSetters, type SettingsDrafts, type ThemeMode, type ThinkingMode } from "../lib/appContracts";
 import type { AppCopy } from "../lib/appCopy";
 import type { GraphEnvelope, SnapshotRecord, WorkspaceConfig, WorkspaceEnvelope } from "../lib/types";
 
@@ -25,58 +25,16 @@ type SettingsModalProps = {
   copy: AppCopy;
   setSettingsOpen: StateSetter<boolean>;
   currentConfig: WorkspaceConfig | null;
-  providerDraft: string;
-  setProviderDraft: StateSetter<string>;
-  modelDraft: string;
-  setModelDraft: StateSetter<string>;
-  modelPresetDraft: string;
-  setModelPresetDraft: StateSetter<string>;
+  drafts: SettingsDrafts;
+  setDrafts: SettingsDraftSetters;
   geminiKeyLockedByEnv: boolean;
-  geminiApiKeyDraft: string;
-  setGeminiApiKeyDraft: StateSetter<string>;
   openaiKeyLockedByEnv: boolean;
-  openaiApiKeyDraft: string;
-  setOpenaiApiKeyDraft: StateSetter<string>;
   providerOptions: string[];
-  openaiBaseUrlDraft: string;
-  setOpenaiBaseUrlDraft: StateSetter<string>;
   openaiBaseUrlLockedByEnv: boolean;
-  showOpenAIEndpointDraft: boolean;
-  setShowOpenAIEndpointDraft: StateSetter<boolean>;
   activeThinkingOption: ModeOption<ThinkingMode>;
   activeThinkingValues: string;
-  thinkingModeDraft: ThinkingMode;
-  setThinkingModeDraft: StateSetter<ThinkingMode>;
-  plannerMaxTokensDraft: number;
-  setPlannerMaxTokensDraft: StateSetter<number>;
-  plannerThinkingBudgetDraft: number;
-  setPlannerThinkingBudgetDraft: StateSetter<number>;
-  orchestratorMaxTokensDraft: number;
-  setOrchestratorMaxTokensDraft: StateSetter<number>;
-  quizMaxTokensDraft: number;
-  setQuizMaxTokensDraft: StateSetter<number>;
-  assistantMaxTokensDraft: number;
-  setAssistantMaxTokensDraft: StateSetter<number>;
-  personaDraft: string;
-  setPersonaDraft: StateSetter<string>;
-  disableIdleAnimationsDraft: boolean;
-  setDisableIdleAnimationsDraft: StateSetter<boolean>;
   activeMemoryOption: ModeOption<MemoryMode>;
   activeMemoryValues: string;
-  memoryModeDraft: MemoryMode;
-  setMemoryModeDraft: StateSetter<MemoryMode>;
-  memoryHistoryLimitDraft: number;
-  setMemoryHistoryLimitDraft: StateSetter<number>;
-  memoryIncludeGraphContextDraft: boolean;
-  setMemoryIncludeGraphContextDraft: StateSetter<boolean>;
-  memoryIncludeProgressContextDraft: boolean;
-  setMemoryIncludeProgressContextDraft: StateSetter<boolean>;
-  memoryIncludeQuizContextDraft: boolean;
-  setMemoryIncludeQuizContextDraft: StateSetter<boolean>;
-  memoryIncludeFrontierContextDraft: boolean;
-  setMemoryIncludeFrontierContextDraft: StateSetter<boolean>;
-  memoryIncludeSelectedTopicContextDraft: boolean;
-  setMemoryIncludeSelectedTopicContextDraft: StateSetter<boolean>;
   activeGraph: GraphEnvelope | null;
   loadSnapshots: () => Promise<void>;
   historyLoading: boolean;
@@ -84,18 +42,6 @@ type SettingsModalProps = {
   snapshots: SnapshotRecord[];
   data: WorkspaceEnvelope | null;
   rollbackSnapshot: (snapshotId: number) => Promise<void>;
-  enableClosureTestsDraft: boolean;
-  setEnableClosureTestsDraft: StateSetter<boolean>;
-  debugModeEnabledDraft: boolean;
-  setDebugModeEnabledDraft: StateSetter<boolean>;
-  curvedEdgeLinesDraft: boolean;
-  setCurvedEdgeLinesDraft: StateSetter<boolean>;
-  themeModeDraft: ThemeMode;
-  setThemeModeDraft: StateSetter<ThemeMode>;
-  quizQuestionCountDraft: number;
-  setQuizQuestionCountDraft: StateSetter<number>;
-  quizPassCountDraft: number;
-  setQuizPassCountDraft: StateSetter<number>;
   configSaving: boolean;
   settingsDirty: boolean;
   saveSettings: () => void;
@@ -107,58 +53,16 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
     copy,
     setSettingsOpen,
     currentConfig,
-    providerDraft,
-    setProviderDraft,
-    modelDraft,
-    setModelDraft,
-    modelPresetDraft,
-    setModelPresetDraft,
+    drafts,
+    setDrafts,
     geminiKeyLockedByEnv,
-    geminiApiKeyDraft,
-    setGeminiApiKeyDraft,
     openaiKeyLockedByEnv,
-    openaiApiKeyDraft,
-    setOpenaiApiKeyDraft,
     providerOptions,
-    openaiBaseUrlDraft,
-    setOpenaiBaseUrlDraft,
     openaiBaseUrlLockedByEnv,
-    showOpenAIEndpointDraft,
-    setShowOpenAIEndpointDraft,
     activeThinkingOption,
     activeThinkingValues,
-    thinkingModeDraft,
-    setThinkingModeDraft,
-    plannerMaxTokensDraft,
-    setPlannerMaxTokensDraft,
-    plannerThinkingBudgetDraft,
-    setPlannerThinkingBudgetDraft,
-    orchestratorMaxTokensDraft,
-    setOrchestratorMaxTokensDraft,
-    quizMaxTokensDraft,
-    setQuizMaxTokensDraft,
-    assistantMaxTokensDraft,
-    setAssistantMaxTokensDraft,
-    personaDraft,
-    setPersonaDraft,
-    disableIdleAnimationsDraft,
-    setDisableIdleAnimationsDraft,
     activeMemoryOption,
     activeMemoryValues,
-    memoryModeDraft,
-    setMemoryModeDraft,
-    memoryHistoryLimitDraft,
-    setMemoryHistoryLimitDraft,
-    memoryIncludeGraphContextDraft,
-    setMemoryIncludeGraphContextDraft,
-    memoryIncludeProgressContextDraft,
-    setMemoryIncludeProgressContextDraft,
-    memoryIncludeQuizContextDraft,
-    setMemoryIncludeQuizContextDraft,
-    memoryIncludeFrontierContextDraft,
-    setMemoryIncludeFrontierContextDraft,
-    memoryIncludeSelectedTopicContextDraft,
-    setMemoryIncludeSelectedTopicContextDraft,
     activeGraph,
     loadSnapshots,
     historyLoading,
@@ -166,22 +70,70 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
     snapshots,
     data,
     rollbackSnapshot,
-    enableClosureTestsDraft,
-    setEnableClosureTestsDraft,
-    debugModeEnabledDraft,
-    setDebugModeEnabledDraft,
-    curvedEdgeLinesDraft,
-    setCurvedEdgeLinesDraft,
-    themeModeDraft,
-    setThemeModeDraft,
-    quizQuestionCountDraft,
-    setQuizQuestionCountDraft,
-    quizPassCountDraft,
-    setQuizPassCountDraft,
     configSaving,
     settingsDirty,
     saveSettings,
   } = props;
+  const {
+    provider: providerDraft,
+    model: modelDraft,
+    modelPreset: modelPresetDraft,
+    geminiApiKey: geminiApiKeyDraft,
+    openaiApiKey: openaiApiKeyDraft,
+    openaiBaseUrl: openaiBaseUrlDraft,
+    showOpenAIEndpoint: showOpenAIEndpointDraft,
+    thinkingMode: thinkingModeDraft,
+    plannerMaxTokens: plannerMaxTokensDraft,
+    plannerThinkingBudget: plannerThinkingBudgetDraft,
+    orchestratorMaxTokens: orchestratorMaxTokensDraft,
+    quizMaxTokens: quizMaxTokensDraft,
+    assistantMaxTokens: assistantMaxTokensDraft,
+    persona: personaDraft,
+    disableIdleAnimations: disableIdleAnimationsDraft,
+    memoryMode: memoryModeDraft,
+    memoryHistoryLimit: memoryHistoryLimitDraft,
+    memoryIncludeGraphContext: memoryIncludeGraphContextDraft,
+    memoryIncludeProgressContext: memoryIncludeProgressContextDraft,
+    memoryIncludeQuizContext: memoryIncludeQuizContextDraft,
+    memoryIncludeFrontierContext: memoryIncludeFrontierContextDraft,
+    memoryIncludeSelectedTopicContext: memoryIncludeSelectedTopicContextDraft,
+    enableClosureTests: enableClosureTestsDraft,
+    debugModeEnabled: debugModeEnabledDraft,
+    straightEdgeLines: straightEdgeLinesDraft,
+    themeMode: themeModeDraft,
+    quizQuestionCount: quizQuestionCountDraft,
+    quizPassCount: quizPassCountDraft,
+  } = drafts;
+  const {
+    provider: setProviderDraft,
+    model: setModelDraft,
+    modelPreset: setModelPresetDraft,
+    geminiApiKey: setGeminiApiKeyDraft,
+    openaiApiKey: setOpenaiApiKeyDraft,
+    openaiBaseUrl: setOpenaiBaseUrlDraft,
+    showOpenAIEndpoint: setShowOpenAIEndpointDraft,
+    thinkingMode: setThinkingModeDraft,
+    plannerMaxTokens: setPlannerMaxTokensDraft,
+    plannerThinkingBudget: setPlannerThinkingBudgetDraft,
+    orchestratorMaxTokens: setOrchestratorMaxTokensDraft,
+    quizMaxTokens: setQuizMaxTokensDraft,
+    assistantMaxTokens: setAssistantMaxTokensDraft,
+    persona: setPersonaDraft,
+    disableIdleAnimations: setDisableIdleAnimationsDraft,
+    memoryMode: setMemoryModeDraft,
+    memoryHistoryLimit: setMemoryHistoryLimitDraft,
+    memoryIncludeGraphContext: setMemoryIncludeGraphContextDraft,
+    memoryIncludeProgressContext: setMemoryIncludeProgressContextDraft,
+    memoryIncludeQuizContext: setMemoryIncludeQuizContextDraft,
+    memoryIncludeFrontierContext: setMemoryIncludeFrontierContextDraft,
+    memoryIncludeSelectedTopicContext: setMemoryIncludeSelectedTopicContextDraft,
+    enableClosureTests: setEnableClosureTestsDraft,
+    debugModeEnabled: setDebugModeEnabledDraft,
+    straightEdgeLines: setStraightEdgeLinesDraft,
+    themeMode: setThemeModeDraft,
+    quizQuestionCount: setQuizQuestionCountDraft,
+    quizPassCount: setQuizPassCountDraft,
+  } = setDrafts;
   const resolvedProvider = providerDraft === "openai" ? "openai" : "gemini";
   const providerModelOptions = (
     providerDraft === currentConfig?.ai_provider
@@ -474,10 +426,10 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                         </div>
                         <button
                           id="edge-lines-toggle"
-                          className={`settingsSwitch ${curvedEdgeLinesDraft ? "settingsSwitchActive" : ""}`}
-                          onClick={() => setCurvedEdgeLinesDraft((current) => !current)}
+                          className={`settingsSwitch ${straightEdgeLinesDraft ? "settingsSwitchActive" : ""}`}
+                          onClick={() => setStraightEdgeLinesDraft((current) => !current)}
                           type="button"
-                          aria-pressed={curvedEdgeLinesDraft}
+                          aria-pressed={straightEdgeLinesDraft}
                         >
                           <span className="settingsSwitchKnob" />
                         </button>

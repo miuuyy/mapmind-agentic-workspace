@@ -24,7 +24,7 @@ import {
 } from "./lib/appContracts";
 import {
   COMPACT_TOP_OVERLAY_THRESHOLD,
-  CURVED_EDGE_LINES_STORAGE_KEY,
+  STRAIGHT_EDGE_LINES_STORAGE_KEY,
   LEFT_SIDEBAR_OPEN_STORAGE_KEY,
   LOGS_OPEN_STORAGE_KEY,
   MOBILE_LAYOUT_BREAKPOINT,
@@ -36,10 +36,10 @@ import {
   readStoredActiveChatSession,
   readStoredAssistantWidth,
   readStoredBoolean,
-  readStoredCurvedEdgeLines,
+  readStoredStraightEdgeLines,
   readStoredViewportCenteredZoom,
-  reconcileThreadMessages,
 } from "./lib/appStatePersistence";
+import { usePersistedBoolean, usePersistedNumber, usePersistedString } from "./lib/usePersistedState";
 import {
   apiFetch,
   computePopoverPosition,
@@ -54,7 +54,7 @@ import {
   shouldKeepCurrentAnchor,
   type PopoverPosition,
 } from "./lib/appUiHelpers";
-import { fetchChatSessions, markChatProposalApplied } from "./lib/chatRequests";
+import { fetchChatSessions, markChatProposalApplied, reconcileThreadMessages } from "./lib/chatRequests";
 import {
   buildFallbackAssessment,
   computeClosureStatus,
@@ -192,8 +192,8 @@ export default function App(): React.JSX.Element {
   const [debugLogsError, setDebugLogsError] = useState<string | null>(null);
   const [composerUseGrounding, setComposerUseGrounding] = useState(true);
   const [viewportCenteredZoom, setViewportCenteredZoom] = useState(readStoredViewportCenteredZoom);
-  const [curvedEdgeLinesEnabled, setCurvedEdgeLinesEnabled] = useState<boolean>(readStoredCurvedEdgeLines);
-  const [curvedEdgeLinesDraft, setCurvedEdgeLinesDraft] = useState<boolean>(readStoredCurvedEdgeLines);
+  const [straightEdgeLinesEnabled, setStraightEdgeLinesEnabled] = useState<boolean>(readStoredStraightEdgeLines);
+  const [straightEdgeLinesDraft, setStraightEdgeLinesDraft] = useState<boolean>(readStoredStraightEdgeLines);
   const [themeModeDraft, setThemeModeDraft] = useState<ThemeMode>(readInitialThemeMode);
   const graphShellRef = useRef<HTMLDivElement | null>(null);
   const topicPopoverRef = useRef<HTMLDivElement | null>(null);
@@ -350,60 +350,14 @@ export default function App(): React.JSX.Element {
     wasMobileViewportRef.current = isMobileViewport;
   }, [isMobileViewport]);
 
+  usePersistedNumber(ASSISTANT_WIDTH_STORAGE_KEY, assistantWidth);
+  usePersistedBoolean(LEFT_SIDEBAR_OPEN_STORAGE_KEY, leftSidebarOpen);
+  usePersistedBoolean(SETTINGS_OPEN_STORAGE_KEY, isSettingsOpen);
+  usePersistedBoolean(LOGS_OPEN_STORAGE_KEY, isLogsOpen);
+  usePersistedBoolean(VIEWPORT_CENTERED_ZOOM_STORAGE_KEY, viewportCenteredZoom);
+  usePersistedBoolean(STRAIGHT_EDGE_LINES_STORAGE_KEY, straightEdgeLinesEnabled);
+  usePersistedString(THEME_MODE_STORAGE_KEY, themeModeDraft);
   useEffect(() => {
-    try {
-      localStorage.setItem(ASSISTANT_WIDTH_STORAGE_KEY, String(assistantWidth));
-    } catch {
-      // Ignore localStorage write failures.
-    }
-  }, [assistantWidth]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(LEFT_SIDEBAR_OPEN_STORAGE_KEY, leftSidebarOpen ? "1" : "0");
-    } catch {
-      // Ignore localStorage write failures.
-    }
-  }, [leftSidebarOpen]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(SETTINGS_OPEN_STORAGE_KEY, isSettingsOpen ? "1" : "0");
-    } catch {
-      // Ignore localStorage write failures.
-    }
-  }, [isSettingsOpen]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(LOGS_OPEN_STORAGE_KEY, isLogsOpen ? "1" : "0");
-    } catch {
-      // Ignore localStorage write failures.
-    }
-  }, [isLogsOpen]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(VIEWPORT_CENTERED_ZOOM_STORAGE_KEY, viewportCenteredZoom ? "1" : "0");
-    } catch {
-      // Ignore localStorage write failures.
-    }
-  }, [viewportCenteredZoom]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(CURVED_EDGE_LINES_STORAGE_KEY, curvedEdgeLinesEnabled ? "1" : "0");
-    } catch {
-      // Ignore localStorage write failures.
-    }
-  }, [curvedEdgeLinesEnabled]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(THEME_MODE_STORAGE_KEY, themeModeDraft);
-    } catch {
-      // Ignore localStorage write failures.
-    }
     document.documentElement.dataset.theme = themeModeDraft;
   }, [themeModeDraft]);
 
@@ -495,8 +449,8 @@ export default function App(): React.JSX.Element {
 
   useEffect(() => {
     if (!isSettingsOpen) return;
-    setCurvedEdgeLinesDraft(curvedEdgeLinesEnabled);
-  }, [isSettingsOpen, curvedEdgeLinesEnabled]);
+    setStraightEdgeLinesDraft(straightEdgeLinesEnabled);
+  }, [isSettingsOpen, straightEdgeLinesEnabled]);
 
   useEffect(() => {
     if (!isMobileViewport) return;
@@ -655,7 +609,7 @@ export default function App(): React.JSX.Element {
       quizQuestionCountDraft !== currentConfig.quiz_question_count ||
       quizPassCountDraft !== currentQuizPassCount
     )) ||
-    curvedEdgeLinesDraft !== curvedEdgeLinesEnabled
+    straightEdgeLinesDraft !== straightEdgeLinesEnabled
   );
   const showGraphLoadingState = loading && !activeGraph;
   const showGraphEmptyState = !loading && !activeGraph;
@@ -1235,8 +1189,8 @@ export default function App(): React.JSX.Element {
     if (quizPassCountDraft !== currentQuizPassCount || quizQuestionCountDraft !== currentConfig.quiz_question_count) {
       patch.pass_threshold = quizPassCountDraft / quizQuestionCountDraft;
     }
-    if (curvedEdgeLinesDraft !== curvedEdgeLinesEnabled) {
-      setCurvedEdgeLinesEnabled(curvedEdgeLinesDraft);
+    if (straightEdgeLinesDraft !== straightEdgeLinesEnabled) {
+      setStraightEdgeLinesEnabled(straightEdgeLinesDraft);
     }
     if (Object.keys(patch).length > 0) void updateWorkspaceConfig(patch);
   }
@@ -1703,7 +1657,7 @@ export default function App(): React.JSX.Element {
         assistantWidth={assistantWidth}
         viewportCenteredZoom={viewportCenteredZoom}
         setViewportCenteredZoom={setViewportCenteredZoom}
-        curvedEdgeLinesEnabled={curvedEdgeLinesEnabled}
+        straightEdgeLinesEnabled={straightEdgeLinesEnabled}
         topOverlayCompact={topOverlayCompact}
         overlayLeftOffset={overlayLeftOffset}
         overlayRightOffset={overlayRightOffset}
@@ -1792,58 +1746,74 @@ export default function App(): React.JSX.Element {
         copy={copy}
         setSettingsOpen={setSettingsOpen}
         currentConfig={currentConfig}
-        providerDraft={providerDraft}
-        setProviderDraft={setProviderDraft}
-        modelDraft={modelDraft}
-        setModelDraft={setModelDraft}
-        modelPresetDraft={modelPresetDraft}
-        setModelPresetDraft={setModelPresetDraft}
+        drafts={{
+          provider: providerDraft,
+          model: modelDraft,
+          modelPreset: modelPresetDraft,
+          geminiApiKey: geminiApiKeyDraft,
+          openaiApiKey: openaiApiKeyDraft,
+          openaiBaseUrl: openaiBaseUrlDraft,
+          showOpenAIEndpoint: showOpenAIEndpointDraft,
+          thinkingMode: thinkingModeDraft,
+          plannerMaxTokens: plannerMaxTokensDraft,
+          plannerThinkingBudget: plannerThinkingBudgetDraft,
+          orchestratorMaxTokens: orchestratorMaxTokensDraft,
+          quizMaxTokens: quizMaxTokensDraft,
+          assistantMaxTokens: assistantMaxTokensDraft,
+          persona: personaDraft,
+          disableIdleAnimations: disableIdleAnimationsDraft,
+          memoryMode: memoryModeDraft,
+          memoryHistoryLimit: memoryHistoryLimitDraft,
+          memoryIncludeGraphContext: memoryIncludeGraphContextDraft,
+          memoryIncludeProgressContext: memoryIncludeProgressContextDraft,
+          memoryIncludeQuizContext: memoryIncludeQuizContextDraft,
+          memoryIncludeFrontierContext: memoryIncludeFrontierContextDraft,
+          memoryIncludeSelectedTopicContext: memoryIncludeSelectedTopicContextDraft,
+          enableClosureTests: enableClosureTestsDraft,
+          debugModeEnabled: debugModeEnabledDraft,
+          straightEdgeLines: straightEdgeLinesDraft,
+          themeMode: themeModeDraft,
+          quizQuestionCount: quizQuestionCountDraft,
+          quizPassCount: quizPassCountDraft,
+        }}
+        setDrafts={{
+          provider: setProviderDraft,
+          model: setModelDraft,
+          modelPreset: setModelPresetDraft,
+          geminiApiKey: setGeminiApiKeyDraft,
+          openaiApiKey: setOpenaiApiKeyDraft,
+          openaiBaseUrl: setOpenaiBaseUrlDraft,
+          showOpenAIEndpoint: setShowOpenAIEndpointDraft,
+          thinkingMode: setThinkingModeDraft,
+          plannerMaxTokens: setPlannerMaxTokensDraft,
+          plannerThinkingBudget: setPlannerThinkingBudgetDraft,
+          orchestratorMaxTokens: setOrchestratorMaxTokensDraft,
+          quizMaxTokens: setQuizMaxTokensDraft,
+          assistantMaxTokens: setAssistantMaxTokensDraft,
+          persona: setPersonaDraft,
+          disableIdleAnimations: setDisableIdleAnimationsDraft,
+          memoryMode: setMemoryModeDraft,
+          memoryHistoryLimit: setMemoryHistoryLimitDraft,
+          memoryIncludeGraphContext: setMemoryIncludeGraphContextDraft,
+          memoryIncludeProgressContext: setMemoryIncludeProgressContextDraft,
+          memoryIncludeQuizContext: setMemoryIncludeQuizContextDraft,
+          memoryIncludeFrontierContext: setMemoryIncludeFrontierContextDraft,
+          memoryIncludeSelectedTopicContext: setMemoryIncludeSelectedTopicContextDraft,
+          enableClosureTests: setEnableClosureTestsDraft,
+          debugModeEnabled: setDebugModeEnabledDraft,
+          straightEdgeLines: setStraightEdgeLinesDraft,
+          themeMode: setThemeModeDraft,
+          quizQuestionCount: setQuizQuestionCountDraft,
+          quizPassCount: setQuizPassCountDraft,
+        }}
         geminiKeyLockedByEnv={geminiKeyLockedByEnv}
-        geminiApiKeyDraft={geminiApiKeyDraft}
-        setGeminiApiKeyDraft={setGeminiApiKeyDraft}
         openaiKeyLockedByEnv={openaiKeyLockedByEnv}
-        openaiApiKeyDraft={openaiApiKeyDraft}
-        setOpenaiApiKeyDraft={setOpenaiApiKeyDraft}
         providerOptions={currentConfig?.provider_options ?? ["gemini", "openai"]}
-        openaiBaseUrlDraft={openaiBaseUrlDraft}
-        setOpenaiBaseUrlDraft={setOpenaiBaseUrlDraft}
         openaiBaseUrlLockedByEnv={openaiBaseUrlLockedByEnv}
-        showOpenAIEndpointDraft={showOpenAIEndpointDraft}
-        setShowOpenAIEndpointDraft={setShowOpenAIEndpointDraft}
         activeThinkingOption={activeThinkingOption}
         activeThinkingValues={activeThinkingValues}
-        thinkingModeDraft={thinkingModeDraft}
-        setThinkingModeDraft={setThinkingModeDraft}
-        plannerMaxTokensDraft={plannerMaxTokensDraft}
-        setPlannerMaxTokensDraft={setPlannerMaxTokensDraft}
-        plannerThinkingBudgetDraft={plannerThinkingBudgetDraft}
-        setPlannerThinkingBudgetDraft={setPlannerThinkingBudgetDraft}
-        orchestratorMaxTokensDraft={orchestratorMaxTokensDraft}
-        setOrchestratorMaxTokensDraft={setOrchestratorMaxTokensDraft}
-        quizMaxTokensDraft={quizMaxTokensDraft}
-        setQuizMaxTokensDraft={setQuizMaxTokensDraft}
-        assistantMaxTokensDraft={assistantMaxTokensDraft}
-        setAssistantMaxTokensDraft={setAssistantMaxTokensDraft}
-        personaDraft={personaDraft}
-        setPersonaDraft={setPersonaDraft}
-        disableIdleAnimationsDraft={disableIdleAnimationsDraft}
-        setDisableIdleAnimationsDraft={setDisableIdleAnimationsDraft}
         activeMemoryOption={activeMemoryOption}
         activeMemoryValues={activeMemoryValues}
-        memoryModeDraft={memoryModeDraft}
-        setMemoryModeDraft={setMemoryModeDraft}
-        memoryHistoryLimitDraft={memoryHistoryLimitDraft}
-        setMemoryHistoryLimitDraft={setMemoryHistoryLimitDraft}
-        memoryIncludeGraphContextDraft={memoryIncludeGraphContextDraft}
-        setMemoryIncludeGraphContextDraft={setMemoryIncludeGraphContextDraft}
-        memoryIncludeProgressContextDraft={memoryIncludeProgressContextDraft}
-        setMemoryIncludeProgressContextDraft={setMemoryIncludeProgressContextDraft}
-        memoryIncludeQuizContextDraft={memoryIncludeQuizContextDraft}
-        setMemoryIncludeQuizContextDraft={setMemoryIncludeQuizContextDraft}
-        memoryIncludeFrontierContextDraft={memoryIncludeFrontierContextDraft}
-        setMemoryIncludeFrontierContextDraft={setMemoryIncludeFrontierContextDraft}
-        memoryIncludeSelectedTopicContextDraft={memoryIncludeSelectedTopicContextDraft}
-        setMemoryIncludeSelectedTopicContextDraft={setMemoryIncludeSelectedTopicContextDraft}
         activeGraph={activeGraph}
         loadSnapshots={loadSnapshots}
         historyLoading={historyLoading}
@@ -1851,18 +1821,6 @@ export default function App(): React.JSX.Element {
         snapshots={snapshots}
         data={data}
         rollbackSnapshot={rollbackSnapshot}
-        enableClosureTestsDraft={enableClosureTestsDraft}
-        setEnableClosureTestsDraft={setEnableClosureTestsDraft}
-        debugModeEnabledDraft={debugModeEnabledDraft}
-        setDebugModeEnabledDraft={setDebugModeEnabledDraft}
-        curvedEdgeLinesDraft={curvedEdgeLinesDraft}
-        setCurvedEdgeLinesDraft={setCurvedEdgeLinesDraft}
-        themeModeDraft={themeModeDraft}
-        setThemeModeDraft={setThemeModeDraft}
-        quizQuestionCountDraft={quizQuestionCountDraft}
-        setQuizQuestionCountDraft={setQuizQuestionCountDraft}
-        quizPassCountDraft={quizPassCountDraft}
-        setQuizPassCountDraft={setQuizPassCountDraft}
         configSaving={configSaving}
         settingsDirty={settingsDirty}
         saveSettings={saveSettings}

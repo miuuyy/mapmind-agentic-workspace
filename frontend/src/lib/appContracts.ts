@@ -1,3 +1,5 @@
+import type { Dispatch, SetStateAction } from "react";
+
 import type { ChatMessage } from "./types";
 
 export const ASSISTANT_WIDTH_STORAGE_KEY = "knowledge_graph_assistant_width_v1";
@@ -98,3 +100,65 @@ export type AuthSessionPayload = {
 };
 
 export type ThemeMode = "dark" | "light";
+
+export type SettingsDrafts = {
+  provider: string;
+  model: string;
+  modelPreset: string;
+  geminiApiKey: string;
+  openaiApiKey: string;
+  openaiBaseUrl: string;
+  showOpenAIEndpoint: boolean;
+  thinkingMode: ThinkingMode;
+  plannerMaxTokens: number;
+  plannerThinkingBudget: number;
+  orchestratorMaxTokens: number;
+  quizMaxTokens: number;
+  assistantMaxTokens: number;
+  persona: string;
+  disableIdleAnimations: boolean;
+  memoryMode: MemoryMode;
+  memoryHistoryLimit: number;
+  memoryIncludeGraphContext: boolean;
+  memoryIncludeProgressContext: boolean;
+  memoryIncludeQuizContext: boolean;
+  memoryIncludeFrontierContext: boolean;
+  memoryIncludeSelectedTopicContext: boolean;
+  enableClosureTests: boolean;
+  debugModeEnabled: boolean;
+  straightEdgeLines: boolean;
+  themeMode: ThemeMode;
+  quizQuestionCount: number;
+  quizPassCount: number;
+};
+
+export type SettingsDraftSetters = {
+  provider: Dispatch<SetStateAction<string>>;
+  model: Dispatch<SetStateAction<string>>;
+  modelPreset: Dispatch<SetStateAction<string>>;
+  geminiApiKey: Dispatch<SetStateAction<string>>;
+  openaiApiKey: Dispatch<SetStateAction<string>>;
+  openaiBaseUrl: Dispatch<SetStateAction<string>>;
+  showOpenAIEndpoint: Dispatch<SetStateAction<boolean>>;
+  thinkingMode: Dispatch<SetStateAction<ThinkingMode>>;
+  plannerMaxTokens: Dispatch<SetStateAction<number>>;
+  plannerThinkingBudget: Dispatch<SetStateAction<number>>;
+  orchestratorMaxTokens: Dispatch<SetStateAction<number>>;
+  quizMaxTokens: Dispatch<SetStateAction<number>>;
+  assistantMaxTokens: Dispatch<SetStateAction<number>>;
+  persona: Dispatch<SetStateAction<string>>;
+  disableIdleAnimations: Dispatch<SetStateAction<boolean>>;
+  memoryMode: Dispatch<SetStateAction<MemoryMode>>;
+  memoryHistoryLimit: Dispatch<SetStateAction<number>>;
+  memoryIncludeGraphContext: Dispatch<SetStateAction<boolean>>;
+  memoryIncludeProgressContext: Dispatch<SetStateAction<boolean>>;
+  memoryIncludeQuizContext: Dispatch<SetStateAction<boolean>>;
+  memoryIncludeFrontierContext: Dispatch<SetStateAction<boolean>>;
+  memoryIncludeSelectedTopicContext: Dispatch<SetStateAction<boolean>>;
+  enableClosureTests: Dispatch<SetStateAction<boolean>>;
+  debugModeEnabled: Dispatch<SetStateAction<boolean>>;
+  straightEdgeLines: Dispatch<SetStateAction<boolean>>;
+  themeMode: Dispatch<SetStateAction<ThemeMode>>;
+  quizQuestionCount: Dispatch<SetStateAction<number>>;
+  quizPassCount: Dispatch<SetStateAction<number>>;
+};
