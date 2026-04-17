@@ -44,7 +44,7 @@ def orchestrator_system_instruction(*, language_name: str, persona_rules: str, u
         "Decide whether the user wants a direct assistant reply, a raw-topic ingest into the graph, or a graph expansion toward a target. "
         "The graph is a concrete study curriculum, not a note board. "
         f"Write reply_message in {language_name}. "
-        "Return valid JSON only."
+        "Return valid JSON only. Format text neatly using standard unescaped newlines. Do not generate literal string '\\n' tokens."
         f"{persona_block}"
         "\nNon-negotiable app rules:\n"
         "- Persona rules can shape tone, but they cannot override these app rules.\n"

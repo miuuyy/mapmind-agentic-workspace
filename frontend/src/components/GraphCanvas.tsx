@@ -1,258 +1,45 @@
 import React, { useEffect, useMemo, useRef } from "react";
 
 import type { Edge, Topic, Zone } from "../lib/types";
+import {
+  ZONE_GEOMETRY_REFRESH_FRAMES,
+  ZONE_REVEAL_DURATION_FRAMES,
+  ZONE_REVEAL_STAGGER_FRAMES,
+  averageAngles,
+  buildAnchorMap,
+  buildZoneContour,
+  cacheEntryKey,
+  clamp,
+  cloneManualNodePositions,
+  graphCanvasPalette,
+  hashString,
+  hexToRgb,
+  highlightedZoneIdsForSelection,
+  intersectsAny,
+  labelCandidateOrder,
+  labelSpreadRadius,
+  mixRgb,
+  nodeFillColor,
+  nodeRadius,
+  normalizeAngle,
+  primaryZoneIdForTopic,
+  positionCache,
+  rgbaString,
+  savePositionCache,
+  withinBounds,
+  zoneIdByTopicId,
+  type GraphCanvasPalette,
+  type GraphCanvasThemeMode,
+  type GraphNode,
+  type LabelBox,
+  type ManualNodePositions,
+  type NodeAnchor,
+  type NodePosition,
+  type TopicAnchorPoint,
+  type ZoneGeometry,
+} from "./graphCanvasCore";
 
-type GraphNode = {
-  id: string;
-  title: string;
-  state: Topic["state"];
-  level: number;
-};
-
-type NodePosition = {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-};
-
-type ManualNodePositions = Record<string, { x: number; y: number }>;
-
-type LabelBox = {
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
-};
-
-type NodeAnchor = {
-  x: number;
-  y: number;
-  angle: number;
-  primaryRootId: string;
-  primaryBranchId: string;
-};
-
-export type TopicAnchorPoint = {
-  x: number;
-  y: number;
-  side: "left" | "right";
-};
-
-const POSITION_CACHE_KEY = "knowledge_graph_pos_v21";
-const positionCache = new Map<string, { x: number; y: number }>();
-
-try {
-  const saved = localStorage.getItem(POSITION_CACHE_KEY);
-  if (saved) {
-    const parsed = JSON.parse(saved) as Record<string, { x: number; y: number }>;
-    Object.entries(parsed).forEach(([id, pos]) => positionCache.set(id, pos));
-  }
-} catch {
-  // Ignore corrupted cached positions.
-}
-
-function savePositionCache(): void {
-  try {
-    localStorage.setItem(POSITION_CACHE_KEY, JSON.stringify(Object.fromEntries(positionCache.entries())));
-  } catch {
-    // Ignore localStorage write failures.
-  }
-}
-
-function hexToRgb(color: string): { r: number; g: number; b: number } | null {
-  const value = color.trim().replace("#", "");
-  if (!/^[0-9a-fA-F]{6}$/.test(value)) return null;
-  return {
-    r: Number.parseInt(value.slice(0, 2), 16),
-    g: Number.parseInt(value.slice(2, 4), 16),
-    b: Number.parseInt(value.slice(4, 6), 16),
-  };
-}
-
-function nodeFillColor(node: GraphNode, selected: boolean, onPath: boolean): string {
-  if (selected) return "rgba(255,255,255,0.96)";
-  if (onPath) return "rgba(255,255,255,0.86)";
-  if (node.state === "mastered" || node.state === "solid") return "rgba(255,255,255,0.76)";
-  if (node.state === "learning") return "rgba(255,255,255,0.62)";
-  if (node.state === "needs_review" || node.state === "shaky") return "rgba(190,190,190,0.82)";
-  return "rgba(120,120,120,0.76)";
-}
-
-function nodeRadius(node: GraphNode, selected: boolean, onPath: boolean, isRoot: boolean): number {
-  if (selected) return 8;
-  if (onPath) return 7;
-  if (isRoot) return 6;
-  if (node.level <= 1) return 5.5;
-  return 5;
-}
-
-function labelSpreadRadius(node: GraphNode): number {
-  return 26 + Math.min(110, node.title.length * 3.4);
-}
-
-function hashString(value: string): number {
-  let hash = 2166136261;
-  for (let i = 0; i < value.length; i += 1) {
-    hash ^= value.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-}
-
-function normalizeAngle(value: number): number {
-  let angle = value;
-  while (angle <= -Math.PI) angle += Math.PI * 2;
-  while (angle > Math.PI) angle -= Math.PI * 2;
-  return angle;
-}
-
-function intersectsAny(box: LabelBox, others: LabelBox[]): boolean {
-  return others.some(
-    (other) => !(box.right < other.left || box.left > other.right || box.bottom < other.top || box.top > other.bottom),
-  );
-}
-
-function labelCandidateOrder(): number[] {
-  return [0, 4, 2, 3, 1, 5];
-}
-
-function withinBounds(box: LabelBox, width: number, height: number, margin = 8): boolean {
-  return box.left >= margin && box.right <= width - margin && box.top >= margin && box.bottom <= height - margin;
-}
-
-function averageAngles(values: number[]): number {
-  if (values.length === 0) return -Math.PI / 2;
-  const x = values.reduce((sum, value) => sum + Math.cos(value), 0);
-  const y = values.reduce((sum, value) => sum + Math.sin(value), 0);
-  return Math.atan2(y, x);
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
-
-function cloneManualNodePositions(positions: ManualNodePositions): ManualNodePositions {
-  return Object.fromEntries(
-    Object.entries(positions).map(([topicId, point]) => [topicId, { x: point.x, y: point.y }]),
-  );
-}
-
-function cacheEntryKey(namespace: string, nodeId: string): string {
-  return `${namespace}::${nodeId}`;
-}
-
-function buildAnchorMap(nodes: GraphNode[], edges: Edge[], width: number, height: number): Map<string, NodeAnchor> {
-  const byId = new Map(nodes.map((node) => [node.id, node]));
-  const parentsByChild = new Map<string, string[]>();
-  const childrenByParent = new Map<string, string[]>();
-  for (const node of nodes) {
-    parentsByChild.set(node.id, []);
-    childrenByParent.set(node.id, []);
-  }
-  for (const edge of edges) {
-    parentsByChild.set(edge.target_topic_id, [...(parentsByChild.get(edge.target_topic_id) ?? []), edge.source_topic_id]);
-    childrenByParent.set(edge.source_topic_id, [...(childrenByParent.get(edge.source_topic_id) ?? []), edge.target_topic_id]);
-  }
-
-  const roots = nodes.filter((node) => (parentsByChild.get(node.id) ?? []).length === 0).sort((a, b) => a.title.localeCompare(b.title));
-  const stableWidth = Math.max(width, 900);
-  const stableHeight = Math.max(height, 600);
-  const minDimension = Math.min(stableWidth, stableHeight);
-  const maxLevel = Math.max(...nodes.map((n) => n.level), 1);
-  const anchors = new Map<string, NodeAnchor>();
-  const resolving = new Set<string>();
-  const resolvedPrimaryRoots = new Map<string, string>();
-  const rootAngles = new Map<string, number>();
-  const rootCount = Math.max(roots.length, 1);
-  const rootRingRadius = Math.max(22, Math.min(58, minDimension * 0.064));
-  const fullSpread = Math.PI * 2;
-  const branchAngles = new Map<string, number>();
-  const resolvedPrimaryBranches = new Map<string, string>();
-
-  roots.forEach((root, index) => {
-    const seed = hashString(root.id);
-    const jitter = (((seed >> 20) % 1000) / 1000 - 0.5) * 0.16;
-    rootAngles.set(root.id, (-Math.PI / 2) + (index / rootCount) * fullSpread + jitter);
-  });
-
-  function resolvePrimaryRootId(nodeId: string): string {
-    const cached = resolvedPrimaryRoots.get(nodeId);
-    if (cached) return cached;
-    const parents = (parentsByChild.get(nodeId) ?? []).filter((pid) => byId.has(pid));
-    if (parents.length === 0) { resolvedPrimaryRoots.set(nodeId, nodeId); return nodeId; }
-    const freq = new Map<string, number>();
-    for (const pid of parents) { const rid = resolvePrimaryRootId(pid); freq.set(rid, (freq.get(rid) ?? 0) + 1); }
-    const sorted = [...freq.entries()].sort((a, b) => b[1] !== a[1] ? b[1] - a[1] : a[0].localeCompare(b[0]));
-    const resolved = sorted[0]?.[0] ?? parents[0];
-    resolvedPrimaryRoots.set(nodeId, resolved);
-    return resolved;
-  }
-
-  function resolvePrimaryBranchId(nodeId: string): string {
-    const cached = resolvedPrimaryBranches.get(nodeId);
-    if (cached) return cached;
-    const parents = (parentsByChild.get(nodeId) ?? []).filter((pid) => byId.has(pid));
-    if (parents.length === 0) { resolvedPrimaryBranches.set(nodeId, nodeId); return nodeId; }
-    if (parents.find((pid) => (parentsByChild.get(pid) ?? []).length === 0)) {
-      resolvedPrimaryBranches.set(nodeId, nodeId); return nodeId;
-    }
-    const freq = new Map<string, number>();
-    for (const pid of parents) { const bid = resolvePrimaryBranchId(pid); freq.set(bid, (freq.get(bid) ?? 0) + 1); }
-    const sorted = [...freq.entries()].sort((a, b) => b[1] !== a[1] ? b[1] - a[1] : a[0].localeCompare(b[0]));
-    resolvedPrimaryBranches.set(nodeId, sorted[0]?.[0] ?? nodeId);
-    return resolvedPrimaryBranches.get(nodeId)!;
-  }
-
-  for (const root of roots) {
-    const kids = (childrenByParent.get(root.id) ?? []).filter((cid) => byId.has(cid))
-      .sort((a, b) => (byId.get(a)?.title ?? a).localeCompare(byId.get(b)?.title ?? b));
-    const sectorW = rootCount === 1 ? Math.PI * 1.6 : Math.max(0.8, (fullSpread / rootCount) * 0.88);
-    const rootAngle = rootAngles.get(root.id) ?? -Math.PI / 2;
-    kids.forEach((cid, i) => {
-      const off = kids.length === 1 ? 0 : ((i / (kids.length - 1)) - 0.5) * sectorW;
-      branchAngles.set(cid, rootAngle + off);
-    });
-  }
-
-  function resolveAnchor(nodeId: string): NodeAnchor {
-    const cached = anchors.get(nodeId);
-    if (cached) return cached;
-    if (resolving.has(nodeId)) return { x: width / 2, y: height / 2, angle: -Math.PI / 2, primaryRootId: nodeId, primaryBranchId: nodeId };
-    resolving.add(nodeId);
-    const node = byId.get(nodeId);
-    if (!node) { const fb = { x: width / 2, y: height / 2, angle: -Math.PI / 2, primaryRootId: nodeId, primaryBranchId: nodeId }; anchors.set(nodeId, fb); resolving.delete(nodeId); return fb; }
-    const seed = hashString(node.id);
-    const parents = (parentsByChild.get(node.id) ?? []).filter((pid) => byId.has(pid));
-    const primaryRootId = resolvePrimaryRootId(node.id);
-    const primaryBranchId = resolvePrimaryBranchId(node.id);
-    const usableRadius = Math.max(200, minDimension * 0.72 - rootRingRadius);
-    const radialStep = usableRadius / Math.max(maxLevel + 0.35, 1);
-    const baseRadius = node.level <= 0 ? rootRingRadius : rootRingRadius + node.level * radialStep;
-    const radiusJitter = (((seed >> 12) % 1000) / 1000 - 0.5) * minDimension * 0.018;
-    let angle: number;
-    if (parents.length === 0) {
-      angle = rootAngles.get(node.id) ?? -Math.PI / 2;
-    } else {
-      const pAnchors = parents.map((pid) => resolveAnchor(pid));
-      const pAngle = averageAngles(pAnchors.map((a) => a.angle));
-      const bAngle = branchAngles.get(primaryBranchId) ?? rootAngles.get(primaryRootId) ?? pAngle;
-      const sibs = Array.from(new Set(parents.flatMap((pid) => childrenByParent.get(pid) ?? []))).sort((a, b) => (byId.get(a)?.title ?? a).localeCompare(byId.get(b)?.title ?? b));
-      const si = Math.max(0, sibs.indexOf(node.id));
-      const spread = Math.max(0.15, 0.85 / Math.max(sibs.length, 1));
-      const sibOff = (si - (sibs.length - 1) / 2) * spread;
-      const bPull = normalizeAngle(bAngle - pAngle) * 0.68;
-      const jit = (((seed >> 22) % 1000) / 1000 - 0.5) * 0.05;
-      angle = node.level === 1 ? bAngle + sibOff + jit : pAngle + bPull + sibOff + jit;
-    }
-    const radius = Math.max(rootRingRadius, baseRadius + radiusJitter);
-    const anchor = { x: width / 2 + Math.cos(angle) * radius, y: height / 2 + Math.sin(angle) * radius, angle, primaryRootId, primaryBranchId };
-    anchors.set(node.id, anchor); resolving.delete(nodeId); return anchor;
-  }
-
-  for (const node of nodes) resolveAnchor(node.id);
-  return anchors;
-}
+export type { TopicAnchorPoint } from "./graphCanvasCore";
 
 
 
@@ -278,10 +65,12 @@ function GraphCanvasComponent({
   onNodePositionsChange,
   disableIdleAnimations = false,
   backgroundFill = "#000000",
+  themeMode = "dark",
   disableGrid = false,
   cascadeStepFrames = 8,
   disablePhysics = false,
   viewportCenteredWheelZoom = false,
+  curvedEdgeLinesEnabled = true,
 }: {
   topics: Topic[];
   edges: Edge[];
@@ -304,10 +93,12 @@ function GraphCanvasComponent({
   onNodePositionsChange?: (positions: ManualNodePositions) => void;
   disableIdleAnimations?: boolean;
   backgroundFill?: string | null;
+  themeMode?: GraphCanvasThemeMode;
   disableGrid?: boolean;
   cascadeStepFrames?: number;
   disablePhysics?: boolean;
   viewportCenteredWheelZoom?: boolean;
+  curvedEdgeLinesEnabled?: boolean;
 }
 ): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -330,12 +121,22 @@ function GraphCanvasComponent({
   const disableIdleAnimationsRef = useRef<boolean>(disableIdleAnimations);
   const disableGridRef = useRef<boolean>(disableGrid);
   const viewportCenteredWheelZoomRef = useRef<boolean>(viewportCenteredWheelZoom ?? false);
+  const curvedEdgeLinesEnabledRef = useRef<boolean>(curvedEdgeLinesEnabled);
+  const paletteRef = useRef<GraphCanvasPalette>(graphCanvasPalette(themeMode));
+  const backgroundFillRef = useRef<string | null>(backgroundFill);
   const onSelectTopicRef = useRef(onSelectTopic);
   const onSelectedTopicAnchorChangeRef = useRef(onSelectedTopicAnchorChange);
   const onNodePositionsChangeRef = useRef(onNodePositionsChange);
   const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pinchGestureRef = useRef<{ distance: number; centerX: number; centerY: number } | null>(null);
   const gestureConsumedRef = useRef<boolean>(false);
+  const zoneGeometryRef = useRef<Map<string, ZoneGeometry>>(new Map());
+  const zoneRevealStartFrameRef = useRef<number>(0);
+  const themeModeRef = useRef<GraphCanvasThemeMode>(themeMode);
+  const viewportSignatureRef = useRef<string>("");
+  paletteRef.current = graphCanvasPalette(themeMode);
+  themeModeRef.current = themeMode;
+  curvedEdgeLinesEnabledRef.current = curvedEdgeLinesEnabled;
 
   // Smoothly animate zoom towards targetZoom
   useEffect(() => {
@@ -455,6 +256,7 @@ function GraphCanvasComponent({
   disableIdleAnimationsRef.current = disableIdleAnimations;
   disableGridRef.current = disableGrid;
   viewportCenteredWheelZoomRef.current = viewportCenteredWheelZoom ?? false;
+  backgroundFillRef.current = backgroundFill;
 
   const cascadeStepFramesRef = useRef<number>(cascadeStepFrames);
   cascadeStepFramesRef.current = cascadeStepFrames;
@@ -558,12 +360,42 @@ function GraphCanvasComponent({
       const dpr = window.devicePixelRatio || 1;
       const nextW = Math.max(1, Math.floor(latestWidth * dpr));
       const nextH = Math.max(1, Math.floor(latestHeight * dpr));
+      const viewportSignature = `${Math.round(latestWidth)}x${Math.round(latestHeight)}@${Math.round(dpr * 100)}`;
+      const viewportChanged = viewportSignatureRef.current !== viewportSignature;
       if (canvasEl.width !== nextW || canvasEl.height !== nextH) {
         canvasEl.width = nextW;
         canvasEl.height = nextH;
         canvasEl.style.width = `${latestWidth}px`;
         canvasEl.style.height = `${latestHeight}px`;
         ctx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      if (viewportChanged) {
+        viewportSignatureRef.current = viewportSignature;
+        structureActivityFrameRef.current = frameCount;
+        idleFrozenRef.current = false;
+        idleSettleFramesRef.current = 0;
+        lastEmittedAnchorRef.current = null;
+        labelPlacementRef.current.clear();
+        zoneGeometryRef.current.clear();
+        zoneRevealStartFrameRef.current = frameCount + (staticLayout ? 4 : Math.max(8, cascadeStepFramesRef.current));
+        const hasManualLayout = Boolean(manualPositionsRef.current && Object.keys(manualPositionsRef.current).length > 0);
+        if (!staticLayout && !layoutEditModeRef.current && !hasManualLayout) {
+          for (const node of nodesDataRef.current) {
+            nodesRef.current.delete(node.id);
+            positionCache.delete(cacheEntryKey(graphCacheKey, node.id));
+          }
+        }
+        if (!staticLayout) {
+          scheduleCascade();
+        } else {
+          litFrameRef.current.clear();
+          for (const node of nodesDataRef.current) {
+            litFrameRef.current.set(node.id, frameCount);
+          }
+          for (const edge of edgesDataRef.current) {
+            litFrameRef.current.set(`e:${edge.id}`, frameCount);
+          }
+        }
       }
     }
 
@@ -668,28 +500,69 @@ function GraphCanvasComponent({
       }
     }
 
-    function drawZoneBackgrounds(width: number, height: number): void {
+    function drawZoneBackgrounds(width: number, height: number, anchors: Map<string, NodeAnchor>): void {
       const positions = nodesRef.current;
-      for (const zone of zonesDataRef.current) {
-        const zonePoints = zone.topic_ids
-          .map((topicId) => positions.get(topicId))
-          .filter((point): point is NodePosition => Boolean(point));
-        if (zonePoints.length === 0) continue;
-
-        const center = zonePoints.reduce(
-          (acc, point) => ({ x: acc.x + point.x / zonePoints.length, y: acc.y + point.y / zonePoints.length }),
-          { x: 0, y: 0 },
-        );
-        const spread = Math.max(...zonePoints.map((point) => Math.hypot(point.x - center.x, point.y - center.y)), 44) + 86 + zone.intensity * 16;
+      const structureAnimatingZones =
+        !staticLayout &&
+        !idleFrozenRef.current &&
+        frameCount - structureActivityFrameRef.current <= ZONE_GEOMETRY_REFRESH_FRAMES;
+      const shouldRefreshZoneGeometry =
+        layoutEditModeRef.current ||
+        draggedNodeRef.current !== null ||
+        structureAnimatingZones ||
+        zoneGeometryRef.current.size === 0;
+      for (const [zoneIndex, zone] of zonesDataRef.current.entries()) {
+        let geometry = zoneGeometryRef.current.get(zone.id);
+        if (shouldRefreshZoneGeometry || !geometry) {
+          const zonePoints = zone.topic_ids
+            .map((topicId) => positions.get(topicId))
+            .filter((point): point is NodePosition => Boolean(point));
+          if (zonePoints.length === 0) continue;
+          const center = zonePoints.reduce(
+            (acc, point) => ({ x: acc.x + point.x / zonePoints.length, y: acc.y + point.y / zonePoints.length }),
+            { x: 0, y: 0 },
+          );
+          geometry = {
+            center,
+            spread: Math.max(...zonePoints.map((point) => Math.hypot(point.x - center.x, point.y - center.y)), 44) + 86 + zone.intensity * 16,
+            contour: buildZoneContour(zonePoints, zone.intensity),
+          };
+          zoneGeometryRef.current.set(zone.id, geometry);
+        }
+        if (!geometry) continue;
+        const { center, spread, contour } = geometry;
         const rgb = hexToRgb(zone.color) ?? { r: 255, g: 214, b: 10 };
-        const gradient = ctx2.createRadialGradient(center.x, center.y, 0, center.x, center.y, spread);
-        gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.09)`);
-        gradient.addColorStop(0.48, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.045)`);
-        gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
-        ctx2.fillStyle = gradient;
+        const zoneRevealAge = frameCount - zoneRevealStartFrameRef.current - zoneIndex * ZONE_REVEAL_STAGGER_FRAMES;
+        const zoneRevealProgress = clamp(zoneRevealAge / ZONE_REVEAL_DURATION_FRAMES, 0, 1);
+        const easedZoneReveal = 1 - Math.pow(1 - zoneRevealProgress, 2);
+        if (easedZoneReveal <= 0.001) continue;
+        const zoneOpacityMultiplier = paletteRef.current.zoneOpacityMultiplier;
+        const gradientProgress = easedZoneReveal;
+        const gradientFill = ctx2.createRadialGradient(center.x, center.y, 0, center.x, center.y, spread);
+        gradientFill.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.09 * zoneOpacityMultiplier * gradientProgress})`);
+        gradientFill.addColorStop(0.48, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.045 * zoneOpacityMultiplier * gradientProgress})`);
+        gradientFill.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+        ctx2.fillStyle = gradientFill;
         ctx2.beginPath();
         ctx2.arc(center.x, center.y, spread, 0, Math.PI * 2);
         ctx2.fill();
+        if (paletteRef.current.zoneOutlineAlpha > 0 && contour.length >= 2) {
+          ctx2.save();
+          ctx2.setLineDash([10, 8]);
+          ctx2.lineWidth = paletteRef.current.zoneOutlineWidth;
+          ctx2.strokeStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${paletteRef.current.zoneOutlineAlpha * easedZoneReveal})`;
+          ctx2.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${paletteRef.current.zoneOutlineAlpha * 0.14 * easedZoneReveal})`;
+          ctx2.beginPath();
+          ctx2.moveTo(contour[0].x, contour[0].y);
+          for (let index = 1; index < contour.length; index += 1) {
+            const point = contour[index];
+            ctx2.lineTo(point.x, point.y);
+          }
+          ctx2.closePath();
+          ctx2.fill();
+          ctx2.stroke();
+          ctx2.restore();
+        }
       }
 
       const zoom = zoomRef.current;
@@ -704,7 +577,7 @@ function GraphCanvasComponent({
       const gridBottom = Math.ceil(worldBottom / gridStep) * gridStep;
 
       if (!disableGridRef.current) {
-        ctx2.strokeStyle = "rgba(255,255,255,0.025)";
+        ctx2.strokeStyle = paletteRef.current.gridStroke;
         ctx2.lineWidth = 1;
         for (let x = gridLeft; x <= gridRight; x += gridStep) {
           if (x <= worldLeft + 1 || x >= worldRight - 1) continue;
@@ -752,17 +625,23 @@ function GraphCanvasComponent({
       const currentEdges = edgesDataRef.current;
       const positions = nodesRef.current;
       const anchors = buildAnchorMap(currentNodes, currentEdges, width, height);
-        const graphSignature = `${graphCacheKey}::${currentNodes.map((node) => node.id).sort().join("|")}::${currentEdges
+      const zoneSignature = zonesDataRef.current
+        .map((zone) => `${zone.id}:${zone.color}:${zone.intensity}:${[...zone.topic_ids].sort().join(",")}`)
+        .sort()
+        .join("|");
+      const graphSignature = `${graphCacheKey}::${currentNodes.map((node) => node.id).sort().join("|")}::${currentEdges
         .map((edge) => edge.id)
         .sort()
-        .join("|")}`;
+        .join("|")}::${zoneSignature}`;
 
       if (graphSignatureRef.current !== graphSignature) {
         graphSignatureRef.current = graphSignature;
         structureActivityFrameRef.current = frameCount;
+        zoneRevealStartFrameRef.current = frameCount + (staticLayout ? 6 : Math.max(12, cascadeStepFramesRef.current * 2));
         idleFrozenRef.current = false;
         idleSettleFramesRef.current = 0;
         labelPlacementRef.current.clear();
+        zoneGeometryRef.current.clear();
         if (!staticLayout) {
           scheduleCascade();
         } else {
@@ -858,6 +737,7 @@ function GraphCanvasComponent({
         const spring = 0.0046;
         const centerPull = 0.00008;
         const levelPull = 0.004;
+        const siblingFanStrength = 0.0015;
         // Smooth startup: forces ramp up gradually, constant high damping prevents bounce
         const startupProgress = Math.min(1, frameCount / 80);
         const startupEase = startupProgress * startupProgress; // quadratic ease-in
@@ -879,6 +759,7 @@ function GraphCanvasComponent({
           const aNode = currentNodes[i];
           const a = positions.get(aNode.id);
           if (!a) continue;
+          const aPinned = pinnedPositions[aNode.id];
           if (aNode.id === draggedNodeId) {
             a.vx = 0;
             a.vy = 0;
@@ -890,11 +771,13 @@ function GraphCanvasComponent({
             const bNode = currentNodes[j];
             const b = positions.get(bNode.id);
             if (!b) continue;
+            const bPinned = pinnedPositions[bNode.id];
             if (bNode.id === draggedNodeId) {
               b.vx = 0;
               b.vy = 0;
               continue;
             }
+            if (aPinned && bPinned) continue;
             const bAnchor = anchors.get(bNode.id);
             const aZone = nodeZoneId.get(aNode.id);
             const bZone = nodeZoneId.get(bNode.id);
@@ -912,10 +795,14 @@ function GraphCanvasComponent({
             const force = (repulsion * branchMultiplier * sameZoneBoost * forceScale) / d2;
             const fx = (dx / dist) * force;
             const fy = (dy / dist) * force;
-            a.vx += fx;
-            a.vy += fy;
-            b.vx -= fx;
-            b.vy -= fy;
+            if (!aPinned) {
+              a.vx += fx;
+              a.vy += fy;
+            }
+            if (!bPinned) {
+              b.vx -= fx;
+              b.vy -= fy;
+            }
           }
         }
 
@@ -924,6 +811,9 @@ function GraphCanvasComponent({
           const to = positions.get(edge.target_topic_id);
           if (!from || !to) continue;
           if (edge.source_topic_id === draggedNodeId || edge.target_topic_id === draggedNodeId) continue;
+          const sourcePinned = pinnedPositions[edge.source_topic_id];
+          const targetPinned = pinnedPositions[edge.target_topic_id];
+          if (sourcePinned && targetPinned) continue;
           const dx = to.x - from.x;
           const dy = to.y - from.y;
           const dist = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -947,10 +837,61 @@ function GraphCanvasComponent({
           const k = spring * (dist - restLength) * edgeScale;
           const fx = (dx / dist) * k;
           const fy = (dy / dist) * k;
-          from.vx += fx;
-          from.vy += fy;
-          to.vx -= fx;
-          to.vy -= fy;
+          if (!sourcePinned) {
+            from.vx += fx;
+            from.vy += fy;
+          }
+          if (!targetPinned) {
+            to.vx -= fx;
+            to.vy -= fy;
+          }
+        }
+
+        const outgoingByParent = new Map<string, string[]>();
+        for (const edge of currentEdges) {
+          outgoingByParent.set(edge.source_topic_id, [...(outgoingByParent.get(edge.source_topic_id) ?? []), edge.target_topic_id]);
+        }
+
+        for (const [parentId, childIds] of outgoingByParent) {
+          if (childIds.length < 2) continue;
+          const parent = positions.get(parentId);
+          if (!parent) continue;
+          const orderedChildren = childIds
+            .map((childId) => {
+              const child = positions.get(childId);
+              if (!child) return null;
+              const stableAngle = anchors.get(childId)?.angle ?? Math.atan2(child.y - parent.y, child.x - parent.x);
+              return { id: childId, child, stableAngle };
+            })
+            .filter((entry): entry is { id: string; child: NodePosition; stableAngle: number } => Boolean(entry))
+            .sort((left, right) => left.stableAngle - right.stableAngle);
+          if (orderedChildren.length < 2) continue;
+
+          const centerAngle = averageAngles(orderedChildren.map((entry) => entry.stableAngle));
+          const totalSpread = clamp(0.56 + (orderedChildren.length - 2) * 0.18, 0.56, 1.28);
+          const stepAngle = orderedChildren.length === 1 ? 0 : totalSpread / (orderedChildren.length - 1);
+
+          orderedChildren.forEach((entry, index) => {
+            if (entry.id === draggedNodeId) {
+              entry.child.vx = 0;
+              entry.child.vy = 0;
+              return;
+            }
+            if (pinnedPositions[entry.id]) return;
+
+            const dx = entry.child.x - parent.x;
+            const dy = entry.child.y - parent.y;
+            const dist = Math.max(1, Math.hypot(dx, dy));
+            const currentAngle = Math.atan2(dy, dx);
+            const targetAngle = centerAngle + (index - (orderedChildren.length - 1) / 2) * stepAngle;
+            const angleDelta = normalizeAngle(targetAngle - currentAngle);
+            const tangentialX = -dy / dist;
+            const tangentialY = dx / dist;
+            const angularForce = angleDelta * siblingFanStrength * forceScale * Math.min(dist, 260);
+
+            entry.child.vx += tangentialX * angularForce;
+            entry.child.vy += tangentialY * angularForce;
+          });
         }
 
         const zoneData = zonesDataRef.current;
@@ -981,11 +922,11 @@ function GraphCanvasComponent({
               const zb = zoneData.find((z) => z.id === zoneIds[j])!;
               for (const tid of za.topic_ids) {
                 const p = positions.get(tid);
-                if (p) { p.vx += fx / ca.count; p.vy += fy / ca.count; }
+                if (p && !pinnedPositions[tid]) { p.vx += fx / ca.count; p.vy += fy / ca.count; }
               }
               for (const tid of zb.topic_ids) {
                 const p = positions.get(tid);
-                if (p) { p.vx -= fx / cb.count; p.vy -= fy / cb.count; }
+                if (p && !pinnedPositions[tid]) { p.vx -= fx / cb.count; p.vy -= fy / cb.count; }
               }
             }
           }
@@ -995,7 +936,7 @@ function GraphCanvasComponent({
             const cohesionStrength = 0.012 / Math.max(1, Math.sqrt(c.count / 4));
             for (const tid of zone.topic_ids) {
               const p = positions.get(tid);
-              if (!p) continue;
+              if (!p || pinnedPositions[tid]) continue;
               p.vx += (c.x - p.x) * cohesionStrength;
               p.vy += (c.y - p.y) * cohesionStrength;
             }
@@ -1020,10 +961,10 @@ function GraphCanvasComponent({
           const age = litFrame === undefined ? 0 : Math.max(0, frameCount - litFrame);
           const ramp = Math.min(1, age / 32);
           if (pinned) {
-            const anchorDx = pinned.x - position.x;
-            const anchorDy = pinned.y - position.y;
-            position.vx += anchorDx * 0.04;
-            position.vy += anchorDy * 0.04;
+            position.x = pinned.x;
+            position.y = pinned.y;
+            position.vx = 0;
+            position.vy = 0;
             continue;
           }
             position.vx += (stable.x - position.x) * levelPull;
@@ -1059,18 +1000,12 @@ function GraphCanvasComponent({
           position.x += position.vx;
           position.y += position.vy;
           if (pinned) {
-            const overshootDx = pinned.x - position.x;
-            const overshootDy = pinned.y - position.y;
-            const overshootDistance = Math.hypot(overshootDx, overshootDy);
-            if (overshootDistance > 10) {
-              position.x += overshootDx * 0.34;
-              position.y += overshootDy * 0.34;
-            } else if (overshootDistance < 1.5) {
-              position.x = pinned.x;
-              position.y = pinned.y;
-              position.vx = 0;
-              position.vy = 0;
-            }
+            position.x = pinned.x;
+            position.y = pinned.y;
+            position.vx = 0;
+            position.vy = 0;
+            positionCache.set(cacheEntryKey(graphCacheKey, node.id), { x: position.x, y: position.y });
+            continue;
           }
           const softBound = Math.max(width, height) * 1.5;
           position.x = Math.max(-softBound, Math.min(softBound, position.x));
@@ -1082,8 +1017,8 @@ function GraphCanvasComponent({
 
       if (frameCount % 60 === 0) savePositionCache();
 
-      if (backgroundFill) {
-        ctx2.fillStyle = backgroundFill;
+      if (backgroundFillRef.current) {
+        ctx2.fillStyle = backgroundFillRef.current;
         ctx2.fillRect(0, 0, width, height);
       } else {
         ctx2.clearRect(0, 0, width, height);
@@ -1096,11 +1031,42 @@ function GraphCanvasComponent({
       ctx2.translate(-width / 2 + panOffsetRef.current.x, -height / 2 + panOffsetRef.current.y);
       const renderIdleFrozen = disableIdleAnimationsRef.current && idleFrozenRef.current;
 
-      drawZoneBackgrounds(width, height);
+      drawZoneBackgrounds(width, height, anchors);
 
-      const selectedZoneIds = new Set(
-        zonesDataRef.current.filter((zone) => selectedTopicIdRef.current && zone.topic_ids.includes(selectedTopicIdRef.current)).map((zone) => zone.id),
-      );
+      const selectedPrimaryZoneId = primaryZoneIdForTopic(zonesDataRef.current, selectedTopicIdRef.current);
+      const selectedZoneIds = themeModeRef.current === "light"
+        ? highlightedZoneIdsForSelection(zonesDataRef.current, selectedTopicIdRef.current, pathNodeIdsRef.current)
+        : selectedPrimaryZoneId
+          ? new Set([selectedPrimaryZoneId])
+          : new Set<string>();
+      const zoneByTopicId = zoneIdByTopicId(zonesDataRef.current);
+      const zoneById = new Map(zonesDataRef.current.map((zone) => [zone.id, zone]));
+      const bundleMetaByEdgeId = new Map<string, { angle: number; laneOffset: number; laneCount: number }>();
+
+      const outgoingBySource = new Map<string, Array<{ edge: Edge; angle: number }>>();
+      for (const edge of currentEdges) {
+        const from = positions.get(edge.source_topic_id);
+        const to = positions.get(edge.target_topic_id);
+        if (!from || !to) continue;
+        const angle = Math.atan2(to.y - from.y, to.x - from.x);
+        outgoingBySource.set(edge.source_topic_id, [...(outgoingBySource.get(edge.source_topic_id) ?? []), { edge, angle }]);
+      }
+
+      for (const [sourceId, entries] of outgoingBySource) {
+        if (entries.length === 0) continue;
+        entries.sort((left, right) => left.angle - right.angle);
+        const sourceAnchorAngle = anchors.get(sourceId)?.angle ?? averageAngles(entries.map((entry) => entry.angle));
+        const bundleAngle = averageAngles(entries.map((entry) => entry.angle));
+        const resolvedAngle = Math.abs(normalizeAngle(bundleAngle - sourceAnchorAngle)) > 0.9 ? sourceAnchorAngle : bundleAngle;
+        const laneSpacing = clamp(10 - entries.length * 0.6, 5, 10);
+        entries.forEach((entry, index) => {
+          bundleMetaByEdgeId.set(entry.edge.id, {
+            angle: resolvedAngle,
+            laneOffset: (index - (entries.length - 1) / 2) * laneSpacing,
+            laneCount: entries.length,
+          });
+        });
+      }
 
       for (const edge of currentEdges) {
         const from = positions.get(edge.source_topic_id);
@@ -1112,22 +1078,56 @@ function GraphCanvasComponent({
         const edgeBrightness = litFrame === undefined ? 0 : Math.min(1, Math.max(0, (frameCount - litFrame) / fadeRate));
         const onPath = pathEdgeIdsRef.current.has(edge.id);
         const onFrontier = frontierEdgeIdsRef.current.has(edge.id);
+        const sourceZoneId = zoneByTopicId.get(edge.source_topic_id) ?? null;
+        const targetZoneId = zoneByTopicId.get(edge.target_topic_id) ?? null;
+        const highlightedSourceZone = sourceZoneId && selectedZoneIds.has(sourceZoneId) ? zoneById.get(sourceZoneId) ?? null : null;
+        const highlightedTargetZone = targetZoneId && selectedZoneIds.has(targetZoneId) ? zoneById.get(targetZoneId) ?? null : null;
         const pulse = renderIdleFrozen ? 0.84 : 0.84 + Math.sin(frameCount * 0.03 + from.x * 0.008) * 0.05;
         const targetX = from.x + (to.x - from.x) * edgeBrightness;
         const targetY = from.y + (to.y - from.y) * edgeBrightness;
+        const bundleMeta = bundleMetaByEdgeId.get(edge.id);
+        const bundleAngle = bundleMeta?.angle ?? Math.atan2(targetY - from.y, targetX - from.x);
+        const bundleDist = Math.max(16, Math.min(46, Math.hypot(targetX - from.x, targetY - from.y) * 0.24));
+        const laneOffset = bundleMeta?.laneOffset ?? 0;
+        const perpX = -Math.sin(bundleAngle);
+        const perpY = Math.cos(bundleAngle);
+        const startControlX = from.x + Math.cos(bundleAngle) * bundleDist + perpX * laneOffset;
+        const startControlY = from.y + Math.sin(bundleAngle) * bundleDist + perpY * laneOffset;
+        const targetAngle = Math.atan2(targetY - from.y, targetX - from.x);
+        const endBundleDist = Math.max(10, Math.min(34, Math.hypot(targetX - from.x, targetY - from.y) * 0.18));
+        const endControlX = targetX - Math.cos(targetAngle) * endBundleDist + perpX * laneOffset * 0.24;
+        const endControlY = targetY - Math.sin(targetAngle) * endBundleDist + perpY * laneOffset * 0.24;
 
         ctx2.beginPath();
         ctx2.moveTo(from.x, from.y);
-        ctx2.lineTo(targetX, targetY);
+        if (curvedEdgeLinesEnabledRef.current) {
+          ctx2.bezierCurveTo(startControlX, startControlY, endControlX, endControlY, targetX, targetY);
+        } else {
+          ctx2.lineTo(targetX, targetY);
+        }
         if (onPath) {
-          ctx2.strokeStyle = `rgba(255,255,255,${Math.max(0.04, pulse * edgeBrightness)})`;
+          if (themeModeRef.current === "light" && (highlightedSourceZone || highlightedTargetZone)) {
+            const startRgb = hexToRgb(highlightedSourceZone?.color ?? highlightedTargetZone?.color ?? "#64748b") ?? { r: 100, g: 116, b: 139 };
+            const endRgb = hexToRgb(highlightedTargetZone?.color ?? highlightedSourceZone?.color ?? "#64748b") ?? { r: 100, g: 116, b: 139 };
+            if (highlightedSourceZone && highlightedTargetZone && highlightedSourceZone.id !== highlightedTargetZone.id) {
+              const gradient = ctx2.createLinearGradient(from.x, from.y, targetX, targetY);
+              gradient.addColorStop(0, rgbaString(startRgb, Math.max(0.24, pulse * 0.7 * edgeBrightness)));
+              gradient.addColorStop(1, rgbaString(endRgb, Math.max(0.24, pulse * 0.7 * edgeBrightness)));
+              ctx2.strokeStyle = gradient;
+            } else {
+              const rgb = mixRgb(startRgb, { r: 100, g: 116, b: 139 }, 0.1);
+              ctx2.strokeStyle = rgbaString(rgb, Math.max(0.22, pulse * 0.72 * edgeBrightness));
+            }
+          } else {
+            ctx2.strokeStyle = `rgba(${paletteRef.current.edgeRgb},${Math.max(0.04, pulse * edgeBrightness)})`;
+          }
           ctx2.lineWidth = 1.7;
         } else if (onFrontier) {
           ctx2.setLineDash([7, 9]);
-          ctx2.strokeStyle = `rgba(255,255,255,${0.012 + 0.05 * edgeBrightness})`;
+          ctx2.strokeStyle = `rgba(${paletteRef.current.edgeRgb},${0.012 + 0.05 * edgeBrightness})`;
           ctx2.lineWidth = 1;
         } else {
-          ctx2.strokeStyle = `rgba(255,255,255,${0.012 + 0.05 * edgeBrightness})`;
+          ctx2.strokeStyle = `rgba(${paletteRef.current.edgeRgb},${0.012 + 0.05 * edgeBrightness})`;
           ctx2.lineWidth = 1;
         }
         ctx2.stroke();
@@ -1146,6 +1146,12 @@ function GraphCanvasComponent({
         const onPath = pathNodeIdsRef.current.has(node.id);
         const contextual = ancestorIdsRef.current.has(node.id);
         const isRoot = rootIdsRef.current.has(node.id);
+        const nodeZoneId = zoneByTopicId.get(node.id) ?? null;
+        const effectiveZoneId = selected && selectedPrimaryZoneId ? selectedPrimaryZoneId : nodeZoneId;
+        const highlightedZone = (selected || onPath) && effectiveZoneId && selectedZoneIds.has(effectiveZoneId)
+          ? zoneById.get(effectiveZoneId) ?? null
+          : null;
+        const highlightedZoneRgb = highlightedZone ? hexToRgb(highlightedZone.color) : null;
         const r = nodeRadius(node, selected, onPath, isRoot);
         const haloPulse = renderIdleFrozen ? 0.55 : 0.55 + Math.sin(frameCount * 0.04 + position.x * 0.008) * 0.07;
         const frontierSources = currentEdges
@@ -1154,7 +1160,13 @@ function GraphCanvasComponent({
           .filter((point): point is NodePosition => Boolean(point));
 
         if (brightness > 0.06 && (selected || onPath)) {
-          ctx2.strokeStyle = selected ? `rgba(255,255,255,${haloPulse * brightness})` : `rgba(255,255,255,${0.24 * brightness})`;
+          if (themeModeRef.current === "light" && highlightedZoneRgb) {
+            ctx2.strokeStyle = rgbaString(highlightedZoneRgb, selected ? Math.max(0.72, haloPulse * brightness) : Math.max(0.52, 0.62 * brightness));
+          } else {
+            ctx2.strokeStyle = selected
+              ? `rgba(${paletteRef.current.edgeRgb},${haloPulse * brightness})`
+              : `rgba(${paletteRef.current.edgeRgb},${0.24 * brightness})`;
+          }
           ctx2.lineWidth = selected ? 1.35 : 1;
           ctx2.beginPath();
           ctx2.arc(position.x, position.y, r + (selected ? 8 : 6), 0, Math.PI * 2);
@@ -1167,7 +1179,7 @@ function GraphCanvasComponent({
           averageSource.x /= frontierSources.length;
           averageSource.y /= frontierSources.length;
           const angle = Math.atan2(averageSource.y - position.y, averageSource.x - position.x);
-          ctx2.strokeStyle = `rgba(255,214,102,${0.52 * brightness})`;
+          ctx2.strokeStyle = `rgba(${paletteRef.current.frontierRgb},${0.52 * brightness})`;
           ctx2.lineWidth = 1.35;
           ctx2.beginPath();
           ctx2.arc(position.x, position.y, r + 4, angle - 0.54, angle + 0.54);
@@ -1175,8 +1187,8 @@ function GraphCanvasComponent({
         } else if (brightness > 0.06 && (node.state === "needs_review" || node.state === "shaky")) {
           ctx2.setLineDash([4, 6]);
           ctx2.shadowBlur = 12;
-          ctx2.shadowColor = "rgba(255,50,40,0.6)";
-          ctx2.strokeStyle = `rgba(255,50,40,${0.7 * brightness})`;
+          ctx2.shadowColor = `rgba(${paletteRef.current.reviewRingRgb},0.6)`;
+          ctx2.strokeStyle = `rgba(${paletteRef.current.reviewRingRgb},${0.7 * brightness})`;
           ctx2.lineWidth = 1.2;
           ctx2.beginPath();
           ctx2.arc(position.x, position.y, r + 8, 0, Math.PI * 2);
@@ -1185,24 +1197,39 @@ function GraphCanvasComponent({
           ctx2.shadowBlur = 0;
         } else if (brightness > 0.06 && isRoot) {
           ctx2.setLineDash([4, 6]);
-          ctx2.strokeStyle = `rgba(255,255,255,${0.14 * brightness})`;
+          ctx2.strokeStyle = `rgba(${paletteRef.current.edgeRgb},${0.14 * brightness})`;
           ctx2.lineWidth = 1;
           ctx2.beginPath();
           ctx2.arc(position.x, position.y, r + 8, 0, Math.PI * 2);
           ctx2.stroke();
           ctx2.setLineDash([]);
+        } else if (brightness > 0.06 && themeModeRef.current === "light" && highlightedZoneRgb) {
+          ctx2.strokeStyle = rgbaString(highlightedZoneRgb, selected ? 0.9 : onPath ? 0.72 : 0.52);
+          ctx2.lineWidth = selected ? 1.8 : 1.35;
+          ctx2.beginPath();
+          ctx2.arc(position.x, position.y, r + 5, 0, Math.PI * 2);
+          ctx2.stroke();
         }
 
-        ctx2.fillStyle = "rgba(38,38,38,0.95)";
+        ctx2.fillStyle = paletteRef.current.nodeBaseFill;
         ctx2.beginPath();
         ctx2.arc(position.x, position.y, r, 0, Math.PI * 2);
         ctx2.fill();
 
-        ctx2.globalAlpha = brightness;
+        ctx2.globalAlpha = themeModeRef.current === "light" ? Math.max(0.34, brightness) : brightness;
         const isBlocker = node.state === "needs_review" || node.state === "shaky";
         ctx2.shadowBlur = selected ? 14 : onPath ? 8 : contextual ? 4 : 0;
-        ctx2.shadowColor = selected ? "rgba(255,255,255,0.35)" : onPath ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.07)";
-        ctx2.fillStyle = nodeFillColor(node, selected, onPath);
+        ctx2.shadowColor = selected
+          ? paletteRef.current.shadowSelected
+          : onPath
+            ? paletteRef.current.shadowPath
+            : paletteRef.current.shadowContext;
+        if (themeModeRef.current === "light" && highlightedZoneRgb) {
+          const zoneTint = selected ? 0.78 : onPath ? 0.62 : 0.46;
+          ctx2.fillStyle = rgbaString(highlightedZoneRgb, zoneTint);
+        } else {
+          ctx2.fillStyle = nodeFillColor(node, selected, onPath, paletteRef.current);
+        }
         ctx2.beginPath();
         ctx2.arc(position.x, position.y, r, 0, Math.PI * 2);
         ctx2.fill();
@@ -1280,8 +1307,32 @@ function GraphCanvasComponent({
         }
 
         labelPlacementRef.current.set(node.id, chosenIndex);
+        if (themeModeRef.current === "light" && (selected || onPath)) {
+          chosen = { ...chosen, y: chosen.y - 2 };
+          chosenBox = {
+            left: chosenBox.left,
+            right: chosenBox.right,
+            top: chosenBox.top - 2,
+            bottom: chosenBox.bottom - 2,
+          };
+        }
         placedLabels.push(chosenBox);
-        ctx2.fillStyle = `rgba(255,255,255,${alpha})`;
+        const nodeZoneId = zoneByTopicId.get(node.id) ?? null;
+        const effectiveZoneId = selected && selectedPrimaryZoneId ? selectedPrimaryZoneId : nodeZoneId;
+        const highlightedZone = (selected || onPath) && effectiveZoneId && selectedZoneIds.has(effectiveZoneId)
+          ? zoneById.get(effectiveZoneId) ?? null
+          : null;
+        const highlightedZoneRgb = highlightedZone ? hexToRgb(highlightedZone.color) : null;
+        if (themeModeRef.current === "light" && highlightedZoneRgb && (selected || onPath)) {
+          const labelBg = mixRgb(highlightedZoneRgb, { r: 255, g: 255, b: 255 }, 0.08);
+          ctx2.fillStyle = rgbaString(labelBg, Math.min(0.96, 0.72 + alpha * 0.3));
+          ctx2.beginPath();
+          ctx2.roundRect(chosenBox.left - 4, chosenBox.top - 3, chosenBox.right - chosenBox.left + 8, chosenBox.bottom - chosenBox.top + 6, 8);
+          ctx2.fill();
+          ctx2.fillStyle = `rgba(255,255,255,${Math.min(0.98, 0.78 + alpha * 0.24)})`;
+        } else {
+          ctx2.fillStyle = `rgba(${paletteRef.current.labelRgb},${alpha})`;
+        }
         ctx2.fillText(node.title, chosen.x, chosen.y);
       }
 
@@ -1596,7 +1647,7 @@ function GraphCanvasComponent({
       <canvas
         ref={canvasRef}
         className="neuroGraphCanvas"
-        style={{ cursor: layoutEditMode ? "crosshair" : "grab", touchAction: "none" }}
+        style={{ cursor: layoutEditMode ? "crosshair" : "grab", touchAction: "none", background: backgroundFill ?? "transparent" }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -1631,9 +1682,11 @@ export const GraphCanvas = React.memo(GraphCanvasComponent, (prev, next) => {
   if (prev.nodePositions !== next.nodePositions) return false;
   if (prev.disableIdleAnimations !== next.disableIdleAnimations) return false;
   if (prev.backgroundFill !== next.backgroundFill) return false;
+  if (prev.themeMode !== next.themeMode) return false;
   if (prev.disableGrid !== next.disableGrid) return false;
   if (prev.disablePhysics !== next.disablePhysics) return false;
   if (prev.viewportCenteredWheelZoom !== next.viewportCenteredWheelZoom) return false;
+  if (prev.curvedEdgeLinesEnabled !== next.curvedEdgeLinesEnabled) return false;
   if (!setsEqual(prev.rootIds, next.rootIds)) return false;
   if (!setsEqual(prev.ancestorIds, next.ancestorIds)) return false;
   if (!setsEqual(prev.pathNodeIds, next.pathNodeIds)) return false;

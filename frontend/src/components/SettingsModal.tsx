@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Card } from "./Card";
-import { MEMORY_MODE_OPTIONS, THINKING_MODE_OPTIONS, type MemoryMode, type ThinkingMode } from "../lib/appContracts";
+import { MEMORY_MODE_OPTIONS, THINKING_MODE_OPTIONS, type MemoryMode, type ThemeMode, type ThinkingMode } from "../lib/appContracts";
 import type { AppCopy } from "../lib/appCopy";
 import type { GraphEnvelope, SnapshotRecord, WorkspaceConfig, WorkspaceEnvelope } from "../lib/types";
 
@@ -88,6 +88,10 @@ type SettingsModalProps = {
   setEnableClosureTestsDraft: StateSetter<boolean>;
   debugModeEnabledDraft: boolean;
   setDebugModeEnabledDraft: StateSetter<boolean>;
+  curvedEdgeLinesDraft: boolean;
+  setCurvedEdgeLinesDraft: StateSetter<boolean>;
+  themeModeDraft: ThemeMode;
+  setThemeModeDraft: StateSetter<ThemeMode>;
   quizQuestionCountDraft: number;
   setQuizQuestionCountDraft: StateSetter<number>;
   quizPassCountDraft: number;
@@ -166,6 +170,10 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
     setEnableClosureTestsDraft,
     debugModeEnabledDraft,
     setDebugModeEnabledDraft,
+    curvedEdgeLinesDraft,
+    setCurvedEdgeLinesDraft,
+    themeModeDraft,
+    setThemeModeDraft,
     quizQuestionCountDraft,
     setQuizQuestionCountDraft,
     quizPassCountDraft,
@@ -180,13 +188,39 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
       ? currentConfig.model_options
       : DEFAULT_PROVIDER_MODELS[resolvedProvider]
   ) ?? [];
+  const snapshotsScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const [snapshotsScrolledTop, setSnapshotsScrolledTop] = React.useState(false);
+  const [snapshotsScrolledBottom, setSnapshotsScrolledBottom] = React.useState(false);
+
+  React.useEffect(() => {
+    const el = snapshotsScrollRef.current;
+    if (!el) return;
+
+    const syncSnapshotsScrollState = () => {
+      const maxScrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
+      setSnapshotsScrolledTop(el.scrollTop > 2);
+      setSnapshotsScrolledBottom(el.scrollTop < maxScrollTop - 2);
+    };
+
+    syncSnapshotsScrollState();
+    el.addEventListener("scroll", syncSnapshotsScrollState, { passive: true });
+    window.addEventListener("resize", syncSnapshotsScrollState);
+
+    return () => {
+      el.removeEventListener("scroll", syncSnapshotsScrollState);
+      window.removeEventListener("resize", syncSnapshotsScrollState);
+    };
+  }, [isSettingsOpen, activeGraph?.graph_id, historyError, snapshots.length]);
 
   if (!isSettingsOpen) {
     return null;
   }
 
   return (
-    <div className="quizOverlay settingsOverlay" style={{ zIndex: 100 }}>
+    <div
+      className="quizOverlay settingsOverlay"
+      style={{ zIndex: 100 }}
+    >
       <div className="settingsModal">
         <div className="settingsContent">
           <div className="settingsContentHeader">
@@ -208,17 +242,17 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                   <section className="settingsPanel settingsPanelWide">
                     <div className="settingsPanelHeader">
                       <div>
-                        <div className="settingsPanelEyebrow">Providers</div>
-                        <div className="settingsPanelTitle">Model provider</div>
+                        <div className="settingsPanelEyebrow">{copy.settingsPanel.providersEyebrow}</div>
+                        <div className="settingsPanelTitle">{copy.settingsPanel.modelProviderTitle}</div>
                       </div>
                     </div>
                     <div className="settingsPanelBody">
                       <div className="settingsLead">
-                        MapMind runs locally. Choose the active provider and model, then keep credentials in workspace config so the shell stays provider-agnostic.
+                        {copy.settingsPanel.modelProviderLead}
                       </div>
                       <div className="settingsInlineFields">
                         <label className="field">
-                          <span className="fieldLabel">Provider</span>
+                          <span className="fieldLabel">{copy.settingsPanel.providerLabel}</span>
                           <select
                             className="input"
                             value={providerDraft}
@@ -236,7 +270,7 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                           </select>
                         </label>
                         <label className="field">
-                          <span className="fieldLabel">Model</span>
+                          <span className="fieldLabel">{copy.settingsPanel.modelLabel}</span>
                           <select
                             className="input"
                             value={modelPresetDraft}
@@ -251,13 +285,13 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                             {providerModelOptions.map((modelId) => (
                               <option key={modelId} value={modelId}>{modelId}</option>
                             ))}
-                            <option value="__custom__">Custom…</option>
+                            <option value="__custom__">{copy.settingsPanel.customModelOption}</option>
                           </select>
                         </label>
                       </div>
                       {modelPresetDraft === "__custom__" ? (
                         <label className="field">
-                          <span className="fieldLabel">Custom model id</span>
+                          <span className="fieldLabel">{copy.settingsPanel.customModelId}</span>
                           <input
                             className="input"
                             value={modelDraft}
@@ -267,33 +301,33 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                         </label>
                       ) : null}
                       <label className="field">
-                        <span className="fieldLabel">Gemini API key</span>
+                        <span className="fieldLabel">{copy.settingsPanel.geminiApiKey}</span>
                         <input
                           className="input"
-                          value={geminiKeyLockedByEnv ? "Provided by .env" : geminiApiKeyDraft}
+                          value={geminiKeyLockedByEnv ? copy.settingsPanel.providedByEnv : geminiApiKeyDraft}
                           onChange={(event) => setGeminiApiKeyDraft(event.target.value)}
-                          placeholder="AIza..."
+                          placeholder={copy.settingsPanel.geminiApiKeyPlaceholder}
                           disabled={geminiKeyLockedByEnv}
                         />
                       </label>
                       {geminiKeyLockedByEnv ? (
                         <div className="settingsInlineNotice">
-                          Gemini key is coming from `.env`, so it has higher priority than workspace config and cannot be changed here.
+                          {copy.settingsPanel.geminiApiKeyEnvNotice}
                         </div>
                       ) : null}
                       <label className="field">
-                        <span className="fieldLabel">OpenAI API key</span>
+                        <span className="fieldLabel">{copy.settingsPanel.openaiApiKey}</span>
                         <input
                           className="input"
-                          value={openaiKeyLockedByEnv ? "Provided by .env" : openaiApiKeyDraft}
+                          value={openaiKeyLockedByEnv ? copy.settingsPanel.providedByEnv : openaiApiKeyDraft}
                           onChange={(event) => setOpenaiApiKeyDraft(event.target.value)}
-                          placeholder="sk-..."
+                          placeholder={copy.settingsPanel.openaiApiKeyPlaceholder}
                           disabled={openaiKeyLockedByEnv}
                         />
                       </label>
                       {openaiKeyLockedByEnv ? (
                         <div className="settingsInlineNotice">
-                          OpenAI key is coming from `.env`, so it has higher priority than workspace config and cannot be changed here.
+                          {copy.settingsPanel.openaiApiKeyEnvNotice}
                         </div>
                       ) : null}
                       {providerDraft === "openai" ? (
@@ -306,7 +340,7 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                                 appearance: "none",
                                 border: 0,
                                 background: "transparent",
-                                color: "rgba(255,255,255,0.62)",
+                                color: themeModeDraft === "light" ? "rgba(17,24,39,0.62)" : "rgba(255,255,255,0.62)",
                                 padding: 0,
                                 font: "inherit",
                                 cursor: "pointer",
@@ -314,13 +348,13 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                                 textUnderlineOffset: "3px",
                               }}
                             >
-                              {showOpenAIEndpointDraft ? "Hide custom endpoint" : "Use custom endpoint"}
+                              {showOpenAIEndpointDraft ? copy.settingsPanel.hideCustomEndpoint : copy.settingsPanel.useCustomEndpoint}
                             </button>
                           </div>
                           {showOpenAIEndpointDraft ? (
                             <>
                               <label className="field">
-                                <span className="fieldLabel">OpenAI-compatible endpoint (advanced)</span>
+                                <span className="fieldLabel">{copy.settingsPanel.openaiEndpointLabel}</span>
                                 <input
                                   className="input"
                                   value={openaiBaseUrlDraft}
@@ -330,13 +364,13 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                                 />
                               </label>
                               <div className="settingsInlineNotice">
-                                You do not need this for the official OpenAI API. Use it only for OpenAI-compatible gateways or local proxies.
+                                {copy.settingsPanel.openaiEndpointHelp}
                               </div>
                             </>
                           ) : null}
                           {openaiBaseUrlLockedByEnv ? (
                             <div className="settingsInlineNotice">
-                              OpenAI endpoint is coming from `.env`, so it has higher priority than workspace config and cannot be changed here.
+                              {copy.settingsPanel.openaiEndpointEnvNotice}
                             </div>
                           ) : null}
                         </>
@@ -373,23 +407,23 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                       {thinkingModeDraft === "custom" ? (
                         <div className="settingsInlineFields">
                           <label className="field">
-                            <span className="fieldLabel">Planner max output tokens</span>
+                            <span className="fieldLabel">{copy.settingsPanel.plannerMaxOutputTokens}</span>
                             <input className="input" type="number" min={100} step={100} value={plannerMaxTokensDraft} onChange={(event) => setPlannerMaxTokensDraft(Number(event.target.value) || 100)} />
                           </label>
                           <label className="field">
-                            <span className="fieldLabel">Planner thinking budget</span>
+                            <span className="fieldLabel">{copy.settingsPanel.plannerThinkingBudget}</span>
                             <input className="input" type="number" min={100} step={100} value={plannerThinkingBudgetDraft} onChange={(event) => setPlannerThinkingBudgetDraft(Number(event.target.value) || 100)} />
                           </label>
                           <label className="field">
-                            <span className="fieldLabel">Chat orchestrator max output tokens</span>
+                            <span className="fieldLabel">{copy.settingsPanel.orchestratorMaxOutputTokens}</span>
                             <input className="input" type="number" min={100} step={100} value={orchestratorMaxTokensDraft} onChange={(event) => setOrchestratorMaxTokensDraft(Number(event.target.value) || 100)} />
                           </label>
                           <label className="field">
-                            <span className="fieldLabel">Quiz max output tokens</span>
+                            <span className="fieldLabel">{copy.settingsPanel.quizMaxOutputTokens}</span>
                             <input className="input" type="number" min={100} step={100} value={quizMaxTokensDraft} onChange={(event) => setQuizMaxTokensDraft(Number(event.target.value) || 100)} />
                           </label>
                           <label className="field">
-                            <span className="fieldLabel">Assistant max output tokens</span>
+                            <span className="fieldLabel">{copy.settingsPanel.assistantMaxOutputTokens}</span>
                             <input className="input" type="number" min={100} step={100} value={assistantMaxTokensDraft} onChange={(event) => setAssistantMaxTokensDraft(Number(event.target.value) || 100)} />
                           </label>
                         </div>
@@ -429,6 +463,21 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                           onClick={() => setDebugModeEnabledDraft((current) => !current)}
                           type="button"
                           aria-pressed={debugModeEnabledDraft}
+                        >
+                          <span className="settingsSwitchKnob" />
+                        </button>
+                      </label>
+                      <label className="settingsToggleRow" htmlFor="edge-lines-toggle">
+                        <div className="settingsToggleCopy">
+                          <span className="fieldLabel">{copy.settingsPanel.edgeLines}</span>
+                          <span className="mutedSmall">{copy.settingsPanel.edgeLinesHelp}</span>
+                        </div>
+                        <button
+                          id="edge-lines-toggle"
+                          className={`settingsSwitch ${curvedEdgeLinesDraft ? "settingsSwitchActive" : ""}`}
+                          onClick={() => setCurvedEdgeLinesDraft((current) => !current)}
+                          type="button"
+                          aria-pressed={curvedEdgeLinesDraft}
                         >
                           <span className="settingsSwitchKnob" />
                         </button>
@@ -558,7 +607,10 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                 <div className="settingsSecondaryColumn">
                   {activeGraph ? (
                     <Card className="snapshotsCard settingsSnapshotsCard" title={copy.settingsPanel.snapshots} right={<button className="btn btn-sm" onClick={() => void loadSnapshots()} type="button">{historyLoading ? copy.settingsPanel.refreshing : copy.settingsPanel.refresh}</button>}>
-                      <div className="snapshotsScrollContainer stack">
+                      <div
+                        ref={snapshotsScrollRef}
+                        className={`snapshotsScrollContainer stack ${snapshotsScrolledTop ? "snapshotsScrollContainerScrolledTop" : ""} ${snapshotsScrolledBottom ? "snapshotsScrollContainerScrolledBottom" : ""}`}
+                      >
                         {historyError ? <div className="inlineNotice inlineNoticeError">{historyError}</div> : null}
                         {snapshots.length > 0 ? (
                           <div className="list">

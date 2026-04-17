@@ -96,3 +96,5 @@ export type AuthSessionPayload = {
   } | null;
   workspace_surface?: WorkspaceSurfacePayload | null;
 };
+
+export type ThemeMode = "dark" | "light";

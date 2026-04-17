@@ -1,7 +1,7 @@
 {
   "name": "mapmind-frontend",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,6 +20,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "lightningcss": "^1.32.0",
     "typescript": "^5.7.3",
     "vite": "^6.0.0",
     "vitest": "^3.2.4"

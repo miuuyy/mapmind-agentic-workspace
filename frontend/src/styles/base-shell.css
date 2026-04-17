@@ -1,0 +1,1793 @@
+:root {
+  --bg: #000000;
+  --panel: rgba(10, 10, 10, 0.65);
+  --panel2: #050505;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #ffffff;
+  --muted: #888888;
+  --surface-0: rgba(14, 14, 15, 0.92);
+  --surface-1: rgba(255, 255, 255, 0.04);
+  --surface-2: rgba(255, 255, 255, 0.08);
+  --surface-3: rgba(255, 255, 255, 0.12);
+  --field-bg: rgba(255, 255, 255, 0.02);
+  --field-bg-focus: rgba(255, 255, 255, 0.05);
+  --field-border: rgba(255, 255, 255, 0.08);
+  --shadow-soft: rgba(0, 0, 0, 0.2);
+  --shadow-strong: rgba(0, 0, 0, 0.48);
+  --grid-line: rgba(255, 255, 255, 0.03);
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --system-fonts: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --sans: "Manrope", var(--system-fonts);
+  --heading: var(--sans);
+  --mono: "JetBrains Mono", source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  --green: #1EB866;
+  --yellow: #ffd60a;
+  --red: #ff453a;
+  --gray: #8e8e93;
+}
+
+:root[data-theme="light"] {
+  --bg: #faf9f6;
+  --panel: #faf9f6;
+  --panel2: #faf9f6;
+  --border: #e8e4de;
+  --text: #2d2b28;
+  --muted: #8b8580;
+  --surface-0: #faf9f6;
+  --surface-1: #f0ede7;
+  --surface-2: rgba(45, 43, 40, 0.06);
+  --surface-3: rgba(45, 43, 40, 0.11);
+  --field-bg: #faf9f6;
+  --field-bg-focus: #faf9f6;
+  --field-border: rgba(195, 90, 44, 0.18);
+  --shadow-soft: rgba(45, 43, 40, 0.08);
+  --shadow-strong: rgba(45, 43, 40, 0.14);
+  --grid-line: rgba(45, 43, 40, 0.045);
+  --text-secondary: rgba(45, 43, 40, 0.72);
+  --mm-accent-green: #c35a2c;
+  --mm-accent-green-hover: #ab4d24;
+  --mm-accent-green-text: #fffaf6;
+  --mm-accent-green-soft-bg: rgba(195, 90, 44, 0.12);
+  --mm-accent-green-soft-border: rgba(195, 90, 44, 0.32);
+  --mm-accent-green-soft-text: rgba(145, 63, 28, 0.96);
+  --light-flat-bg: #faf9f6;
+  --light-soft-bg: #f0ede7;
+  --light-soft-hover: #f5f1eb;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  overflow: hidden;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] body {
+  color-scheme: light;
+}
+
+.appLaunchScreen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+:root[data-theme="light"] .appLaunchScreen {
+  background: #f7f7f4;
+}
+
+:root[data-theme="light"] .appLaunchCard p {
+  color: rgba(71, 85, 105, 0.82);
+}
+
+:root[data-theme="light"] .appLaunchButton {
+  border-color: rgba(203, 213, 225, 0.86);
+  background: rgba(255, 255, 255, 0.94);
+  color: rgba(30, 41, 59, 0.92);
+}
+
+.appLaunchCard {
+  width: auto;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.appLaunchCard h1 {
+  margin: 0;
+  font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+  line-height: 1.1;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+.appLaunchCard p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.66);
+  line-height: 1.55;
+  max-width: 34ch;
+  font-size: 13px;
+}
+
+.appLaunchButton {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  border-radius: 999px;
+  height: 44px;
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.appLaunchGraph {
+  width: 56px;
+  height: 40px;
+  position: relative;
+}
+
+.appLaunchGraphNode {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.22);
+  animation: appLaunchNodePulse 1.3s ease-in-out infinite;
+}
+
+.appLaunchGraphNodeA { top: 5px; left: 3px; animation-delay: 0s; }
+.appLaunchGraphNodeB { top: 5px; right: 3px; animation-delay: 0.18s; }
+.appLaunchGraphNodeC { bottom: 3px; left: 50%; transform: translateX(-50%); animation-delay: 0.3s; }
+
+.appLaunchGraphEdge {
+  position: absolute;
+  height: 1px;
+  transform-origin: left center;
+  background: rgba(255, 255, 255, 0.3);
+  animation: appLaunchEdgeFlow 1.4s linear infinite;
+}
+
+.appLaunchGraphEdgeA {
+  left: 9px;
+  top: 8px;
+  width: 38px;
+  transform: rotate(0deg);
+}
+
+.appLaunchGraphEdgeB {
+  left: 8px;
+  top: 9px;
+  width: 19px;
+  transform: rotate(44deg);
+  animation-delay: 0.2s;
+}
+
+.appLaunchGraphEdgeC {
+  left: 29px;
+  top: 9px;
+  width: 19px;
+  transform: rotate(136deg);
+  animation-delay: 0.45s;
+}
+
+@keyframes appLaunchNodePulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes appLaunchEdgeFlow {
+  0% { opacity: 0.22; }
+  50% { opacity: 0.68; }
+  100% { opacity: 0.22; }
+}
+
+.ambient-glow {
+  position: fixed;
+  top: -15%; left: 50%; transform: translateX(-50%);
+  width: 80vw; height: 60vh;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.04) 0%, rgba(0,0,0,0) 70%);
+  filter: blur(100px);
+  z-index: 0; pointer-events: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--panel2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+
+
+
+.sidebarIcon {
+  margin-right: 10px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sidebarTreeItem:hover .sidebarIcon {
+  opacity: 1;
+}
+
+.sidebarDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 12px 16px;
+}
+
+.sidebarGenerateBtn {
+  display: none; /* removed */
+}
+
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.leftSidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  background: rgba(10, 10, 10, 0.75);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  z-index: 50;
+  overflow: hidden;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: transform 120ms ease-out, opacity 110ms ease-out;
+}
+
+.leftSidebarCollapsed {
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.leftSidebarVisible {
+  opacity: 1;
+  transform: translateX(0);
+  visibility: visible;
+}
+
+.leftSidebarClosing {
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+}
+
+.sidebarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.sidebarBrand {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.sidebarBrandLogo {
+  display: block;
+  width: 72px;
+  height: auto;
+}
+
+.sidebarAccountSection {
+  position: relative;
+  padding: 8px 12px 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.sidebarAccountTrigger {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  text-align: left;
+  color: inherit;
+}
+
+.sidebarAccountLink {
+  text-decoration: none;
+}
+
+.sidebarAccountTrigger:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebarAccountCaret {
+  opacity: 0.3;
+  margin-left: auto;
+  transition: opacity 0.2s;
+}
+
+.sidebarAccountTrigger:hover .sidebarAccountCaret {
+  opacity: 0.8;
+}
+
+.sidebarAccountPopover {
+  position: absolute;
+  bottom: calc(100% - 10px);
+  left: 12px;
+  right: 12px;
+  background: rgba(18, 18, 18, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebarAccountPopoverOpen {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.sidebarAccountPopoverHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.sidebarAccountPopoverMeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sidebarAccountPopoverDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 4px 0;
+}
+
+.sidebarAccountPopoverItem {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.1s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebarAccountPopoverItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.sidebarAccountPopoverItem .sidebarIcon {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.sidebarAccountPopoverDanger {
+  color: rgba(255, 69, 58, 0.85);
+}
+
+.sidebarAccountPopoverDanger:hover {
+  background: rgba(255, 69, 58, 0.12);
+  color: rgba(255, 69, 58, 1);
+}
+
+.sidebarAccountPopoverDanger .sidebarIcon {
+  color: rgba(255, 69, 58, 0.85);
+}
+
+.sidebarAccountPopoverDanger:hover .sidebarIcon {
+  color: rgba(255, 69, 58, 1);
+}
+
+.sidebarAccountPopoverUpgrade {
+  color: rgba(50, 215, 75, 0.95);
+}
+
+.sidebarAccountPopoverUpgrade:hover {
+  background: rgba(50, 215, 75, 0.12);
+  color: #fff;
+}
+
+.sidebarAccountPopoverUpgrade .sidebarIcon {
+  color: rgba(50, 215, 75, 0.8) !important;
+}
+
+.sidebarAccountPopoverLink,
+.settingsPromoLink {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.58);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font: inherit;
+  cursor: pointer;
+  padding: 2px 12px 8px;
+  text-align: center;
+  font-size: 11.5px;
+  line-height: 1.2;
+}
+
+.sidebarAccountPopoverLink:hover,
+.settingsPromoLink:hover {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.mobileMenuBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  border: none;
+  padding: 0;
+  margin: 0;
+  z-index: 55;
+}
+
+.mobileMenuSheet {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+  z-index: 56;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 20px;
+  background: rgba(10, 10, 10, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.mobileMenuSheetHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 6px 10px;
+}
+
+.mobileMenuSheetMeta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobileMenuSheetName {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mobileMenuSheetEmail {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileMenuCloseButton {
+  margin-left: auto;
+  appearance: none;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.78);
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.mobileMenuSheet .sidebarAccountPopoverItem {
+  border-radius: 12px;
+}
+
+.settingsPromoLink {
+  padding: 0;
+  margin: 2px auto 0;
+  display: block;
+}
+
+.sidebarAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebarAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sidebarAccountMeta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebarAccountName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebarAccountEmail {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.sidebarAccountTriggerName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.sidebarAccountTriggerPlan {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 2px;
+}
+
+.sidebarToggleBtn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebarToggleBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.floatingToggle {
+  position: absolute;
+  top: 24px;
+  left: 0;
+  width: 32px;
+  height: 48px;
+  border-radius: 0 8px 8px 0;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: none;
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  box-shadow: 2px 4px 16px rgba(0,0,0,0.2);
+}
+
+.floatingToggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  width: 36px;
+}
+
+.floatingToggleRight {
+  left: auto;
+  right: 0;
+  top: 72px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  box-shadow: -2px 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.floatingStatsContainer {
+  position: absolute;
+  top: 20px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  z-index: 40;
+  pointer-events: none;
+  transition: left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.2s ease;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  cursor: ew-resize;
+}
+
+.floatingStatsContainer > * {
+  pointer-events: auto;
+}
+
+.floatingStatsContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.floatingStatusContainer {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.floatingStatusContainerCompact {
+  position: static;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+}
+
+.floatingStatusContainer > * {
+  pointer-events: auto;
+}
+
+.floatingStatusContainerCompact::-webkit-scrollbar {
+  display: none;
+}
+
+.floatingStatusButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(12, 12, 12, 0.82);
+  color: rgba(255, 255, 255, 0.8);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+  padding: 0;
+}
+
+.floatingStatusButton:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(18, 18, 18, 0.92);
+}
+
+.floatingStatusButtonActive {
+  color: #fff6d5;
+  border-color: rgba(255, 214, 102, 0.38);
+  background: rgba(255, 214, 102, 0.12);
+}
+
+.floatingStatusButtonActive:hover {
+  color: #fffbe9;
+  border-color: rgba(255, 214, 102, 0.5);
+  background: rgba(255, 214, 102, 0.18);
+}
+
+.floatingStatusContainerCompact .pageStat {
+  flex-shrink: 0;
+}
+
+.topOverlayStack {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.topOverlayStack > * {
+  pointer-events: auto;
+}
+
+.floatingStatsContainerStacked {
+  position: static;
+  left: auto !important;
+  right: auto !important;
+  top: auto;
+  width: 100%;
+  max-width: 100%;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.topOverlayStack .floatingStatusContainerCompact {
+  align-self: stretch;
+  display: flex;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: 0;
+  position: static;
+  z-index: auto;
+  flex-wrap: wrap;
+}
+
+.topOverlayStack {
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  overflow: visible;
+}
+
+.topOverlayInline {
+  position: absolute;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  z-index: 40;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.topOverlayInline > * {
+  pointer-events: auto;
+}
+
+.topOverlayInline .floatingStatsContainerStacked {
+  width: 0;
+  flex: 1 1 0;
+}
+
+.topOverlayInline .floatingStatusContainerCompact {
+  align-self: flex-start;
+  display: flex;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  min-width: max-content;
+}
+
+.topOverlayStackMobile {
+  z-index: 121;
+}
+
+.debugLogsModal {
+  width: min(1460px, calc(100vw - 28px));
+}
+
+.debugLogsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  min-height: 0;
+  padding-top: 0;
+}
+
+.debugLogsModal .settingsContent {
+  padding-bottom: 8px;
+}
+
+.debugLogsModal .settingsContentHeader {
+  padding: 18px 20px 6px;
+}
+
+.debugLogColumn {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(9, 9, 9, 0.94);
+  display: flex;
+  flex-direction: column;
+}
+
+.debugLogColumn + .debugLogColumn {
+  border-left: 0;
+}
+
+.debugLogColumnHeader {
+  padding: 9px 11px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.debugLogColumnBody {
+  min-height: 0;
+  max-height: min(68vh, 760px);
+  overflow: auto;
+  padding: 6px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.debugLogEntry {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.debugLogMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.debugLogTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.debugLogBody,
+.debugLogDetails pre {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.debugLogDetails summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.54);
+  text-transform: lowercase;
+}
+
+.debugLogPlaceholder {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 12px;
+}
+
+@media (max-width: 1100px) {
+  .debugLogsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sidebarScrollArea {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 0 12px;
+}
+
+.sidebarScrollArea::-webkit-scrollbar {
+  display: none;
+}
+
+
+
+.sidebarTab {
+  width: 100%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.12s;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.sidebarTab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.sidebarTabActive {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+.sidebarTree {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+}
+
+.sidebarTreeNested {
+  margin: 0;
+  padding: 0;
+  gap: 4px;
+}
+
+.sidebarSpacer {
+  flex: 1;
+  min-height: 24px;
+}
+
+.sidebarTreeGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebarTreeLabel {
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.sidebarTreeItem {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  appearance: none;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 400;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.1s ease;
+  line-height: 1.2;
+}
+
+.sidebarTreeItem:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.sidebarTreeItemActive {
+  color: #fff;
+  font-weight: 500;
+}
+
+.sidebarTreeItemGhost {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.sidebarTreeItemGhost:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.sidebarSectionHeader {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  padding: 0 8px 16px 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.sidebarSectionHeader:hover,
+.sidebarSectionHeaderActive {
+  color: #fff;
+}
+
+.sidebarCaret {
+  margin-left: 6px;
+  opacity: 0.6;
+}
+
+.sidebarNewAction {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 400;
+  color: #888;
+  cursor: pointer;
+  padding: 0 8px 12px 8px;
+  transition: color 0.1s ease;
+  text-align: left;
+}
+
+.sidebarNewAction:hover {
+  color: #fff;
+}
+
+.sidebarGraphRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.sidebarGraphActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 4px;
+  flex-shrink: 0;
+}
+
+.sidebarGraphRow .sidebarTreeItem {
+  padding: 8px 8px 8px 24px;
+}
+
+.sidebarGraphRow>.sidebarTreeItem {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebarGraphRow>.sidebarTreeItem span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebarGraphRow>.sidebarTreeItem:hover {
+  background: transparent;
+}
+
+.sidebarTreeItemInlineEdit {
+  cursor: default;
+}
+
+.sidebarGraphRowEditing {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sidebarGraphTitleInput {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  padding: 0;
+  outline: none;
+}
+
+.sidebarGraphTitleInput::selection {
+  background: rgba(50, 215, 75, 0.28);
+}
+
+.sidebarGraphRowActive {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sidebarGraphRowActive>.sidebarTreeItem {
+  color: #fff;
+  font-weight: 500;
+  background: transparent;
+}
+
+.sidebarRenameBtn,
+.sidebarDeleteBtn,
+.sidebarExportBtn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  color: rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+}
+
+.sidebarRenameBtn {
+  min-width: 22px;
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sidebarDeleteBtn {
+  margin-right: 4px;
+}
+
+.sidebarRenameBtn svg,
+.sidebarDeleteBtn svg,
+.sidebarExportBtn svg {
+  width: 13px;
+  height: 13px;
+  display: block;
+}
+
+.sidebarGraphRow:hover .sidebarRenameBtn,
+.sidebarGraphRow:hover .sidebarExportBtn,
+.sidebarGraphRow:hover .sidebarDeleteBtn,
+.sidebarGraphRowEditing .sidebarRenameBtn,
+.sidebarGraphRowEditing .sidebarExportBtn,
+.sidebarGraphRowEditing .sidebarDeleteBtn {
+  opacity: 1;
+}
+
+.sidebarRenameBtn:hover,
+.sidebarRenameBtnActive {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.sidebarDeleteBtn:hover {
+  color: #e85454;
+}
+
+.sidebarExportBtn:hover {
+  color: rgba(126, 191, 255, 0.92);
+}
+
+.btnGhost {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 7px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.btnGhost:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.mainLibrarySurface {
+  position: relative;
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    radial-gradient(circle at 50% 8%, color-mix(in srgb, var(--text) 7%, transparent), transparent 40%),
+    radial-gradient(circle at 28% 72%, color-mix(in srgb, var(--text) 4.5%, transparent), transparent 45%),
+    radial-gradient(circle at 76% 64%, color-mix(in srgb, var(--text) 4%, transparent), transparent 43%),
+    linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(9, 9, 9, 0.98) 52%, rgba(8, 8, 8, 0.98) 100%);
+  background-size: 52px 52px, 52px 52px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+}
+
+:root[data-theme="light"] .mainLibrarySurface {
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(rgba(17, 24, 39, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 24, 39, 0.015) 1px, transparent 1px),
+    linear-gradient(180deg, #fafaf8 0%, #f7f7f4 52%, #f4f4f1 100%);
+  background-size: 52px 52px, 52px 52px, 260px 260px, 260px 260px, 100% 100%;
+}
+.graphTabsRail {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.graphTabsRail::-webkit-scrollbar {
+  display: none;
+}
+
+.graphTabChip {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  cursor: pointer;
+  min-width: 148px;
+  transition: 160ms ease;
+}
+
+.graphTabChip:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.graphTabChipActive {
+  background: rgba(255, 214, 102, 0.1);
+  border-color: rgba(255, 214, 102, 0.22);
+}
+
+.graphTabChipMeta {
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.workspaceUtilityActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.workspaceUtilityButton {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.84);
+  border-radius: 999px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: 160ms ease;
+}
+
+.workspaceUtilityButton:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.workspaceUtilityButtonActive {
+  background: rgba(255, 214, 102, 0.12);
+  border-color: rgba(255, 214, 102, 0.2);
+  color: #fff3c7;
+}
+
+
+.row,
+.listActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+
+
+.mainContent {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px;
+}
+
+.mainContentGraph {
+  overflow: hidden;
+  padding: 0;
+}
+
+.workspaceShell {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.workspaceShellLightDockMode {
+  isolation: isolate;
+}
+
+.workspaceMain {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.assistantDock {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 10, 10, 0.6);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  min-height: 0;
+  z-index: 2;
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.035);
+  overflow: hidden;
+  transform: translateX(12px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 120ms ease-out, opacity 110ms ease-out;
+  backface-visibility: hidden;
+  isolation: isolate;
+}
+
+.lightFloatingWindowEnter {
+  animation: lightWindowEnter 180ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@keyframes lightWindowEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.lightDock {
+  position: absolute;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  width: 72px;
+  padding: 10px 9px 10px;
+  border-radius: 26px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 24px rgba(30, 41, 59, 0.08);
+}
+
+.lightDockGrip {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 25% 50%, rgba(148, 163, 184, 0.34) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.34) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 75% 50%, rgba(148, 163, 184, 0.34) 0 1.2px, transparent 1.8px);
+  cursor: grab;
+}
+
+.lightDockButton,
+.lightDockButtonLink {
+  width: 54px;
+  height: 54px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: rgba(51, 65, 85, 0.74);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 180ms ease;
+}
+
+.lightDockButton::before,
+.lightDockButtonLink::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 999px;
+  background: rgba(255, 214, 102, 0.24);
+  opacity: 0;
+  transform: scale(0.82);
+  transition: opacity 180ms ease, transform 220ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.lightDockButtonActive::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.lightDockButton:hover,
+.lightDockButtonLink:hover,
+.lightDockButtonActive {
+  background: transparent;
+  color: rgba(15, 23, 42, 0.92);
+}
+
+.lightDockButton svg,
+.lightDockButtonLink svg {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+}
+
+.lightFloatingWindow {
+  position: absolute;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.12), 0 0 0 1px inset rgba(255, 255, 255, 0.6);
+}
+
+.lightWorkspaceWindow {
+  width: min(400px, calc(100% - 140px));
+  height: min(520px, calc(100% - 120px));
+}
+
+.lightChatWindow {
+  height: min(760px, calc(100% - 120px));
+}
+
+.lightFloatingWindowHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 12px;
+  background: transparent;
+  cursor: grab;
+}
+
+.lightFloatingWindowTitle {
+  font-size: 14px;
+  font-weight: 650;
+  color: rgba(15, 23, 42, 0.94);
+}
+
+.lightFloatingWindowSubtle {
+  margin-top: 3px;
+  font-size: 11px;
+  color: rgba(100, 116, 139, 0.86);
+}
+
+.lightWorkspaceWindowHeaderActions {
+  display: flex;
+  gap: 8px;
+}
+
+.lightWindowActionButton {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(195, 90, 44, 0.16);
+  background: rgba(195, 90, 44, 0.1);
+  color: rgba(131, 55, 24, 0.9);
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.lightWindowActionButton:hover {
+  background: rgba(195, 90, 44, 0.16);
+  border-color: rgba(195, 90, 44, 0.24);
+  color: rgba(111, 44, 17, 0.96);
+}
+
+.lightWorkspaceWindowBody {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--panel2);
+}
+
+.lightWorkspaceListItem {
+  display: block;
+  border-radius: 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.lightWorkspaceListItem:hover {
+  background: #ffffff;
+  border-color: rgba(195, 90, 44, 0.14);
+  box-shadow: none;
+}
+
+.lightWorkspaceListItemActive {
+  border-color: rgba(195, 90, 44, 0.2);
+  background: rgba(195, 90, 44, 0.1);
+  box-shadow: none;
+}
+
+.lightWorkspaceListButton {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px 14px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.lightWorkspaceListTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(45, 43, 40, 0.94);
+}
+
+.lightWorkspaceListMeta {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(139, 133, 128, 0.88);
+}
+
+.assistantDockOpen {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.assistantDockHidden {
+  opacity: 0;
+  transform: translateX(12px);
+  pointer-events: none;
+}
+
+.assistantDockResize {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 2px;
+  cursor: ew-resize;
+  z-index: 4;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.assistantDockHandleClosed {
+  display: none;
+}
+
+.assistantDockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 14px;
+  border-bottom: none;
+  background: #050505;
+  box-shadow: none;
+  position: relative;
+}
+
+.assistantMobileResizeHandle {
+  display: none;
+}
+
+.sessionListWrap {
+  position: relative;
+  flex-shrink: 0;
+  background: #050505;
+}
+
+.sessionListWrap::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(to right, #050505, transparent);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.sessionListWrap.scrolledLeft::before {
+  opacity: 1;
+}
+
+.sessionListWrap.scrolledRight::after {
+  opacity: 0;
+}
+
+.sessionListWrap::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(to left, #050505, transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sessionList {
+  display: flex;
+  gap: 6px;
+  padding: 0 32px 10px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+}
+
+.sessionList::-webkit-scrollbar {
+  display: none;
+}
+
+.sessionItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.sessionItemGroup {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+  padding: 5px 26px 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.sessionItemGroup:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.sessionItemGroupActive {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
