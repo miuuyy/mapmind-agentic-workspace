@@ -18,7 +18,7 @@ from app.services.repository import ChatSessionDeletionError, ChatSessionNotFoun
 
 if TYPE_CHECKING:
     from app.services.chat_orchestrator import ChatOrchestratorService
-    from app.services.gemini_planner import GeminiPlanner
+    from app.services.gemini_planner import ProposalPlanner
     from app.services.quiz_service import QuizService
     from app.services.study_assistant import StudyAssistantService
 
@@ -38,11 +38,11 @@ def get_effective_settings(
     return settings.with_workspace_overrides(workspace_config)
 
 
-def get_planner(settings: Settings = Depends(get_effective_settings)) -> "GeminiPlanner":
-    from app.services.gemini_planner import GeminiPlanner, GeminiPlannerError
+def get_planner(settings: Settings = Depends(get_effective_settings)) -> "ProposalPlanner":
+    from app.services.gemini_planner import ProposalPlanner, GeminiPlannerError
 
     try:
-        return GeminiPlanner(settings)
+        return ProposalPlanner(settings)
     except GeminiPlannerError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
@@ -69,7 +69,7 @@ def get_study_assistant(settings: Settings = Depends(get_effective_settings)) ->
 
 def get_chat_orchestrator(
     settings: Settings = Depends(get_effective_settings),
-    planner: "GeminiPlanner" = Depends(get_planner),
+    planner: "ProposalPlanner" = Depends(get_planner),
 ) -> "ChatOrchestratorService":
     from app.services.chat_orchestrator import ChatOrchestratorService
 
@@ -350,11 +350,19 @@ def export_workspace_graph(
     repository: GraphRepository = Depends(get_repository),
 ) -> dict:
     try:
-        package = repository.export_graph_package(
-            graph_id,
-            title=request.title,
-            include_progress=request.include_progress,
-        )
+        if request.format == "mapmind_obsidian_export":
+            package = repository.export_graph_to_obsidian(
+                graph_id,
+                title=request.title,
+                include_progress=request.include_progress,
+                options=request.obsidian,
+            )
+        else:
+            package = repository.export_graph_package(
+                graph_id,
+                title=request.title,
+                include_progress=request.include_progress,
+            )
     except (ValueError, KeyError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return package.model_dump(mode="json")
@@ -451,7 +459,7 @@ def propose_graph_changes(
     graph_id: str,
     request: ProposalGenerateRequest,
     repository: GraphRepository = Depends(get_repository),
-    planner: "GeminiPlanner" = Depends(get_planner),
+    planner: "ProposalPlanner" = Depends(get_planner),
 ) -> dict:
     from app.services.gemini_planner import GeminiPlannerError
 
@@ -480,7 +488,7 @@ def propose_graph_changes_stream(
     graph_id: str,
     request: ProposalGenerateRequest,
     repository: GraphRepository = Depends(get_repository),
-    planner: "GeminiPlanner" = Depends(get_planner),
+    planner: "ProposalPlanner" = Depends(get_planner),
 ) -> StreamingResponse:
     from app.services.gemini_planner import GeminiPlannerError
 

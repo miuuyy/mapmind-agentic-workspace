@@ -27,7 +27,9 @@ frontend/node_modules/
 frontend/dist/
 frontend/test-results/
 backend/workspace.db
+backend/mapmind.db
 backend/uvicorn.log
+frontend/public/styles.css
 tmp-layout-check.png
 README.archive.local.md
 references/

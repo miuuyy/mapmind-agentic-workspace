@@ -4,13 +4,13 @@ import unittest
 
 from app.models.domain import GraphOperation, GraphProposalEnvelope, ProposalEdge, ProposalIntent, ProposalSourceBundle, ProposalZone
 from app.services.bootstrap import build_seed_workspace
-from app.services.gemini_planner import GeminiPlanner, GeminiPlannerError
+from app.services.gemini_planner import ProposalPlanner, GeminiPlannerError
 
 
 class GeminiPlannerValidationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.graph = next(graph for graph in build_seed_workspace().graphs if graph.graph_id == "mathematics-demo")
-        self.planner = GeminiPlanner.__new__(GeminiPlanner)
+        self.planner = ProposalPlanner.__new__(ProposalPlanner)
 
     def _proposal(self, *operations: GraphOperation) -> GraphProposalEnvelope:
         return GraphProposalEnvelope(

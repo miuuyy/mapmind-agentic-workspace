@@ -3,10 +3,8 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import Any, Iterable
 from uuid import uuid4
-
-from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.config import Settings
 from app.llm import LLMProviderError, build_llm_provider
@@ -14,9 +12,6 @@ from app.llm.prompt_templates import planner_system_instruction
 from app.llm.schemas import GeminiProposalDraft, planner_response_json_schema
 from app.models.domain import GraphOperation, GraphProposalEnvelope, ProposalDisplay, ProposalGenerateRequest, ProposalGenerateResponse, ProposalIntent, ProposalOpenQuestion, ProposalProvenance, ProposalSourceBundle, ProposalTrace, StudyGraph
 from app.services.proposal_normalizer import ProposalNormalizer
-
-if TYPE_CHECKING:
-    from google import genai as genai_module
 
 logger = logging.getLogger(__name__)
 
@@ -29,35 +24,10 @@ MARKDOWN_LINK_URL_RE = re.compile(r"\[[^\]]+\]\((https?://[^)\s]+)\)", re.IGNORE
 class GeminiPlannerError(RuntimeError):
     pass
 
-class _FallbackThinkingConfig(BaseModel):
-    thinking_budget: int
-
-
-class _FallbackGenerateContentConfig(BaseModel):
-    system_instruction: str
-    temperature: float
-    max_output_tokens: int
-    response_mime_type: str
-    tools: list[Any] | None = None
-    thinking_config: _FallbackThinkingConfig | None = None
-    response_json_schema: dict[str, Any] | None = None
-    response_schema: Any | None = None
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-
-class GeminiPlanner:
+class ProposalPlanner:
     def __init__(self, settings: Settings):
         self._settings = settings
         self._provider = build_llm_provider(settings)
-        self._client: genai_module.Client | None = None
-        self._types = None
-        if settings.ai_provider == "gemini" and settings.gemini_api_key:
-            from google import genai
-            from google.genai import types
-
-            self._client = genai.Client(api_key=settings.gemini_api_key)
-            self._types = types
         if self._provider is None:
             provider_name = (settings.ai_provider or "gemini").upper()
             raise GeminiPlannerError(f"{provider_name}_API_KEY is not configured")
@@ -67,16 +37,11 @@ class GeminiPlanner:
         model_name = request.model or self._settings.default_model
         sanitized_raw_text = self._sanitize_raw_text(request.raw_text)
         prompt = self._build_prompt(graph, request, sanitized_raw_text=sanitized_raw_text)
-        if self._client is None:
-            draft, usage_metadata = self._generate_draft_with_provider(
-                prompt=prompt,
-                request=request,
-                model_name=model_name,
-            )
-        else:
-            response = self._generate_content(prompt, request, model_name=model_name)
-            draft = self._coerce_proposal_draft(response)
-            usage_metadata = getattr(response, "usage_metadata", None)
+        draft, usage_metadata = self._generate_draft_with_provider(
+            prompt=prompt,
+            request=request,
+            model_name=model_name,
+        )
         return self._finalize_proposal(
             graph=graph,
             request=request,
@@ -92,22 +57,27 @@ class GeminiPlanner:
         request: ProposalGenerateRequest,
     ) -> Iterable[dict[str, Any]]:
         model_name = request.model or self._settings.default_model
-        if self._client is None:
-            yield {"type": "status", "stage": "started", "model": model_name}
-            result = self.generate_proposal(graph, request)
-            yield {"type": "result", "result": result.model_dump(mode="json")}
-            return
         sanitized_raw_text = self._sanitize_raw_text(request.raw_text)
         prompt = self._build_prompt(graph, request, sanitized_raw_text=sanitized_raw_text)
         yield {"type": "status", "stage": "started", "model": model_name}
-        stream = self._generate_content_stream(prompt, request, model_name=model_name)
         collected_text = ""
         usage_metadata: Any = None
         finish_reason = ""
+        stream = self._provider.stream_structured(
+            model=model_name,
+            system_instruction=self._build_system_instruction(),
+            prompt=prompt,
+            schema=GeminiProposalDraft,
+            schema_name="graph_proposal_draft",
+            response_json_schema=self._proposal_response_schema(),
+            max_output_tokens=int(self._settings.planner_max_output_tokens),
+            temperature=0.0,
+            use_grounding=request.use_grounding,
+        )
         for chunk in stream:
-            usage_metadata = getattr(chunk, "usage_metadata", None) or usage_metadata
-            finish_reason = self._response_finish_reason(chunk) or finish_reason
-            chunk_text = self._extract_response_text(chunk)
+            usage_metadata = chunk.usage or usage_metadata
+            finish_reason = chunk.finish_reason or finish_reason
+            chunk_text = chunk.text
             delta = self._stream_delta(previous_text=collected_text, current_text=chunk_text)
             if delta:
                 collected_text += delta
@@ -167,60 +137,6 @@ class GeminiPlanner:
             return response.parsed, response.usage
         except LLMProviderError as exc:
             raise GeminiPlannerError(str(exc)) from exc
-
-    def _generate_content(
-        self,
-        prompt: str,
-        request: ProposalGenerateRequest,
-        *,
-        model_name: str,
-    ) -> Any:
-        return self._client.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=self._build_generation_config(request),
-        )
-
-    def _generate_content_stream(
-        self,
-        prompt: str,
-        request: ProposalGenerateRequest,
-        *,
-        model_name: str,
-    ) -> Any:
-        return self._client.models.generate_content_stream(
-            model=model_name,
-            contents=prompt,
-            config=self._build_generation_config(request),
-        )
-
-    def _build_generation_config(self, request: ProposalGenerateRequest) -> Any:
-        tools: list[Any] = []
-        if request.use_grounding and getattr(self, "_types", None) is not None:
-            tools.append(self._types.Tool(google_search=self._types.GoogleSearch()))
-        if self._extract_urls(request.raw_text) and getattr(self, "_types", None) is not None:
-            tools.append(self._types.Tool(url_context=self._types.UrlContext()))
-        thinking_budget = min(int(getattr(self._settings, "planner_thinking_budget", 65535)), 65535)
-        config_kwargs: dict[str, Any] = {
-            "system_instruction": self._build_system_instruction(),
-            "temperature": 0.0,
-            "max_output_tokens": int(self._settings.planner_max_output_tokens),
-            "response_mime_type": "application/json",
-            "tools": tools or None,
-            "thinking_config": (
-                self._types.ThinkingConfig(thinking_budget=thinking_budget)
-                if getattr(self, "_types", None) is not None
-                else _FallbackThinkingConfig(thinking_budget=thinking_budget)
-            ),
-        }
-        schema = self._proposal_response_schema()
-        if getattr(self, "_types", None) is None:
-            return _FallbackGenerateContentConfig(
-                **config_kwargs,
-                response_json_schema=schema,
-            )
-        config_kwargs["response_schema"] = GeminiProposalDraft
-        return self._types.GenerateContentConfig(**config_kwargs)
 
     def _build_system_instruction(self) -> str:
         instruction = (
@@ -371,18 +287,6 @@ class GeminiPlanner:
     def _language_name(self, language: str) -> str:
         return {"en": "English", "uk": "Ukrainian", "ru": "Russian"}.get(language, "English")
 
-    def _coerce_proposal_draft(self, response: Any) -> GeminiProposalDraft:
-        parsed = getattr(response, "parsed", None)
-        if isinstance(parsed, GeminiProposalDraft):
-            return parsed
-        if parsed is not None:
-            return GeminiProposalDraft.model_validate(parsed)
-
-        text = self._extract_response_text(response)
-        if not text:
-            raise GeminiPlannerError("Gemini returned no proposal text")
-        return self._coerce_proposal_draft_from_text(text, finish_reason=self._response_finish_reason(response))
-
     def _coerce_proposal_draft_from_text(self, text: str, *, finish_reason: str = "") -> GeminiProposalDraft:
         try:
             return GeminiProposalDraft.model_validate_json(text)
@@ -435,44 +339,12 @@ class GeminiPlanner:
             return cleaned[start : end + 1]
         return None
 
-    def _extract_response_text(self, response: Any) -> str:
-        try:
-            text = getattr(response, "text", None)
-        except Exception:
-            text = None
-        if isinstance(text, str) and text.strip():
-            return text
-
-        candidates = getattr(response, "candidates", None)
-        if not isinstance(candidates, list):
-            return ""
-        parts_out: list[str] = []
-        for candidate in candidates:
-            content = getattr(candidate, "content", None)
-            parts = getattr(content, "parts", None)
-            if not isinstance(parts, list):
-                continue
-            for part in parts:
-                part_text = getattr(part, "text", None)
-                if isinstance(part_text, str) and part_text.strip():
-                    parts_out.append(part_text)
-        return "".join(parts_out).strip()
-
     def _stream_delta(self, *, previous_text: str, current_text: str) -> str:
         if not current_text:
             return ""
         if previous_text and current_text.startswith(previous_text):
             return current_text[len(previous_text) :]
         return current_text
-
-    def _response_finish_reason(self, response: Any) -> str:
-        candidates = getattr(response, "candidates", None)
-        if not isinstance(candidates, list) or not candidates:
-            return ""
-        finish_reason = getattr(candidates[0], "finish_reason", None)
-        if finish_reason is None:
-            return ""
-        return str(finish_reason)
 
     def _invalid_json_error(self, *, finish_reason: str = "") -> GeminiPlannerError:
         finish_reason = str(finish_reason or "").upper()

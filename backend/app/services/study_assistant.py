@@ -1,15 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
 from app.core.config import Settings
 from app.llm import LLMProviderError, build_llm_provider
 from app.llm.prompt_templates import study_assistant_system_instruction
 from app.models.domain import StudyAssistantRequest, StudyAssistantResponse, StudyGraph
-
-if TYPE_CHECKING:
-    from google import genai as genai_module
-
 
 class StudyAssistantError(RuntimeError):
     pass
@@ -19,8 +13,6 @@ class StudyAssistantService:
     def __init__(self, settings: Settings):
         self._settings = settings
         self._provider = build_llm_provider(settings)
-        self._client: genai_module.Client | None = getattr(self._provider, "_client", None)
-        self._types: Any | None = getattr(self._provider, "_types", None)
 
     def answer(self, graph: StudyGraph, request: StudyAssistantRequest, *, persona_rules: str = "") -> StudyAssistantResponse:
         model_name = request.model or self._settings.default_model

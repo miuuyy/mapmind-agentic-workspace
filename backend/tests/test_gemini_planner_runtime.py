@@ -4,26 +4,40 @@ import json
 from types import SimpleNamespace
 import unittest
 
+from app.llm.base import LLMProviderError, LLMStructuredResponse, LLMStructuredStreamChunk
 from app.models.domain import ProposalGenerateRequest
 from app.services.bootstrap import build_seed_workspace
-from app.services.gemini_planner import GeminiPlanner, GeminiPlannerError
+from app.services.gemini_planner import ProposalPlanner, GeminiPlannerError
 from app.services.proposal_normalizer import ProposalNormalizer
 
 
-class _FakeModels:
+class _ProviderStub:
     def __init__(self, responses):
         self._responses = list(responses)
         self.calls = 0
         self.last_kwargs = None
 
-    def generate_content(self, **kwargs):
+    def generate_structured(self, **kwargs):
         self.calls += 1
         self.last_kwargs = kwargs
         if not self._responses:
             raise AssertionError("no fake responses left")
-        return self._responses.pop(0)
+        response = self._responses.pop(0)
+        if isinstance(response, Exception):
+            raise response
+        if isinstance(response, LLMStructuredResponse):
+            return response
+        if isinstance(response, dict):
+            parsed = kwargs["schema"].model_validate(response)
+            return LLMStructuredResponse(
+                text=json.dumps(response),
+                parsed=parsed,
+                usage=None,
+                finish_reason=None,
+            )
+        raise AssertionError(f"unsupported stub response: {type(response)!r}")
 
-    def generate_content_stream(self, **kwargs):
+    def stream_structured(self, **kwargs):
         self.calls += 1
         self.last_kwargs = kwargs
         if not self._responses:
@@ -34,44 +48,19 @@ class _FakeModels:
         return iter([response])
 
 
-class _FakeGenerateContentConfig:
-    def __init__(self, **kwargs):
-        self._kwargs = kwargs
-
-    def model_dump(self, exclude_none: bool = False):
-        if not exclude_none:
-            return dict(self._kwargs)
-        return {key: value for key, value in self._kwargs.items() if value is not None}
-
-
-class _FakeThinkingConfig:
-    def __init__(self, thinking_budget):
-        self.thinking_budget = thinking_budget
-
-    def model_dump(self, mode: str = "json"):
-        return {"thinking_budget": self.thinking_budget}
-
-
 class GeminiPlannerRuntimeTests(unittest.TestCase):
     def setUp(self) -> None:
         self.graph = next(graph for graph in build_seed_workspace().graphs if graph.graph_id == "mathematics-demo")
 
     def _planner_with_responses(self, *responses):
-        planner = GeminiPlanner.__new__(GeminiPlanner)
+        planner = ProposalPlanner.__new__(ProposalPlanner)
         planner._settings = SimpleNamespace(default_model="gemini-3-pro-preview", planner_max_output_tokens=200000)
-        planner._client = SimpleNamespace(models=_FakeModels(responses))
-        planner._types = SimpleNamespace(
-            GenerateContentConfig=_FakeGenerateContentConfig,
-            ThinkingConfig=_FakeThinkingConfig,
-            Tool=lambda **kwargs: kwargs,
-            GoogleSearch=object,
-            UrlContext=object,
-        )
+        planner._provider = _ProviderStub(responses)
         planner._normalizer = ProposalNormalizer()
         return planner
 
     def _valid_expand_response(self):
-        draft = {
+        return {
             "summary": "Ingested 20 topics and multiple bridges.",
             "assistant_message": "Added a bridge topic and its dependency.",
             "operations": [
@@ -103,7 +92,6 @@ class GeminiPlannerRuntimeTests(unittest.TestCase):
                 },
             ],
         }
-        return SimpleNamespace(parsed=draft, text=json.dumps(draft), usage_metadata=None)
 
     def test_sanitize_raw_text_only_removes_separators_and_extra_blank_lines(self) -> None:
         planner = self._planner_with_responses()
@@ -131,30 +119,25 @@ class GeminiPlannerRuntimeTests(unittest.TestCase):
             ProposalGenerateRequest(mode="expand_goal", raw_text="- exponential function"),
         )
 
-        self.assertEqual(planner._client.models.calls, 1)
+        self.assertEqual(planner._provider.calls, 1)
         self.assertEqual(result.display.summary, "1 topic, 1 edge")
 
     def test_invalid_json_surfaces_without_retry_or_repair(self) -> None:
         planner = self._planner_with_responses(
-            SimpleNamespace(parsed=None, text="not json", usage_metadata=None)
+            LLMProviderError("provider returned invalid JSON")
         )
 
-        with self.assertRaisesRegex(GeminiPlannerError, "invalid proposal JSON"):
+        with self.assertRaisesRegex(GeminiPlannerError, "invalid JSON"):
             planner.generate_proposal(
                 self.graph,
                 ProposalGenerateRequest(mode="ingest_topics", raw_text="- arithmetic"),
             )
 
-        self.assertEqual(planner._client.models.calls, 1)
+        self.assertEqual(planner._provider.calls, 1)
 
     def test_max_tokens_truncation_surfaces_explicit_transport_error(self) -> None:
         planner = self._planner_with_responses(
-            SimpleNamespace(
-                parsed=None,
-                text='{"summary":"cut off"',
-                candidates=[SimpleNamespace(finish_reason="MAX_TOKENS")],
-                usage_metadata=None,
-            )
+            LLMProviderError("Gemini proposal hit the output token limit (200000) before closing JSON")
         )
 
         with self.assertRaisesRegex(GeminiPlannerError, "output token limit"):
@@ -175,60 +158,43 @@ class GeminiPlannerRuntimeTests(unittest.TestCase):
         self.assertEqual(result.display.summary, "1 topic, 1 edge")
         self.assertIn("Exponential function", result.display.highlights)
 
-    def test_extracts_json_from_candidate_parts_when_response_text_is_missing(self) -> None:
+    def test_generated_resources_receive_stable_ids(self) -> None:
         planner = self._planner_with_responses(
-            SimpleNamespace(
-                parsed=None,
-                text=None,
-                candidates=[
-                    SimpleNamespace(
-                        content=SimpleNamespace(
-                            parts=[
-                                SimpleNamespace(
-                                    text=json.dumps(
-                                        {
-                                            "summary": "Bridge topic",
-                                            "assistant_message": "Added one topic.",
-                                            "operations": [
-                                                {
-                                                    "op_id": "topic_1",
-                                                    "op": "upsert_topic",
-                                                    "entity_kind": "topic",
-                                                    "rationale": "needed",
-                                                    "topic": {
-                                                        "id": "vector-basis",
-                                                        "title": "Vector basis",
-                                                        "slug": "vector-basis",
-                                                        "resources": [
-                                                            {
-                                                                "label": "Lesson",
-                                                                "url": "https://example.com/basis",
-                                                            }
-                                                        ],
-                                                    },
-                                                },
-                                                {
-                                                    "op_id": "edge_1",
-                                                    "op": "upsert_edge",
-                                                    "entity_kind": "edge",
-                                                    "rationale": "vector basis builds on functions",
-                                                    "edge": {
-                                                        "id": "edge-functions-vector-basis",
-                                                        "source_topic_id": "functions",
-                                                        "target_topic_id": "vector-basis",
-                                                        "relation": "requires",
-                                                    },
-                                                },
-                                            ],
-                                        }
-                                    )
-                                )
-                            ]
-                        )
-                    )
+            {
+                "summary": "Bridge topic",
+                "assistant_message": "Added one topic.",
+                "operations": [
+                    {
+                        "op_id": "topic_1",
+                        "op": "upsert_topic",
+                        "entity_kind": "topic",
+                        "rationale": "needed",
+                        "topic": {
+                            "id": "vector-basis",
+                            "title": "Vector basis",
+                            "slug": "vector-basis",
+                            "resources": [
+                                {
+                                    "label": "Lesson",
+                                    "url": "https://example.com/basis",
+                                }
+                            ],
+                        },
+                    },
+                    {
+                        "op_id": "edge_1",
+                        "op": "upsert_edge",
+                        "entity_kind": "edge",
+                        "rationale": "vector basis builds on functions",
+                        "edge": {
+                            "id": "edge-functions-vector-basis",
+                            "source_topic_id": "functions",
+                            "target_topic_id": "vector-basis",
+                            "relation": "requires",
+                        },
+                    },
                 ],
-                usage_metadata=None,
-            )
+            }
         )
 
         result = planner.generate_proposal(
@@ -247,27 +213,23 @@ class GeminiPlannerRuntimeTests(unittest.TestCase):
             ProposalGenerateRequest(mode="expand_goal", raw_text="- exponential function", model="gemini-3-flash-preview"),
         )
 
-        kwargs = planner._client.models.last_kwargs or {}
+        kwargs = planner._provider.last_kwargs or {}
         self.assertEqual(kwargs.get("model"), "gemini-3-flash-preview")
-        cfg = kwargs.get("config")
-        dumped = cfg.model_dump(exclude_none=True) if hasattr(cfg, "model_dump") else {}
-        self.assertEqual(dumped.get("response_mime_type"), "application/json")
-        self.assertEqual(dumped.get("max_output_tokens"), planner._settings.planner_max_output_tokens)
-        self.assertIn("response_schema", dumped)
-        self.assertNotIn("response_json_schema", dumped)
+        self.assertEqual(kwargs.get("schema_name"), "graph_proposal_draft")
+        self.assertEqual(kwargs.get("max_output_tokens"), planner._settings.planner_max_output_tokens)
+        self.assertEqual(kwargs.get("temperature"), 0.0)
 
     def test_stream_proposal_emits_status_delta_and_result(self) -> None:
         planner = self._planner_with_responses(
             [
-                SimpleNamespace(
+                LLMStructuredStreamChunk(
                     text='{"summary":"1 topic',
-                    candidates=[SimpleNamespace(finish_reason=None)],
-                    usage_metadata=None,
+                    finish_reason=None,
                 ),
-                SimpleNamespace(
+                LLMStructuredStreamChunk(
                     text='{"summary":"1 topic, 1 edge","assistant_message":"ok","operations":[{"op_id":"topic_1","op":"upsert_topic","entity_kind":"topic","rationale":"needed","topic":{"id":"linear-equations","title":"Linear equations","slug":"linear-equations"}},{"op_id":"edge_1","op":"upsert_edge","entity_kind":"edge","rationale":"linear equations depend on algebra basics","edge":{"id":"edge-algebra-linear","source_topic_id":"algebra-basics","target_topic_id":"linear-equations","relation":"requires"}}]}',
-                    candidates=[SimpleNamespace(finish_reason="STOP")],
-                    usage_metadata={"total_token_count": 123},
+                    usage={"total_token_count": 123},
+                    finish_reason="STOP",
                 ),
             ]
         )
@@ -297,10 +259,8 @@ class GeminiPlannerRuntimeTests(unittest.TestCase):
             ),
         )
 
-        prompt = planner._client.models.last_kwargs["contents"]
-        cfg = planner._client.models.last_kwargs["config"]
-        dumped = cfg.model_dump(exclude_none=True) if hasattr(cfg, "model_dump") else {}
-        system_instruction = dumped.get("system_instruction", "")
+        prompt = planner._provider.last_kwargs["prompt"]
+        system_instruction = planner._provider.last_kwargs["system_instruction"]
         self.assertIn('"source_item_count": 2', prompt)
         self.assertIn('"graph_is_empty": false', prompt)
         self.assertNotIn("expected_min_topics", prompt)
@@ -338,7 +298,7 @@ class GeminiPlannerRuntimeTests(unittest.TestCase):
             ),
         )
 
-        prompt = planner._client.models.last_kwargs["contents"]
+        prompt = planner._provider.last_kwargs["prompt"]
         self.assertIn('"source_item_count": 2', prompt)
         self.assertIn('"source_items": [{"title": "Probability basics"', prompt)
         self.assertEqual(result.trace.source_item_count, 2)
@@ -357,7 +317,7 @@ class GeminiPlannerRuntimeTests(unittest.TestCase):
             ),
         )
 
-        prompt = planner._client.models.last_kwargs["contents"]
+        prompt = planner._provider.last_kwargs["prompt"]
         self.assertIn('"selected_topic": {"id": "functions"', prompt)
         self.assertIn('"attach_near_selected_topic": true', prompt)
 

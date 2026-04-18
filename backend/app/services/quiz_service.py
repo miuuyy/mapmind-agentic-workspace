@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from app.core.config import Settings
@@ -17,10 +16,6 @@ from app.models.domain import (
     TopicQuizSession,
 )
 
-if TYPE_CHECKING:
-    from google import genai as genai_module
-
-
 def is_prerequisite_relation(relation: str) -> bool:
     return relation == "requires"
 
@@ -29,8 +24,6 @@ class QuizService:
     def __init__(self, settings: Settings):
         self._settings = settings
         self._provider = build_llm_provider(settings)
-        self._client: genai_module.Client | None = getattr(self._provider, "_client", None)
-        self._types: Any | None = getattr(self._provider, "_types", None)
 
     def build_closure_status(self, graph: StudyGraph, topic_id: str) -> TopicClosureStatus:
         topic_map = {topic.id: topic for topic in graph.topics}

@@ -6,14 +6,29 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Iterator
 import re
 import uuid
 
-from app.llm.catalog import provider_default_model, provider_model_options, supported_provider_ids
-from app.models.api import GraphExportPackage
-from app.models.domain import Artifact, ChatMessage, CreateGraphRequest, Edge, GraphChatThread, GraphProposal, GraphSummary, MEMORY_MODE_PRESETS, PatchOperation, QuizAttempt, ResourceLink, THINKING_MODE_TOKEN_PRESETS, TopicQuizSession, SnapshotRecord, StudyGraph, Topic, UpdateWorkspaceConfigRequest, WorkspaceDocument, WorkspaceEnvelope, Zone
-from app.services.bootstrap import build_seed_workspace
+from app.models.api import GraphExportPackage, ObsidianExportOptions, ObsidianGraphExportPackage
+from app.models.domain import Artifact, ChatMessage, CreateGraphRequest, Edge, GraphChatThread, GraphProposal, GraphSummary, PatchOperation, QuizAttempt, ResourceLink, TopicQuizSession, SnapshotRecord, StudyGraph, Topic, UpdateWorkspaceConfigRequest, WorkspaceDocument, WorkspaceEnvelope, Zone
+from app.services.obsidian_export import build_obsidian_export_package
+from app.services.repository_config import apply_workspace_config_update
+from app.services.repository_storage import (
+    apply_workspace_secrets,
+    ensure_seed_snapshot,
+    init_repository_storage,
+    insert_snapshot,
+    list_snapshot_records,
+    load_current_workspace,
+    load_workspace_snapshot,
+    migrate_workspace_secrets,
+    normalized_secret_value,
+    purge_graph_runtime_state,
+    save_workspace_secrets,
+    snapshot_workspace_document,
+    workspace_document_from_snapshot_row,
+)
 
 
 class ChatSessionNotFoundError(KeyError):
@@ -46,110 +61,11 @@ class GraphRepository:
 
     def _init_db(self) -> None:
         with self._connect() as conn:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS graph_snapshots (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    created_at TEXT NOT NULL,
-                    source TEXT NOT NULL,
-                    reason TEXT,
-                    parent_snapshot_id INTEGER,
-                    payload_json TEXT NOT NULL
-                )
-                """
-            )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS graph_events (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    created_at TEXT NOT NULL,
-                    event_type TEXT NOT NULL,
-                    payload_json TEXT NOT NULL
-                )
-                """
-            )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS quiz_sessions (
-                    session_id TEXT PRIMARY KEY,
-                    created_at TEXT NOT NULL,
-                    graph_id TEXT NOT NULL,
-                    topic_id TEXT NOT NULL,
-                    payload_json TEXT NOT NULL
-                )
-                """
-            )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS chat_sessions (
-                    session_id TEXT PRIMARY KEY,
-                    graph_id TEXT NOT NULL,
-                    topic_id TEXT,
-                    title TEXT,
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
-                )
-                """
-            )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS chat_messages (
-                    ordinal INTEGER PRIMARY KEY AUTOINCREMENT,
-                    message_id TEXT NOT NULL UNIQUE,
-                    session_id TEXT NOT NULL,
-                    graph_id TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    role TEXT NOT NULL,
-                    payload_json TEXT NOT NULL,
-                    FOREIGN KEY(session_id) REFERENCES chat_sessions(session_id)
-                )
-                """
-            )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS workspace_secrets (
-                    workspace_id TEXT PRIMARY KEY,
-                    gemini_api_key TEXT,
-                    openai_api_key TEXT,
-                    updated_at TEXT NOT NULL
-                )
-                """
-            )
-            # Rebuild chat_sessions if an old schema still enforces one session per graph.
-            schema_sql = conn.execute(
-                "SELECT sql FROM sqlite_master WHERE type='table' AND name='chat_sessions'"
-            ).fetchone()
-            if schema_sql and "UNIQUE" in str(schema_sql[0]):
-                conn.execute("ALTER TABLE chat_sessions RENAME TO _chat_sessions_old")
-                conn.execute("""
-                    CREATE TABLE chat_sessions (
-                        session_id TEXT PRIMARY KEY,
-                        graph_id TEXT NOT NULL,
-                        topic_id TEXT,
-                        title TEXT,
-                        created_at TEXT NOT NULL,
-                        updated_at TEXT NOT NULL
-                    )
-                """)
-                conn.execute("""
-                    INSERT INTO chat_sessions (session_id, graph_id, topic_id, title, created_at, updated_at)
-                    SELECT session_id, graph_id, NULL, NULL, created_at, updated_at
-                    FROM _chat_sessions_old
-                """)
-                conn.execute("DROP TABLE _chat_sessions_old")
-            else:
-                cols = {row[1] for row in conn.execute("PRAGMA table_info(chat_sessions)").fetchall()}
-                if "topic_id" not in cols:
-                    conn.execute("ALTER TABLE chat_sessions ADD COLUMN topic_id TEXT")
-                if "title" not in cols:
-                    conn.execute("ALTER TABLE chat_sessions ADD COLUMN title TEXT")
-            self._migrate_workspace_secrets(conn)
+            init_repository_storage(conn)
 
     def _ensure_seed(self) -> None:
         with self._connect() as conn:
-            row = conn.execute("SELECT id FROM graph_snapshots ORDER BY id DESC LIMIT 1").fetchone()
-            if row is None:
-                self._insert_snapshot(conn, build_seed_workspace(), source="seed", reason="bootstrap workspace", parent_snapshot_id=None)
+            ensure_seed_snapshot(conn)
 
     def _insert_snapshot(
         self,
@@ -160,37 +76,17 @@ class GraphRepository:
         reason: str | None,
         parent_snapshot_id: int | None,
     ) -> int:
-        payload_json = self._snapshot_workspace_document(workspace).model_dump_json()
-        cursor = conn.execute(
-            """
-            INSERT INTO graph_snapshots (created_at, source, reason, parent_snapshot_id, payload_json)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (datetime.now(timezone.utc).isoformat(), source, reason, parent_snapshot_id, payload_json),
+        return insert_snapshot(
+            conn,
+            workspace,
+            source=source,
+            reason=reason,
+            parent_snapshot_id=parent_snapshot_id,
         )
-        return int(cursor.lastrowid)
 
     def current(self) -> WorkspaceEnvelope:
         with self._connect() as conn:
-            row = conn.execute(
-                """
-                SELECT id, created_at, source, reason, parent_snapshot_id, payload_json
-                FROM graph_snapshots
-                ORDER BY id DESC
-                LIMIT 1
-                """
-            ).fetchone()
-            if row is None:
-                raise RuntimeError("graph snapshot missing")
-            workspace = self._workspace_document_from_snapshot_row(conn, row)
-        snapshot = SnapshotRecord(
-            id=int(row["id"]),
-            created_at=datetime.fromisoformat(row["created_at"]),
-            source=str(row["source"]),
-            reason=row["reason"],
-            parent_snapshot_id=row["parent_snapshot_id"],
-        )
-        return WorkspaceEnvelope(snapshot=snapshot, workspace=workspace)
+            return load_current_workspace(conn)
 
     def graph(self, graph_id: str) -> StudyGraph:
         workspace = self.current().workspace
@@ -216,25 +112,7 @@ class GraphRepository:
 
     def list_snapshots(self, limit: int = 20) -> list[SnapshotRecord]:
         with self._connect() as conn:
-            rows = conn.execute(
-                """
-                SELECT id, created_at, source, reason, parent_snapshot_id
-                FROM graph_snapshots
-                ORDER BY id DESC
-                LIMIT ?
-                """,
-                (limit,),
-            ).fetchall()
-        return [
-            SnapshotRecord(
-                id=int(row["id"]),
-                created_at=datetime.fromisoformat(row["created_at"]),
-                source=str(row["source"]),
-                reason=row["reason"],
-                parent_snapshot_id=row["parent_snapshot_id"],
-            )
-            for row in rows
-        ]
+            return list_snapshot_records(conn, limit)
 
     def append_event(self, event_type: str, payload: dict) -> int:
         with self._connect() as conn:
@@ -499,25 +377,7 @@ class GraphRepository:
 
     def snapshot(self, snapshot_id: int) -> WorkspaceEnvelope:
         with self._connect() as conn:
-            row = conn.execute(
-                """
-                SELECT id, created_at, source, reason, parent_snapshot_id, payload_json
-                FROM graph_snapshots
-                WHERE id = ?
-                """,
-                (snapshot_id,),
-            ).fetchone()
-            if row is None:
-                raise KeyError(snapshot_id)
-            workspace = self._workspace_document_from_snapshot_row(conn, row)
-        snapshot = SnapshotRecord(
-            id=int(row["id"]),
-            created_at=datetime.fromisoformat(row["created_at"]),
-            source=str(row["source"]),
-            reason=row["reason"],
-            parent_snapshot_id=row["parent_snapshot_id"],
-        )
-        return WorkspaceEnvelope(snapshot=snapshot, workspace=workspace)
+            return load_workspace_snapshot(conn, snapshot_id)
 
     def rollback_to(self, snapshot_id: int) -> WorkspaceEnvelope:
         target = self.snapshot(snapshot_id)
@@ -702,6 +562,27 @@ class GraphRepository:
             graph=graph.model_copy(update={"title": export_title}, deep=True),
         )
 
+    def export_graph_to_obsidian(
+        self,
+        graph_id: str,
+        *,
+        title: str | None = None,
+        include_progress: bool = True,
+        options: ObsidianExportOptions | None = None,
+    ) -> ObsidianGraphExportPackage:
+        graph = StudyGraph.model_validate(deepcopy(self.graph(graph_id).model_dump()))
+        export_title = (title or graph.title).strip() or graph.title
+        if not include_progress:
+            for topic in graph.topics:
+                topic.state = "not_started"
+            graph.quiz_attempts = []
+        return build_obsidian_export_package(
+            graph,
+            title=export_title,
+            include_progress=include_progress,
+            options=options or ObsidianExportOptions(),
+        )
+
     def import_graph_package(
         self,
         package: GraphExportPackage,
@@ -828,128 +709,10 @@ class GraphRepository:
     def update_workspace_config(self, request: UpdateWorkspaceConfigRequest) -> WorkspaceEnvelope:
         current = self.current()
         workspace = WorkspaceDocument.model_validate(deepcopy(current.workspace.model_dump()))
-        reasons: list[str] = []
-        provider_options = supported_provider_ids()
-        workspace.config.provider_options = provider_options
-        provider_changed = False
-        if request.ai_provider is not None:
-            provider_id = request.ai_provider.strip().lower()
-            if provider_id not in provider_options:
-                raise ValueError(f"unsupported provider {request.ai_provider}")
-            workspace.config.ai_provider = provider_id
-            workspace.config.model_options = provider_model_options(provider_id)
-            provider_changed = True
-            reasons.append(f"ai provider {provider_id}")
-        if request.default_model is not None:
-            model_options = provider_model_options(workspace.config.ai_provider)
-            workspace.config.model_options = model_options
-            normalized_model = request.default_model.strip()
-            if not normalized_model:
-                raise ValueError("default_model cannot be empty")
-            workspace.config.default_model = normalized_model
-            reasons.append(f"default model {request.default_model}")
-        elif provider_changed:
-            model_options = provider_model_options(workspace.config.ai_provider)
-            workspace.config.model_options = model_options
-            if workspace.config.default_model not in model_options:
-                workspace.config.default_model = provider_default_model(workspace.config.ai_provider)
-                reasons.append(f"default model {workspace.config.default_model}")
-        if request.use_google_search_grounding is not None:
-            workspace.config.use_google_search_grounding = request.use_google_search_grounding
-            reasons.append(
-                "google grounding on" if request.use_google_search_grounding else "google grounding off"
-            )
-        if request.disable_idle_animations is not None:
-            workspace.config.disable_idle_animations = request.disable_idle_animations
-            reasons.append("idle animations disabled" if request.disable_idle_animations else "idle animations enabled")
-        if request.thinking_mode is not None:
-            workspace.config.thinking_mode = request.thinking_mode
-            if request.thinking_mode != "custom":
-                presets = THINKING_MODE_TOKEN_PRESETS[request.thinking_mode]
-                workspace.config.planner_max_output_tokens = presets["planner_max_output_tokens"]
-                workspace.config.planner_thinking_budget = presets["planner_thinking_budget"]
-                workspace.config.orchestrator_max_output_tokens = presets["orchestrator_max_output_tokens"]
-                workspace.config.quiz_max_output_tokens = presets["quiz_max_output_tokens"]
-                workspace.config.assistant_max_output_tokens = presets["assistant_max_output_tokens"]
-            reasons.append(f"thinking mode {request.thinking_mode}")
-        if request.memory_mode is not None:
-            workspace.config.memory_mode = request.memory_mode
-            if request.memory_mode != "custom":
-                memory_preset = MEMORY_MODE_PRESETS[request.memory_mode]
-                workspace.config.memory_history_message_limit = int(memory_preset["memory_history_message_limit"])
-                workspace.config.memory_include_graph_context = bool(memory_preset["memory_include_graph_context"])
-                workspace.config.memory_include_progress_context = bool(memory_preset["memory_include_progress_context"])
-                workspace.config.memory_include_quiz_context = bool(memory_preset["memory_include_quiz_context"])
-                workspace.config.memory_include_frontier_context = bool(memory_preset["memory_include_frontier_context"])
-                workspace.config.memory_include_selected_topic_context = bool(memory_preset["memory_include_selected_topic_context"])
-            reasons.append(f"memory mode {request.memory_mode}")
-        if request.persona_rules is not None:
-            workspace.config.persona_rules = request.persona_rules.strip()
-            reasons.append("persona rules updated")
-        if request.quiz_question_count is not None:
-            if request.quiz_question_count < 6 or request.quiz_question_count > 12:
-                raise ValueError("quiz_question_count must be between 6 and 12")
-            workspace.config.quiz_question_count = request.quiz_question_count
-            reasons.append(f"quiz question count {request.quiz_question_count}")
-        if request.pass_threshold is not None:
-            if request.pass_threshold <= 0 or request.pass_threshold > 1:
-                raise ValueError("pass_threshold must be between 0 and 1")
-            workspace.config.pass_threshold = request.pass_threshold
-            reasons.append(f"pass threshold {request.pass_threshold:.3f}")
-        if request.enable_closure_tests is not None:
-            workspace.config.enable_closure_tests = request.enable_closure_tests
-            reasons.append("closure tests enabled" if request.enable_closure_tests else "closure tests disabled")
-        if request.debug_mode_enabled is not None:
-            workspace.config.debug_mode_enabled = request.debug_mode_enabled
-            reasons.append("debug mode enabled" if request.debug_mode_enabled else "debug mode disabled")
-        memory_fields = [
-            ("memory_history_message_limit", request.memory_history_message_limit),
-            ("memory_include_graph_context", request.memory_include_graph_context),
-            ("memory_include_progress_context", request.memory_include_progress_context),
-            ("memory_include_quiz_context", request.memory_include_quiz_context),
-            ("memory_include_frontier_context", request.memory_include_frontier_context),
-            ("memory_include_selected_topic_context", request.memory_include_selected_topic_context),
-        ]
-        for field_name, value in memory_fields:
-            if value is None:
-                continue
-            if field_name == "memory_history_message_limit":
-                if value < 4 or value > 120:
-                    raise ValueError("memory_history_message_limit must be between 4 and 120")
-                setattr(workspace.config, field_name, int(value))
-            else:
-                setattr(workspace.config, field_name, bool(value))
-            reasons.append(f"{field_name} updated")
-        token_limit_fields = [
-            ("planner_max_output_tokens", request.planner_max_output_tokens),
-            ("planner_thinking_budget", request.planner_thinking_budget),
-            ("orchestrator_max_output_tokens", request.orchestrator_max_output_tokens),
-            ("quiz_max_output_tokens", request.quiz_max_output_tokens),
-            ("assistant_max_output_tokens", request.assistant_max_output_tokens),
-        ]
-        for field_name, value in token_limit_fields:
-            if value is not None:
-                if value < 100:
-                    raise ValueError(f"{field_name} must be at least 100")
-                setattr(workspace.config, field_name, value)
-                reasons.append(f"{field_name}={value}")
-        if request.gemini_api_key is not None:
-            workspace.config.gemini_api_key = request.gemini_api_key.strip() or None
-            reasons.append("gemini api key updated")
-        if request.openai_api_key is not None:
-            workspace.config.openai_api_key = request.openai_api_key.strip() or None
-            reasons.append("openai api key updated")
-        if request.openai_base_url is not None:
-            normalized = request.openai_base_url.strip().rstrip("/")
-            if not normalized:
-                raise ValueError("openai_base_url cannot be empty")
-            workspace.config.openai_base_url = normalized
-            reasons.append("openai base url updated")
-        if not reasons:
-            raise ValueError("no config fields provided")
+        reasons = apply_workspace_config_update(workspace, request)
 
         with self._connect() as conn:
-            self._save_workspace_secrets(conn, workspace)
+            save_workspace_secrets(conn, workspace)
             snapshot_id = self._insert_snapshot(
                 conn,
                 workspace,
@@ -1011,129 +774,27 @@ class GraphRepository:
 
     @staticmethod
     def _purge_graph_runtime_state(conn: sqlite3.Connection, graph_id: str) -> None:
-        conn.execute("DELETE FROM chat_messages WHERE graph_id = ?", (graph_id,))
-        conn.execute("DELETE FROM chat_sessions WHERE graph_id = ?", (graph_id,))
-        conn.execute("DELETE FROM quiz_sessions WHERE graph_id = ?", (graph_id,))
+        purge_graph_runtime_state(conn, graph_id)
 
     @staticmethod
     def _snapshot_workspace_document(workspace: WorkspaceDocument) -> WorkspaceDocument:
-        sanitized = WorkspaceDocument.model_validate(deepcopy(workspace.model_dump()))
-        sanitized.config.gemini_api_key = None
-        sanitized.config.openai_api_key = None
-        return sanitized
+        return snapshot_workspace_document(workspace)
 
     def _workspace_document_from_snapshot_row(self, conn: sqlite3.Connection, row: sqlite3.Row) -> WorkspaceDocument:
-        workspace = WorkspaceDocument.model_validate_json(row["payload_json"])
-        self._apply_workspace_secrets(conn, workspace)
-        return workspace
+        return workspace_document_from_snapshot_row(conn, row)
 
     def _apply_workspace_secrets(self, conn: sqlite3.Connection, workspace: WorkspaceDocument) -> None:
-        row = conn.execute(
-            """
-            SELECT gemini_api_key, openai_api_key
-            FROM workspace_secrets
-            WHERE workspace_id = ?
-            """,
-            (workspace.workspace_id,),
-        ).fetchone()
-        if row is None:
-            return
-        workspace.config.gemini_api_key = row["gemini_api_key"]
-        workspace.config.openai_api_key = row["openai_api_key"]
+        apply_workspace_secrets(conn, workspace)
 
     def _save_workspace_secrets(self, conn: sqlite3.Connection, workspace: WorkspaceDocument) -> None:
-        conn.execute(
-            """
-            INSERT INTO workspace_secrets (workspace_id, gemini_api_key, openai_api_key, updated_at)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(workspace_id) DO UPDATE SET
-                gemini_api_key = excluded.gemini_api_key,
-                openai_api_key = excluded.openai_api_key,
-                updated_at = excluded.updated_at
-            """,
-            (
-                workspace.workspace_id,
-                workspace.config.gemini_api_key,
-                workspace.config.openai_api_key,
-                datetime.now(timezone.utc).isoformat(),
-            ),
-        )
+        save_workspace_secrets(conn, workspace)
 
     def _migrate_workspace_secrets(self, conn: sqlite3.Connection) -> None:
-        rows = conn.execute(
-            """
-            SELECT id, payload_json
-            FROM graph_snapshots
-            ORDER BY id ASC
-            """
-        ).fetchall()
-        latest_secrets_by_workspace: dict[str, dict[str, str | None]] = {}
-        snapshot_updates: list[tuple[str, int]] = []
-
-        for row in rows:
-            try:
-                payload = json.loads(row["payload_json"])
-            except json.JSONDecodeError:
-                continue
-            if not isinstance(payload, dict):
-                continue
-            workspace_id = str(payload.get("workspace_id") or "default")
-            config = payload.get("config")
-            if not isinstance(config, dict):
-                continue
-
-            gemini_api_key = self._normalized_secret_value(config.get("gemini_api_key"))
-            openai_api_key = self._normalized_secret_value(config.get("openai_api_key"))
-            if gemini_api_key is not None or openai_api_key is not None:
-                latest_secrets_by_workspace[workspace_id] = {
-                    "gemini_api_key": gemini_api_key,
-                    "openai_api_key": openai_api_key,
-                }
-
-            changed = False
-            if config.get("gemini_api_key") is not None:
-                config["gemini_api_key"] = None
-                changed = True
-            if config.get("openai_api_key") is not None:
-                config["openai_api_key"] = None
-                changed = True
-            if changed:
-                snapshot_updates.append((json.dumps(payload, ensure_ascii=False, separators=(",", ":")), int(row["id"])))
-
-        for workspace_id, secrets in latest_secrets_by_workspace.items():
-            conn.execute(
-                """
-                INSERT INTO workspace_secrets (workspace_id, gemini_api_key, openai_api_key, updated_at)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(workspace_id) DO UPDATE SET
-                    gemini_api_key = COALESCE(excluded.gemini_api_key, workspace_secrets.gemini_api_key),
-                    openai_api_key = COALESCE(excluded.openai_api_key, workspace_secrets.openai_api_key),
-                    updated_at = excluded.updated_at
-                """,
-                (
-                    workspace_id,
-                    secrets["gemini_api_key"],
-                    secrets["openai_api_key"],
-                    datetime.now(timezone.utc).isoformat(),
-                ),
-            )
-
-        for payload_json, snapshot_id in snapshot_updates:
-            conn.execute(
-                """
-                UPDATE graph_snapshots
-                SET payload_json = ?
-                WHERE id = ?
-                """,
-                (payload_json, snapshot_id),
-            )
+        migrate_workspace_secrets(conn)
 
     @staticmethod
-    def _normalized_secret_value(value: Any) -> str | None:
-        if value is None:
-            return None
-        normalized = str(value).strip()
-        return normalized or None
+    def _normalized_secret_value(value: object) -> str | None:
+        return normalized_secret_value(value)
 
     def _apply_operation(
         self,
