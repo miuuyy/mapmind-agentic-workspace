@@ -1265,11 +1265,10 @@
 
 :root[data-theme="dark"] .lightDockButtonActive,
 :root[data-theme="dark"] .lightDockButtonActive:hover {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.08) 46%, rgba(255, 255, 255, 0.03) 100%) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 -10px 16px rgba(0, 0, 0, 0.22) inset !important;
+    0 8px 18px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset !important;
   color: rgba(255, 255, 255, 0.96) !important;
   transform: none !important;
 }
@@ -1277,4 +1276,88 @@
 :root[data-theme="dark"] .lightDockButton svg,
 :root[data-theme="dark"] .lightDockButtonLink svg {
   filter: none !important;
+}
+
+/* Final lock: Obsidian import modal must not inherit the heavy wide-card dark treatment */
+:root[data-theme="dark"] .quizModalWide,
+:root[data-theme="dark"] .quizModalWide .quizModalHeader,
+:root[data-theme="dark"] .quizModalWide .quizModalBody {
+  background: #0a0a0b !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .quizModalHeader::after {
+  display: none !important;
+  background: transparent !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .settingsToggleRow,
+:root[data-theme="dark"] .quizModalWide .settingsToggleRow:hover {
+  background: rgba(255, 255, 255, 0.015) !important;
+  border: 1px solid rgba(255, 255, 255, 0.055) !important;
+  box-shadow: none !important;
+  border-radius: 18px !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .previewStatCard {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.055) !important;
+  box-shadow: none !important;
+  border-radius: 999px !important;
+  padding: 8px 11px !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .previewStatCard strong,
+:root[data-theme="dark"] .quizModalWide .previewStatCard span {
+  color: rgba(255, 255, 255, 0.84) !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .previewStatCard strong {
+  color: rgba(255, 255, 255, 0.96) !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .btn.btnImport,
+:root[data-theme="dark"] .quizModalWide .btn.btnImportWide,
+:root[data-theme="dark"] .quizModalWide .btn.btnImport:hover,
+:root[data-theme="dark"] .quizModalWide .btn.btnImportWide:hover {
+  background: rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .obsidianVaultSummary,
+:root[data-theme="dark"] .quizModalWide .btn.btnImportWide + .inlineNotice {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  padding: 12px 14px !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: rgba(255, 255, 255, 0.015) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .obsidianVaultSummaryLabel,
+:root[data-theme="dark"] .quizModalWide .btn.btnImportWide + .inlineNotice::before {
+  color: rgba(255, 255, 255, 0.48) !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .btn.btnImportWide + .inlineNotice::before {
+  content: "Vault" !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .obsidianVaultSummaryValue {
+  color: rgba(255, 255, 255, 0.94) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  text-align: right !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .obsidianVaultSummaryEmpty .obsidianVaultSummaryValue,
+:root[data-theme="dark"] .obsidianImportModal .obsidianVaultSummaryEmpty .obsidianVaultSummaryValue {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-weight: 500 !important;
 }
