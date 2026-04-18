@@ -72,6 +72,7 @@ import {
   type ObsidianImportOptions,
   type ObsidianVaultEntry,
 } from "./lib/obsidianImport";
+import { useChatModelSelection } from "./hooks/useChatModelSelection";
 import { useModalAccessibility } from "./lib/useModalAccessibility";
 import type {
   Artifact,
@@ -226,7 +227,6 @@ export default function App(): React.JSX.Element {
   const [debugLogsLoading, setDebugLogsLoading] = useState(false);
   const [debugLogsError, setDebugLogsError] = useState<string | null>(null);
   const [composerUseGrounding, setComposerUseGrounding] = useState(true);
-  const [selectedChatModel, setSelectedChatModel] = useState<string | null>(null);
   const [viewportCenteredZoom, setViewportCenteredZoom] = useState(readStoredViewportCenteredZoom);
   const [straightEdgeLinesEnabled, setStraightEdgeLinesEnabled] = useState<boolean>(readStoredStraightEdgeLines);
   const [straightEdgeLinesDraft, setStraightEdgeLinesDraft] = useState<boolean>(readStoredStraightEdgeLines);
@@ -534,22 +534,7 @@ export default function App(): React.JSX.Element {
     setQuizPassCountDraft(requiredCorrectAnswers(c.pass_threshold, c.quiz_question_count));
   }, [data?.workspace.config]);
 
-  const chatModelOptions = React.useMemo(() => {
-    const config = data?.workspace.config;
-    if (!config) return [] as string[];
-    return Array.from(new Set([...(config.model_options ?? []), config.default_model].filter(Boolean)));
-  }, [data?.workspace.config]);
-
-  useEffect(() => {
-    if (chatModelOptions.length === 0) {
-      setSelectedChatModel(null);
-      return;
-    }
-    setSelectedChatModel((current) => {
-      if (current && chatModelOptions.includes(current)) return current;
-      return data?.workspace.config.default_model ?? chatModelOptions[0];
-    });
-  }, [chatModelOptions, data?.workspace.config.default_model]);
+  const { chatModelOptions, selectedChatModel, setSelectedChatModel } = useChatModelSelection(data?.workspace.config);
 
   useEffect(() => {
     if (!isSettingsOpen) return;

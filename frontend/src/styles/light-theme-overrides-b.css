@@ -647,29 +647,6 @@
   color: rgba(45, 43, 40, 0.96) !important;
 }
 
-:root[data-theme="light"] .lightChatWindow {
-  overflow: visible !important;
-}
-
-:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
-  position: relative !important;
-  z-index: 6 !important;
-  overflow: visible !important;
-}
-
-:root[data-theme="light"] .lightChatWindow .sessionListWrap {
-  position: relative !important;
-  z-index: 2 !important;
-}
-
-:root[data-theme="light"] .assistantInlineModelTrigger {
-  z-index: 8 !important;
-}
-
-:root[data-theme="light"] .assistantModelMenu {
-  z-index: 30 !important;
-}
-
 :root[data-theme="light"] .lightChatWindow .assistantTemplateActive,
 :root[data-theme="light"] .lightChatWindow .webGroundingToggle.active,
 :root[data-theme="light"] .lightChatWindow .groundingToggleActive {

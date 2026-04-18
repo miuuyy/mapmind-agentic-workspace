@@ -1,6 +1,8 @@
 import React from "react";
 import { UploadSimple } from "@phosphor-icons/react";
 
+import { ExportGraphDialog } from "./dialogs/ExportGraphDialog";
+import { ObsidianImportDialog } from "./dialogs/ObsidianImportDialog";
 import { API_BASE } from "../lib/api";
 import type { AppCopy } from "../lib/appCopy";
 import type { apiFetch, readErrorMessage } from "../lib/appUiHelpers";
@@ -208,10 +210,6 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
 
   function patchCreateGraphDraft(patch: Partial<CreateGraphRequest>): void {
     setCreateGraphDraft((current) => ({ ...current, ...patch }));
-  }
-
-  function patchObsidianExportOptions(patch: Partial<ObsidianExportOptions>): void {
-    setExportGraphObsidianOptionsDraft((current) => ({ ...current, ...patch }));
   }
 
   return (
@@ -508,350 +506,44 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
         </div>
       ) : null}
 
-      {importObsidianOpen ? (
-        <div className="quizOverlay">
-          <div
-            ref={importObsidianModalRef}
-            className="quizModal quizModalWide obsidianImportModal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="import-obsidian-dialog-title"
-            aria-describedby="import-obsidian-dialog-description"
-            tabIndex={-1}
-          >
-            <div className="quizModalHeader">
-              <div>
-                <div id="import-obsidian-dialog-title" className="cardTitle">{copy.dialogs.importObsidianTitle}</div>
-                <div id="import-obsidian-dialog-description" className="mutedSmall">{copy.dialogs.importObsidianBody}</div>
-              </div>
-              <button className="modalCloseButton" onClick={closeImportObsidianModal} type="button" aria-label={copy.dialogs.cancel}>×</button>
-            </div>
-            <div className="quizModalBody stack">
-              <input
-                ref={importObsidianFolderInputRef}
-                type="file"
-                style={{ display: "none" }}
-                onChange={(event) => {
-                  void handleObsidianVaultFiles(event.target.files);
-                  event.currentTarget.value = "";
-                }}
-              />
-              <div className="stack" style={{ gap: 10 }}>
-                <button
-                  ref={importObsidianFolderButtonRef}
-                  className="btn btnImport btnImportWide"
-                  type="button"
-                  onClick={() => importObsidianFolderInputRef.current?.click()}
-                >
-                  <span>{copy.dialogs.chooseVaultFolder}</span>
-                </button>
-                <div className={`obsidianVaultSummary ${obsidianVaultName ? "obsidianVaultSummaryReady" : "obsidianVaultSummaryEmpty"}`}>
-                  <span className="obsidianVaultSummaryLabel">{copy.dialogs.obsidianVault}</span>
-                  <strong className="obsidianVaultSummaryValue">{obsidianVaultName ?? copy.dialogs.noVaultChosen}</strong>
-                </div>
-              </div>
+      <ObsidianImportDialog
+        open={importObsidianOpen}
+        modalRef={importObsidianModalRef}
+        closeModal={closeImportObsidianModal}
+        folderInputRef={importObsidianFolderInputRef}
+        folderButtonRef={importObsidianFolderButtonRef}
+        handleVaultFiles={handleObsidianVaultFiles}
+        vaultName={obsidianVaultName}
+        draft={obsidianImportDraft}
+        setDraft={setObsidianImportDraft}
+        preview={obsidianImportPreview}
+        issues={obsidianIssues}
+        warnings={obsidianWarnings}
+        errors={obsidianErrors}
+        loading={importObsidianLoading}
+        error={importObsidianError}
+        importGraphFromObsidian={importGraphFromObsidian}
+        copy={copy}
+      />
 
-              {obsidianVaultName ? (
-                <>
-                  <div className="obsidianImportGrid">
-                    <label className="field">
-                      <span className="fieldLabel">{copy.dialogs.graphTitle}</span>
-                      <input
-                        className="input"
-                        value={obsidianImportDraft.graphTitle}
-                        onChange={(event) => setObsidianImportDraft((current) => ({ ...current, graphTitle: event.target.value }))}
-                        placeholder={copy.dialogs.graphTitlePlaceholder}
-                      />
-                    </label>
-                    <label className="field">
-                      <span className="fieldLabel">{copy.dialogs.obsidianSubject}</span>
-                      <input
-                        className="input"
-                        value={obsidianImportDraft.subject}
-                        onChange={(event) => setObsidianImportDraft((current) => ({ ...current, subject: event.target.value }))}
-                        placeholder={copy.dialogs.obsidianSubjectPlaceholder}
-                      />
-                    </label>
-                    <label className="field">
-                      <span className="fieldLabel">{copy.dialogs.language}</span>
-                      <select
-                        className="input"
-                        value={obsidianImportDraft.language}
-                        onChange={(event) =>
-                          setObsidianImportDraft((current) => ({
-                            ...current,
-                            language: event.target.value as CreateGraphRequest["language"],
-                          }))
-                        }
-                      >
-                        <option value="uk">{copy.dialogs.languageOptions.uk}</option>
-                        <option value="ru">{copy.dialogs.languageOptions.ru}</option>
-                        <option value="en">{copy.dialogs.languageOptions.en}</option>
-                      </select>
-                    </label>
-                    <label className="field">
-                      <span className="fieldLabel">{copy.dialogs.obsidianRelation}</span>
-                      <select
-                        className="input"
-                        value={obsidianImportDraft.relation}
-                        onChange={(event) =>
-                          setObsidianImportDraft((current) => ({
-                            ...current,
-                            relation: event.target.value as ObsidianImportOptions["relation"],
-                          }))
-                        }
-                      >
-                        <option value="requires">{copy.dialogs.obsidianRelationOptions.requires}</option>
-                        <option value="supports">{copy.dialogs.obsidianRelationOptions.supports}</option>
-                        <option value="bridges">{copy.dialogs.obsidianRelationOptions.bridges}</option>
-                        <option value="extends">{copy.dialogs.obsidianRelationOptions.extends}</option>
-                        <option value="reviews">{copy.dialogs.obsidianRelationOptions.reviews}</option>
-                      </select>
-                      <span className="mutedSmall">{copy.dialogs.obsidianRelationHelp}</span>
-                    </label>
-                  </div>
-
-                  <div className="obsidianSettingsGrid">
-                    <label className="settingsToggleRow">
-                      <input
-                        type="checkbox"
-                        checked={obsidianImportDraft.useFoldersAsZones}
-                        onChange={(event) =>
-                          setObsidianImportDraft((current) => ({
-                            ...current,
-                            useFoldersAsZones: event.target.checked,
-                          }))
-                        }
-                      />
-                      <div className="settingsToggleCopy">
-                        <strong>{copy.dialogs.obsidianFoldersAsZones}</strong>
-                        <span>{copy.dialogs.obsidianFoldersAsZonesHelp}</span>
-                      </div>
-                    </label>
-                    <label className="settingsToggleRow">
-                      <input
-                        type="checkbox"
-                        checked={obsidianImportDraft.autofillDescriptions}
-                        onChange={(event) =>
-                          setObsidianImportDraft((current) => ({
-                            ...current,
-                            autofillDescriptions: event.target.checked,
-                          }))
-                        }
-                      />
-                      <div className="settingsToggleCopy">
-                        <strong>{copy.dialogs.obsidianAutofillDescriptions}</strong>
-                        <span>{copy.dialogs.obsidianAutofillDescriptionsHelp}</span>
-                      </div>
-                    </label>
-                    <label className="settingsToggleRow">
-                      <input
-                        type="checkbox"
-                        checked={obsidianImportDraft.createArtifactsFromNotes}
-                        onChange={(event) =>
-                          setObsidianImportDraft((current) => ({
-                            ...current,
-                            createArtifactsFromNotes: event.target.checked,
-                          }))
-                        }
-                      />
-                      <div className="settingsToggleCopy">
-                        <strong>{copy.dialogs.obsidianCreateArtifacts}</strong>
-                        <span>{copy.dialogs.obsidianCreateArtifactsHelp}</span>
-                      </div>
-                    </label>
-                    <label className="settingsToggleRow">
-                      <input
-                        type="checkbox"
-                        checked={obsidianImportDraft.createPlaceholderTopics}
-                        onChange={(event) =>
-                          setObsidianImportDraft((current) => ({
-                            ...current,
-                            createPlaceholderTopics: event.target.checked,
-                          }))
-                        }
-                      />
-                      <div className="settingsToggleCopy">
-                        <strong>{copy.dialogs.obsidianCreatePlaceholders}</strong>
-                        <span>{copy.dialogs.obsidianCreatePlaceholdersHelp}</span>
-                      </div>
-                    </label>
-                  </div>
-
-                  {obsidianImportPreview ? (
-                    <>
-                      {obsidianErrors.length > 0 ? (
-                        <div className="inlineNotice inlineNoticeError">
-                          {copy.dialogs.obsidianImportBlocked}
-                        </div>
-                      ) : null}
-                      <div className="obsidianPreviewStats">
-                        <div className="previewStatCard">
-                          <strong>{obsidianImportPreview.noteCount}</strong>
-                          <span>{copy.dialogs.obsidianNotesCount}</span>
-                        </div>
-                        <div className="previewStatCard">
-                          <strong>{obsidianWarnings.length}</strong>
-                          <span>{copy.dialogs.obsidianWarningsCount}</span>
-                        </div>
-                        <div className="previewStatCard">
-                          <strong>{obsidianErrors.length}</strong>
-                          <span>{copy.dialogs.obsidianErrorsCount}</span>
-                        </div>
-                      </div>
-                      {obsidianIssues.length === 0 ? (
-                        <div className="inlineNotice inlineNoticeSuccess">{copy.dialogs.obsidianNoIssues}</div>
-                      ) : (
-                        <div className="obsidianIssueList">
-                          {obsidianIssues.map((issue, index) => (
-                            <div
-                              key={`${issue.code}-${index}`}
-                              className={`inlineNotice ${issue.level === "error" ? "inlineNoticeError" : "inlineNoticeWarn"}`}
-                            >
-                              {issue.message}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  ) : null}
-                </>
-              ) : null}
-
-              {importObsidianError ? <div className="inlineNotice inlineNoticeError">{importObsidianError}</div> : null}
-              <div className="quizActions quizActionsRight">
-                <button className="btn btnGhost" onClick={closeImportObsidianModal} type="button">{copy.dialogs.cancel}</button>
-                <button
-                  className="assistantSendButton quizSubmitButton"
-                  disabled={
-                    importObsidianLoading ||
-                    !obsidianImportPreview?.package ||
-                    !obsidianImportDraft.graphTitle.trim() ||
-                    !obsidianImportDraft.subject.trim()
-                  }
-                  onClick={() => void importGraphFromObsidian()}
-                  type="button"
-                >
-                  {importObsidianLoading ? copy.dialogs.importingObsidian : copy.dialogs.importFromObsidian}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {exportGraphTarget ? (
-        <div className="quizOverlay">
-          <div
-            ref={exportGraphModalRef}
-            className="quizModal exportGraphModal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="export-graph-dialog-title"
-            aria-describedby="export-graph-dialog-description"
-            tabIndex={-1}
-          >
-            <div className="quizModalHeader">
-              <div>
-                <div id="export-graph-dialog-title" className="cardTitle">{copy.dialogs.exportGraphTitle}</div>
-                <div id="export-graph-dialog-description" className="mutedSmall">{copy.dialogs.exportGraphBody}</div>
-              </div>
-              <button className="modalCloseButton" onClick={closeExportGraphModal} type="button" aria-label={copy.dialogs.cancel}>×</button>
-            </div>
-            <div className="quizModalBody stack">
-              <label className="field">
-                <span className="fieldLabel">{copy.dialogs.graphTitle}</span>
-                <input
-                  ref={exportGraphTitleInputRef}
-                  className="input"
-                  value={exportGraphTitleDraft}
-                  onChange={(event) => setExportGraphTitleDraft(event.target.value)}
-                  placeholder={copy.dialogs.exportTitlePlaceholder}
-                />
-              </label>
-              <label className="field">
-                <span className="fieldLabel">{copy.dialogs.exportFormat}</span>
-                <select
-                  className="input"
-                  value={exportGraphFormatDraft}
-                  onChange={(event) => setExportGraphFormatDraft(event.target.value as GraphExportFormat)}
-                >
-                  <option value="mapmind_graph_export">{copy.dialogs.exportFormatMapMind}</option>
-                  <option value="mapmind_obsidian_export">{copy.dialogs.exportFormatObsidian}</option>
-                </select>
-              </label>
-              <label className="settingsToggleRow exportSettingsToggleRow">
-                <input
-                  type="checkbox"
-                  checked={exportGraphIncludeProgressDraft}
-                  onChange={(event) => setExportGraphIncludeProgressDraft(event.target.checked)}
-                />
-                <div className="settingsToggleCopy">
-                  <strong>{copy.dialogs.includeOwnProgress}</strong>
-                </div>
-              </label>
-              {exportGraphFormatDraft === "mapmind_obsidian_export" ? (
-                <div className="obsidianSettingsGrid exportSettingsGrid">
-                  <label className="settingsToggleRow exportSettingsToggleRow">
-                    <input
-                      type="checkbox"
-                      checked={exportGraphObsidianOptionsDraft.use_folders_as_zones}
-                      onChange={(event) => patchObsidianExportOptions({ use_folders_as_zones: event.target.checked })}
-                    />
-                    <div className="settingsToggleCopy">
-                      <strong>{copy.dialogs.obsidianUseFoldersAsZones}</strong>
-                      <span>{copy.dialogs.obsidianUseFoldersAsZonesHelp}</span>
-                    </div>
-                  </label>
-                  <label className="settingsToggleRow exportSettingsToggleRow">
-                    <input
-                      type="checkbox"
-                      checked={exportGraphObsidianOptionsDraft.include_descriptions}
-                      onChange={(event) => patchObsidianExportOptions({ include_descriptions: event.target.checked })}
-                    />
-                    <div className="settingsToggleCopy">
-                      <strong>{copy.dialogs.obsidianIncludeDescriptions}</strong>
-                    </div>
-                  </label>
-                  <label className="settingsToggleRow exportSettingsToggleRow">
-                    <input
-                      type="checkbox"
-                      checked={exportGraphObsidianOptionsDraft.include_resources}
-                      onChange={(event) => patchObsidianExportOptions({ include_resources: event.target.checked })}
-                    />
-                    <div className="settingsToggleCopy">
-                      <strong>{copy.dialogs.obsidianIncludeResources}</strong>
-                    </div>
-                  </label>
-                  <label className="settingsToggleRow exportSettingsToggleRow">
-                    <input
-                      type="checkbox"
-                      checked={exportGraphObsidianOptionsDraft.include_artifacts}
-                      onChange={(event) => patchObsidianExportOptions({ include_artifacts: event.target.checked })}
-                    />
-                    <div className="settingsToggleCopy">
-                      <strong>{copy.dialogs.obsidianIncludeArtifacts}</strong>
-                    </div>
-                  </label>
-                </div>
-              ) : null}
-              {exportGraphFormatDraft === "mapmind_obsidian_export" ? <div className="mutedSmall exportGraphHint">{copy.dialogs.obsidianExportHint}</div> : null}
-              {exportGraphError ? <div className="inlineNotice inlineNoticeError">{exportGraphError}</div> : null}
-              <div className="quizActions quizActionsRight">
-                <button className="btn btnGhost" onClick={closeExportGraphModal} type="button">{copy.dialogs.cancel}</button>
-                <button
-                  className="assistantSendButton quizSubmitButton"
-                  disabled={exportGraphLoading || !exportGraphTitleDraft.trim()}
-                  onClick={() => void exportGraph(exportGraphTarget)}
-                  type="button"
-                >
-                  {exportGraphLoading ? copy.dialogs.exportingGraph : copy.dialogs.exportGraph}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ExportGraphDialog
+        target={exportGraphTarget}
+        modalRef={exportGraphModalRef}
+        titleInputRef={exportGraphTitleInputRef}
+        closeModal={closeExportGraphModal}
+        titleDraft={exportGraphTitleDraft}
+        setTitleDraft={setExportGraphTitleDraft}
+        includeProgressDraft={exportGraphIncludeProgressDraft}
+        setIncludeProgressDraft={setExportGraphIncludeProgressDraft}
+        formatDraft={exportGraphFormatDraft}
+        setFormatDraft={setExportGraphFormatDraft}
+        obsidianOptionsDraft={exportGraphObsidianOptionsDraft}
+        setObsidianOptionsDraft={setExportGraphObsidianOptionsDraft}
+        error={exportGraphError}
+        loading={exportGraphLoading}
+        exportGraph={exportGraph}
+        copy={copy}
+      />
 
       {quizSession ? (
         <div className="quizOverlay">
