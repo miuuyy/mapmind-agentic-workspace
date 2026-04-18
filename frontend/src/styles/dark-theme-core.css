@@ -188,7 +188,7 @@
 :root[data-theme="dark"] .quizModal .textarea,
 :root[data-theme="dark"] .topicAssetTextInput,
 :root[data-theme="dark"] .topicAssetResourceInput {
-  background: rgba(11, 11, 12, 0.982) !important;
+  background: transparent !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: none !important;
   font-family: var(--sans) !important;
@@ -243,6 +243,38 @@
   border-color: rgba(255, 255, 255, 0.14) !important;
   color: rgba(255, 255, 255, 0.92) !important;
   box-shadow: none !important;
+}
+
+:root[data-theme="dark"] .quizModalWide {
+  background: rgba(10, 10, 11, 0.94) !important;
+}
+
+:root[data-theme="dark"] .workspaceCreateModal,
+:root[data-theme="dark"] .workspaceCreateModal .quizModalHeader,
+:root[data-theme="dark"] .workspaceCreateModal .quizModalBody {
+  background: rgba(10, 10, 11, 0.94) !important;
+}
+
+:root[data-theme="dark"] .workspaceCreateModal .quizModalHeader::after {
+  display: none !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .previewStatCard {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+  border-radius: 18px !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .settingsToggleRow {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="dark"] .quizModalWide .settingsToggleRow:hover {
+  background: rgba(255, 255, 255, 0.045) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 :root[data-theme="dark"] .topicAssetModal .topicAssetSaveButton,
@@ -1368,4 +1400,218 @@
 
 :root[data-theme="dark"] .debugLogRow {
   border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Final lock: create-workspace modal must not inherit extra dark layered fills */
+:root[data-theme="dark"] .quizModal.workspaceCreateModal {
+  background: #0a0a0b !important;
+  box-shadow:
+    0 24px 58px rgba(0, 0, 0, 0.52),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset !important;
+}
+
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalHeader,
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalBody,
+:root[data-theme="dark"] .quizModal.obsidianImportModal .quizModalHeader,
+:root[data-theme="dark"] .quizModal.obsidianImportModal .quizModalBody,
+:root[data-theme="dark"] .quizModal.exportGraphModal .quizModalHeader,
+:root[data-theme="dark"] .quizModal.exportGraphModal .quizModalBody {
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalHeader,
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalBody {
+  background: #0a0a0b !important;
+}
+
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalHeader {
+  padding-bottom: 12px !important;
+}
+
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalHeader::after {
+  display: none !important;
+  background: transparent !important;
+}
+
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalBody {
+  padding-top: 2px !important;
+}
+
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .input,
+:root[data-theme="dark"] .quizModal.workspaceCreateModal select.input,
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .textarea {
+  padding-left: 12px !important;
+  padding-right: 14px !important;
+}
+
+:root[data-theme="dark"] .quizModal.obsidianImportModal {
+  background: #0a0a0b !important;
+  box-shadow:
+    0 24px 58px rgba(0, 0, 0, 0.52),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset !important;
+}
+
+:root[data-theme="dark"] .quizModal.obsidianImportModal .quizModalHeader,
+:root[data-theme="dark"] .quizModal.obsidianImportModal .quizModalBody {
+  background: #0a0a0b !important;
+}
+
+:root[data-theme="dark"] .quizModal.obsidianImportModal .quizModalHeader::after {
+  display: none !important;
+  background: transparent !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .btn.btnImport,
+:root[data-theme="dark"] .obsidianImportModal .btn.btnImportWide {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .btn.btnImport:hover,
+:root[data-theme="dark"] .obsidianImportModal .btn.btnImportWide:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.96) !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .obsidianVaultSummary {
+  background: rgba(255, 255, 255, 0.015) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .obsidianVaultSummaryLabel {
+  color: rgba(255, 255, 255, 0.48) !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .obsidianVaultSummaryValue {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .settingsToggleRow {
+  background: rgba(255, 255, 255, 0.018) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none !important;
+  padding: 13px 14px !important;
+  border-radius: 18px !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .settingsToggleRow:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .settingsToggleRow,
+:root[data-theme="dark"] .exportGraphModal .settingsToggleRow {
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+  text-align: left !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .settingsToggleRow strong,
+:root[data-theme="dark"] .exportGraphModal .settingsToggleRow strong {
+  display: block !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.34 !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  text-align: left !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .settingsToggleRow span,
+:root[data-theme="dark"] .exportGraphModal .settingsToggleRow span {
+  display: block !important;
+  font-size: 12px !important;
+  line-height: 1.38 !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  text-align: left !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .settingsToggleRow input[type="checkbox"],
+:root[data-theme="dark"] .exportGraphModal .settingsToggleRow input[type="checkbox"] {
+  width: 15px !important;
+  height: 15px !important;
+  margin-top: 3px !important;
+  flex-shrink: 0 !important;
+}
+
+:root[data-theme="dark"] .exportGraphModal .settingsToggleRow {
+  background: rgba(255, 255, 255, 0.018) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none !important;
+  padding: 13px 14px !important;
+  border-radius: 18px !important;
+}
+
+:root[data-theme="dark"] .exportGraphModal .settingsToggleRow:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:root[data-theme="dark"] .exportGraphModal .settingsToggleCopy,
+:root[data-theme="dark"] .obsidianImportModal .settingsToggleCopy {
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+:root[data-theme="dark"] .quizModal.exportGraphModal {
+  background: #0a0a0b !important;
+  box-shadow:
+    0 24px 58px rgba(0, 0, 0, 0.52),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset !important;
+}
+
+:root[data-theme="dark"] .quizModal.exportGraphModal .quizModalHeader,
+:root[data-theme="dark"] .quizModal.exportGraphModal .quizModalBody {
+  background: #0a0a0b !important;
+}
+
+:root[data-theme="dark"] .quizModal.exportGraphModal .quizModalHeader::after {
+  display: none !important;
+  background: transparent !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .previewStatCard {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none !important;
+  border-radius: 999px !important;
+  padding: 8px 11px !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .previewStatCard strong,
+:root[data-theme="dark"] .obsidianImportModal .previewStatCard span {
+  color: rgba(255, 255, 255, 0.84) !important;
+}
+
+:root[data-theme="dark"] .obsidianImportModal .previewStatCard strong {
+  color: rgba(255, 255, 255, 0.96) !important;
+}
+
+:root[data-theme="dark"] .settingsModal .modalCloseButton,
+:root[data-theme="dark"] .debugLogsModal .modalCloseButton {
+  display: none !important;
+}
+
+/* Absolute EOF lock: dark create-graph field content must align like light theme */
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalHeader {
+  padding: 22px 18px 12px !important;
+}
+
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalBody {
+  padding: 0 0 18px !important;
+}
+
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .input,
+:root[data-theme="dark"] .quizModal.workspaceCreateModal select.input,
+:root[data-theme="dark"] .quizModal.workspaceCreateModal .textarea {
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  text-indent: 0 !important;
 }
