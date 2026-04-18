@@ -622,6 +622,54 @@
   box-shadow: none !important;
 }
 
+:root[data-theme="light"] .assistantModelMenuButton {
+  color: rgba(139, 133, 128, 0.92) !important;
+}
+
+:root[data-theme="light"] .assistantModelMenuButton:hover,
+:root[data-theme="light"] .assistantModelMenuButtonOpen {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .assistantModelMenu {
+  background: rgba(250, 249, 246, 0.985) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: 0 18px 34px rgba(45, 43, 40, 0.08) !important;
+}
+
+:root[data-theme="light"] .assistantModelMenuItem {
+  color: rgba(139, 133, 128, 0.92) !important;
+}
+
+:root[data-theme="light"] .assistantModelMenuItem:hover,
+:root[data-theme="light"] .assistantModelMenuItemActive {
+  background: rgba(240, 237, 231, 0.92) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow {
+  overflow: visible !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
+  position: relative !important;
+  z-index: 6 !important;
+  overflow: visible !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+:root[data-theme="light"] .assistantInlineModelTrigger {
+  z-index: 8 !important;
+}
+
+:root[data-theme="light"] .assistantModelMenu {
+  z-index: 30 !important;
+}
+
 :root[data-theme="light"] .lightChatWindow .assistantTemplateActive,
 :root[data-theme="light"] .lightChatWindow .webGroundingToggle.active,
 :root[data-theme="light"] .lightChatWindow .groundingToggleActive {
@@ -817,7 +865,7 @@
 }
 
 :root[data-theme="light"] .topicAssetModalBody {
-  gap: 12px !important;
+  gap: 8px !important;
 }
 
 :root[data-theme="light"] .topicAssetField {
@@ -1836,4 +1884,90 @@
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   background: rgba(255, 255, 255, 0.06) !important;
   color: rgba(255, 255, 255, 0.74) !important;
+}
+
+/* Absolute EOF lock: light chat model menu must render above the session strip */
+:root[data-theme="light"] .lightChatWindow {
+  overflow: visible !important;
+  border-radius: 24px !important;
+}
+
+:root[data-theme="light"] .lightChatWindow::before {
+  border-radius: 24px 24px 0 0 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
+  position: relative !important;
+  overflow: visible !important;
+  z-index: 12 !important;
+  border-radius: 24px 24px 0 0 !important;
+  clip-path: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantDockTitleRow,
+:root[data-theme="light"] .lightChatWindow .assistantInlineModelTrigger {
+  position: relative !important;
+  z-index: 14 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  position: relative !important;
+  z-index: 2 !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::after {
+  display: none !important;
+  background: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionList,
+:root[data-theme="light"] .lightChatWindow .assistantThread,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
+  clip-path: inset(0 round 24px 24px 0 0);
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionList,
+:root[data-theme="light"] .lightChatWindow .assistantThread,
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
+  clip-path: inset(0 round 0 0 24px 24px);
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantModelMenu {
+  top: -6px !important;
+  left: calc(100% + 10px) !important;
+  right: auto !important;
+  z-index: 30 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantThread {
+  border-radius: 0 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
+  border-radius: 0 0 24px 24px !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantTemplates {
+  gap: 6px !important;
+  padding-bottom: 2px !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantTemplate,
+:root[data-theme="light"] .lightChatWindow .webGroundingToggle {
+  min-height: 30px !important;
+  padding: 5px 10px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  border-radius: 999px !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .webGroundingToggle svg {
+  width: 12px !important;
+  height: 12px !important;
+  margin-right: 4px !important;
 }

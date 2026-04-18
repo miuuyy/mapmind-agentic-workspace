@@ -203,6 +203,10 @@ class RepositoryGraphTests(unittest.TestCase):
         self.assertIn("mapmind_relations:", functions_note.body)
         self.assertIn('mapmind_state: "solid"', functions_note.body)
         self.assertIn("[Functions guide]", functions_note.body)
+        self.assertIn("## Requires", functions_note.body)
+        self.assertIn("[[Algebra basics]]", functions_note.body)
+        self.assertIn("[[Arithmetic and number sense]] via [[Algebra basics]]", functions_note.body)
+        self.assertNotIn("## Path context", functions_note.body)
 
     def test_upsert_topic_preserves_existing_progress_and_artifacts(self) -> None:
         current = self.repository.current()

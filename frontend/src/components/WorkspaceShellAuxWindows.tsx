@@ -9,6 +9,85 @@ import { summarizePreviewCounts, summarizeTopOperations } from "../lib/graph";
 import type { ChatSessionSummary, GraphEnvelope } from "../lib/types";
 import type { TopicAnchorPoint } from "./GraphCanvas";
 
+export function AssistantModelMenuTrigger({
+  options,
+  selectedModel,
+  setSelectedModel,
+  ariaLabel,
+  stopPointerDown = false,
+}: {
+  options: string[];
+  selectedModel: string | null;
+  setSelectedModel: React.Dispatch<React.SetStateAction<string | null>>;
+  ariaLabel: string;
+  stopPointerDown?: boolean;
+}): React.JSX.Element | null {
+  const [open, setOpen] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [open]);
+
+  if (options.length === 0) return null;
+
+  return (
+    <div
+      ref={rootRef}
+      className="assistantInlineModelTrigger"
+      onPointerDown={stopPointerDown ? (event) => event.stopPropagation() : undefined}
+    >
+      <button
+        className={`assistantModelMenuButton ${open ? "assistantModelMenuButtonOpen" : ""}`}
+        type="button"
+        aria-label={ariaLabel}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <CaretDown className="assistantModelMenuCaret" size={12} weight="bold" aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="assistantModelMenu" role="menu">
+          {options.map((modelId) => {
+            const active = modelId === (selectedModel ?? options[0]);
+            return (
+              <button
+                key={modelId}
+                className={`assistantModelMenuItem ${active ? "assistantModelMenuItemActive" : ""}`}
+                type="button"
+                role="menuitemradio"
+                aria-checked={active}
+                onClick={() => {
+                  setSelectedModel(modelId);
+                  setOpen(false);
+                }}
+              >
+                <span className="assistantModelMenuItemLabel">{modelId}</span>
+                {active ? <Check size={12} weight="bold" aria-hidden="true" /> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function LightWorkspaceWindow({
   workspaceWindowRef,
   workspaceWindowPosition,
@@ -267,20 +346,20 @@ export function TopicAssetModal({
         tabIndex={-1}
       >
         <div className="quizModalHeader">
-          <div>
+          <div className="topicAssetHeaderCopy">
             <div id="topic-asset-dialog-title" className="cardTitle">
               {topicAssetDialog.kind === "resource" ? copy.dialogs.addResourceTitle : copy.dialogs.addArtifactTitle}
             </div>
             <div id="topic-asset-dialog-description" className="mutedSmall">
               {topicAssetDialog.kind === "resource" ? copy.dialogs.addResourceBody : copy.dialogs.addArtifactBody}
             </div>
+            <div className="mutedSmall topicAssetTopicTitle">{topicAssetDialog.topicTitle}</div>
           </div>
           <button className="modalCloseButton" onClick={closeTopicAssetModal} type="button">
             ×
           </button>
         </div>
         <div className="quizModalBody stack topicAssetModalBody">
-          <div className="mutedSmall topicAssetTopicTitle">{topicAssetDialog.topicTitle}</div>
           {topicAssetDialog.kind === "resource" ? (
             <label className="field topicAssetField">
               <span className="fieldLabel topicAssetFieldLabel">{copy.dialogs.resourceUrl}</span>
@@ -381,6 +460,9 @@ export function LightChatWindow({
   composerUseGrounding,
   setComposerUseGrounding,
   assistantTemplates,
+  chatModelOptions,
+  selectedChatModel,
+  setSelectedChatModel,
   sendChat,
 }: {
   chatWindowRef: React.RefObject<HTMLDivElement | null>;
@@ -418,6 +500,9 @@ export function LightChatWindow({
   composerUseGrounding: boolean;
   setComposerUseGrounding: React.Dispatch<React.SetStateAction<boolean>>;
   assistantTemplates: Array<{ id: string; label: string; value: string }>;
+  chatModelOptions: string[];
+  selectedChatModel: string | null;
+  setSelectedChatModel: React.Dispatch<React.SetStateAction<string | null>>;
   sendChat: () => Promise<void>;
 }): React.JSX.Element {
   return (
@@ -432,7 +517,16 @@ export function LightChatWindow({
     >
       <div className="lightFloatingWindowHeader" onPointerDown={(event) => beginFloatingDrag("chat", event)}>
         <div>
-          <div className="lightFloatingWindowTitle">{activeSession?.title ?? copy.sessions.assistantTitle}</div>
+          <div className="assistantDockTitleRow">
+            <div className="lightFloatingWindowTitle">{activeSession?.title ?? copy.sessions.assistantTitle}</div>
+            <AssistantModelMenuTrigger
+              options={chatModelOptions}
+              selectedModel={selectedChatModel}
+              setSelectedModel={setSelectedChatModel}
+              ariaLabel={copy.sessions.modelPicker}
+              stopPointerDown
+            />
+          </div>
           <div className="lightFloatingWindowSubtle">
             {activeSession?.topic_id
               ? copy.sessions.learningSession
@@ -576,10 +670,9 @@ export function LightChatWindow({
                       </div>
                     );
                   })() : null}
-                  {message.role === "assistant" ? (
+                  {message.role === "assistant" && message.fallback_used ? (
                     <div className="chatMetaRow">
-                      {message.model ? <span className="badge badge-gray">{message.model}</span> : null}
-                      {message.fallback_used ? <span className="badge badge-yellow">{copy.sessions.fallbackUsed}</span> : null}
+                      <span className="badge badge-yellow">{copy.sessions.fallbackUsed}</span>
                     </div>
                   ) : null}
                   {message.planning_status ? (
@@ -721,7 +814,7 @@ export function LightChatWindow({
                 <path d="M12 2a10 10 0 0 1 10 10"></path>
               </svg>
             ) : (
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 19V5"></path>
                 <path d="M5 12L12 5L19 12"></path>
               </svg>

@@ -70,4 +70,66 @@ describe("buildObsidianImportPreview", () => {
     expect(preview.edgeCount).toBe(1);
     expect(preview.issues).toHaveLength(0);
   });
+
+  it("uses explicit inline relation annotations instead of the fallback relation", () => {
+    const preview = buildObsidianImportPreview(
+      [
+        { path: "roadmap.md", content: "[[foundation]]::requires\n[[context]]" },
+        { path: "foundation.md", content: "Base note" },
+        { path: "context.md", content: "Context note" },
+      ],
+      baseOptions,
+    );
+
+    expect(preview.package).not.toBeNull();
+    expect(preview.package?.graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ relation: "requires" }),
+        expect.objectContaining({ relation: "bridges" }),
+      ]),
+    );
+  });
+
+  it("imports typed frontmatter relations when present", () => {
+    const preview = buildObsidianImportPreview(
+      [
+        {
+          path: "topic.md",
+          content: [
+            "---",
+            "mapmind_relations:",
+            "  - requires::[[foundation]]",
+            "  - [[practice]]::reviews",
+            "---",
+            "",
+            "Topic body",
+          ].join("\n"),
+        },
+        { path: "foundation.md", content: "Foundation note" },
+        { path: "practice.md", content: "Practice note" },
+      ],
+      baseOptions,
+    );
+
+    expect(preview.package).not.toBeNull();
+    expect(preview.package?.graph.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target_topic_id: expect.any(String), relation: "requires" }),
+        expect.objectContaining({ target_topic_id: expect.any(String), relation: "reviews" }),
+      ]),
+    );
+  });
+
+  it("fails closed on invalid explicit relation annotations", () => {
+    const preview = buildObsidianImportPreview(
+      [
+        { path: "topic.md", content: "[[foundation]]::teleports" },
+        { path: "foundation.md", content: "Foundation note" },
+      ],
+      baseOptions,
+    );
+
+    expect(preview.package).toBeNull();
+    expect(preview.issues.some((issue) => issue.code === "invalid_relation_annotation" && issue.level === "error")).toBe(true);
+  });
 });

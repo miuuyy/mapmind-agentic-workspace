@@ -342,7 +342,10 @@ export function buildAnchorMap(nodes: GraphNode[], edges: Edge[], width: number,
     childrenByParent.set(edge.source_topic_id, [...(childrenByParent.get(edge.source_topic_id) ?? []), edge.target_topic_id]);
   }
 
-  const roots = nodes.filter((node) => (parentsByChild.get(node.id) ?? []).length === 0).sort((a, b) => a.title.localeCompare(b.title));
+  const explicitRoots = nodes.filter((node) => (parentsByChild.get(node.id) ?? []).length === 0).sort((a, b) => a.title.localeCompare(b.title));
+  const roots = explicitRoots.length > 0
+    ? explicitRoots
+    : [...nodes].sort((left, right) => left.level !== right.level ? left.level - right.level : left.title.localeCompare(right.title));
   const stableWidth = Math.max(width, 900);
   const stableHeight = Math.max(height, 600);
   const minDimension = Math.min(stableWidth, stableHeight);
@@ -356,6 +359,8 @@ export function buildAnchorMap(nodes: GraphNode[], edges: Edge[], width: number,
   const fullSpread = Math.PI * 2;
   const branchAngles = new Map<string, number>();
   const resolvedPrimaryBranches = new Map<string, string>();
+  const resolvingPrimaryRoots = new Set<string>();
+  const resolvingPrimaryBranches = new Set<string>();
 
   roots.forEach((root, index) => {
     const seed = hashString(root.id);
@@ -366,9 +371,15 @@ export function buildAnchorMap(nodes: GraphNode[], edges: Edge[], width: number,
   function resolvePrimaryRootId(nodeId: string): string {
     const cached = resolvedPrimaryRoots.get(nodeId);
     if (cached) return cached;
+    if (resolvingPrimaryRoots.has(nodeId)) {
+      resolvedPrimaryRoots.set(nodeId, nodeId);
+      return nodeId;
+    }
+    resolvingPrimaryRoots.add(nodeId);
     const parents = (parentsByChild.get(nodeId) ?? []).filter((pid) => byId.has(pid));
     if (parents.length === 0) {
       resolvedPrimaryRoots.set(nodeId, nodeId);
+      resolvingPrimaryRoots.delete(nodeId);
       return nodeId;
     }
     const freq = new Map<string, number>();
@@ -379,19 +390,27 @@ export function buildAnchorMap(nodes: GraphNode[], edges: Edge[], width: number,
     const sorted = [...freq.entries()].sort((a, b) => b[1] !== a[1] ? b[1] - a[1] : a[0].localeCompare(b[0]));
     const resolved = sorted[0]?.[0] ?? parents[0];
     resolvedPrimaryRoots.set(nodeId, resolved);
+    resolvingPrimaryRoots.delete(nodeId);
     return resolved;
   }
 
   function resolvePrimaryBranchId(nodeId: string): string {
     const cached = resolvedPrimaryBranches.get(nodeId);
     if (cached) return cached;
+    if (resolvingPrimaryBranches.has(nodeId)) {
+      resolvedPrimaryBranches.set(nodeId, nodeId);
+      return nodeId;
+    }
+    resolvingPrimaryBranches.add(nodeId);
     const parents = (parentsByChild.get(nodeId) ?? []).filter((pid) => byId.has(pid));
     if (parents.length === 0) {
       resolvedPrimaryBranches.set(nodeId, nodeId);
+      resolvingPrimaryBranches.delete(nodeId);
       return nodeId;
     }
     if (parents.find((pid) => (parentsByChild.get(pid) ?? []).length === 0)) {
       resolvedPrimaryBranches.set(nodeId, nodeId);
+      resolvingPrimaryBranches.delete(nodeId);
       return nodeId;
     }
     const freq = new Map<string, number>();
@@ -401,6 +420,7 @@ export function buildAnchorMap(nodes: GraphNode[], edges: Edge[], width: number,
     }
     const sorted = [...freq.entries()].sort((a, b) => b[1] !== a[1] ? b[1] - a[1] : a[0].localeCompare(b[0]));
     resolvedPrimaryBranches.set(nodeId, sorted[0]?.[0] ?? nodeId);
+    resolvingPrimaryBranches.delete(nodeId);
     return resolvedPrimaryBranches.get(nodeId)!;
   }
 

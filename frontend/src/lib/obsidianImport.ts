@@ -35,6 +35,11 @@ export type ObsidianImportPreview = {
   issues: ObsidianImportIssue[];
 };
 
+type ParsedNoteLink = {
+  target: string;
+  relation: Edge["relation"] | null;
+};
+
 type ParsedNote = {
   id: string;
   path: string;
@@ -45,8 +50,13 @@ type ParsedNote = {
   body: string;
   aliases: string[];
   tags: string[];
-  links: string[];
+  links: ParsedNoteLink[];
   placeholder: boolean;
+};
+
+type ParsedNoteResult = {
+  note: ParsedNote;
+  issues: ObsidianImportIssue[];
 };
 
 const ZONE_COLORS = [
@@ -62,6 +72,8 @@ const ZONE_COLORS = [
 
 const INTERNAL_LINK_RE = /!?\[\[([^[\]]+)\]\]/g;
 const MARKDOWN_LINK_RE = /\[[^\]]*]\(([^)]+)\)/g;
+const RELATION_SUFFIX_RE = /^\s*::\s*([a-z_]+)\b/i;
+const SUPPORTED_RELATIONS = new Set<Edge["relation"]>(["requires", "supports", "bridges", "extends", "reviews"]);
 
 export function buildObsidianImportPreview(
   entries: ObsidianVaultEntry[],
@@ -94,7 +106,9 @@ export function buildObsidianImportPreview(
     };
   }
 
-  const notes = markdownEntries.map((entry) => parseNote(entry, options.autofillDescriptions, options.createArtifactsFromNotes));
+  const parsedNotes = markdownEntries.map((entry) => parseNote(entry, options.autofillDescriptions, options.createArtifactsFromNotes));
+  const notes = parsedNotes.map((result) => result.note);
+  issues.push(...parsedNotes.flatMap((result) => result.issues));
   const notesByPath = new Map<string, ParsedNote>();
   const notesByBaseName = new Map<string, ParsedNote[]>();
 
@@ -114,39 +128,40 @@ export function buildObsidianImportPreview(
   const unresolvedLinks = new Set<string>();
 
   for (const note of notes) {
-    for (const rawLink of note.links) {
-      const resolved = resolveInternalLink(rawLink, note.path, notesByPath, notesByBaseName);
+    for (const link of note.links) {
+      const resolved = resolveInternalLink(link.target, note.path, notesByPath, notesByBaseName);
       if (resolved.error) {
         issues.push({
           code: resolved.error === "ambiguous" ? "ambiguous_link" : "unresolved_link",
           level: resolved.error === "ambiguous" ? "error" : "warning",
           message:
             resolved.error === "ambiguous"
-              ? `Ambiguous Obsidian link "${rawLink}" in ${note.path}. Use a path-qualified link before import.`
-              : `Unresolved Obsidian link "${rawLink}" in ${note.path}.`,
+              ? `Ambiguous Obsidian link "${link.target}" in ${note.path}. Use a path-qualified link before import.`
+              : `Unresolved Obsidian link "${link.target}" in ${note.path}.`,
         });
       }
 
       let target = resolved.note;
       if (!target && options.createPlaceholderTopics) {
-        target = makePlaceholderNote(rawLink, options.autofillDescriptions, options.createArtifactsFromNotes);
+        target = makePlaceholderNote(link.target, options.autofillDescriptions, options.createArtifactsFromNotes);
         if (!topics.has(target.id)) {
           topics.set(target.id, noteToTopic(target, options.createArtifactsFromNotes));
         }
       }
       if (!target) {
-        unresolvedLinks.add(rawLink);
+        unresolvedLinks.add(link.target);
         continue;
       }
 
-      const edgeId = `obsidian-edge-${stableHash(`${note.id}:${target.id}:${options.relation}`)}`;
+      const relation = link.relation ?? options.relation;
+      const edgeId = `obsidian-edge-${stableHash(`${note.id}:${target.id}:${relation}`)}`;
       if (edgeIds.has(edgeId) || note.id === target.id) continue;
       edgeIds.add(edgeId);
       edges.push({
         id: edgeId,
         source_topic_id: note.id,
         target_topic_id: target.id,
-        relation: options.relation,
+        relation,
         rationale: `Imported from Obsidian link in ${note.title}.`,
       });
     }
@@ -265,7 +280,7 @@ function noteToTopic(note: ParsedNote, includeArtifact: boolean): Topic {
   };
 }
 
-function parseNote(entry: ObsidianVaultEntry, autofillDescriptions: boolean, createArtifactsFromNotes: boolean): ParsedNote {
+function parseNote(entry: ObsidianVaultEntry, autofillDescriptions: boolean, createArtifactsFromNotes: boolean): ParsedNoteResult {
   const { body, frontmatter } = parseFrontmatter(entry.content);
   const title = stripMdExtension(entry.path).split("/").at(-1) ?? entry.path;
   const folderPath = dirname(entry.path);
@@ -273,19 +288,25 @@ function parseNote(entry: ObsidianVaultEntry, autofillDescriptions: boolean, cre
   const tags = normalizeStringArray(frontmatter.tags);
   const cleanBody = body.trim();
   const description = autofillDescriptions ? deriveDescription(cleanBody) : "";
+  const explicitRelationLinks = extractExplicitRelationEntries(frontmatter, entry.path);
+  const wikilinks = extractWikilinks(cleanBody, entry.path);
+  const markdownLinks = extractMarkdownInternalLinks(cleanBody, entry.path);
 
   return {
-    id: `obsidian-topic-${stableHash(entry.path)}`,
-    path: entry.path,
-    folderPath,
-    title,
-    slug: makeUnicodeSlug(title),
-    description,
-    body: createArtifactsFromNotes ? cleanBody : "",
-    aliases,
-    tags,
-    links: [...extractWikilinks(cleanBody), ...extractMarkdownInternalLinks(cleanBody)],
-    placeholder: false,
+    note: {
+      id: `obsidian-topic-${stableHash(entry.path)}`,
+      path: entry.path,
+      folderPath,
+      title,
+      slug: makeUnicodeSlug(title),
+      description,
+      body: createArtifactsFromNotes ? cleanBody : "",
+      aliases,
+      tags,
+      links: [...explicitRelationLinks.links, ...wikilinks.links, ...markdownLinks.links],
+      placeholder: false,
+    },
+    issues: [...explicitRelationLinks.issues, ...wikilinks.issues, ...markdownLinks.issues],
   };
 }
 
@@ -412,30 +433,109 @@ function normalizeStringArray(value: FrontmatterValue | undefined): string[] {
     .filter(Boolean);
 }
 
-function extractWikilinks(body: string): string[] {
-  const links: string[] = [];
+function extractWikilinks(body: string, notePath: string): { links: ParsedNoteLink[]; issues: ObsidianImportIssue[] } {
+  const links: ParsedNoteLink[] = [];
+  const issues: ObsidianImportIssue[] = [];
   for (const match of body.matchAll(INTERNAL_LINK_RE)) {
     const target = match[1]?.trim();
-    if (target) links.push(target);
+    if (!target) continue;
+    const relationResult = parseRelationSuffix(body.slice((match.index ?? 0) + match[0].length), notePath, target);
+    if (relationResult.relation) {
+      links.push({ target, relation: relationResult.relation });
+    } else {
+      links.push({ target, relation: null });
+    }
+    if (relationResult.issue) issues.push(relationResult.issue);
   }
-  return links;
+  return { links, issues };
 }
 
-function extractMarkdownInternalLinks(body: string): string[] {
-  const links: string[] = [];
+function extractMarkdownInternalLinks(body: string, notePath: string): { links: ParsedNoteLink[]; issues: ObsidianImportIssue[] } {
+  const links: ParsedNoteLink[] = [];
+  const issues: ObsidianImportIssue[] = [];
   for (const match of body.matchAll(MARKDOWN_LINK_RE)) {
     const target = match[1]?.trim();
     if (!target) continue;
     if (isExternalUrl(target) || target.startsWith("#")) continue;
     if (!target.endsWith(".md") && !target.includes("/")) continue;
-    links.push(target);
+    const relationResult = parseRelationSuffix(body.slice((match.index ?? 0) + match[0].length), notePath, target);
+    links.push({ target, relation: relationResult.relation });
+    if (relationResult.issue) issues.push(relationResult.issue);
   }
-  return links;
+  return { links, issues };
+}
+
+function extractExplicitRelationEntries(
+  frontmatter: Record<string, FrontmatterValue>,
+  notePath: string,
+): { links: ParsedNoteLink[]; issues: ObsidianImportIssue[] } {
+  const entries = [
+    ...normalizeStringArray(frontmatter.mapmind_relations),
+    ...normalizeStringArray(frontmatter.mapmind_edges),
+  ];
+  const links: ParsedNoteLink[] = [];
+  const issues: ObsidianImportIssue[] = [];
+
+  for (const entry of entries) {
+    const parsed = parseExplicitRelationEntry(entry);
+    if (!parsed) {
+      issues.push({
+        code: "invalid_relation_annotation",
+        level: "error",
+        message: `Invalid MapMind relation entry "${entry}" in ${notePath}. Use requires::[[Target]] or [[Target]]::requires.`,
+      });
+      continue;
+    }
+    links.push(parsed);
+  }
+
+  return { links, issues };
+}
+
+function parseExplicitRelationEntry(entry: string): ParsedNoteLink | null {
+  const trimmed = entry.trim();
+  if (!trimmed) return null;
+  const relationFirst = trimmed.match(/^([a-z_]+)\s*::\s*(.+)$/i);
+  if (relationFirst) {
+    const relation = normalizeRelationName(relationFirst[1]);
+    if (!relation) return null;
+    return { target: relationFirst[2].trim(), relation };
+  }
+  const targetFirst = trimmed.match(/^(.+?)\s*::\s*([a-z_]+)$/i);
+  if (!targetFirst) return null;
+  const relation = normalizeRelationName(targetFirst[2]);
+  if (!relation) return null;
+  return { target: targetFirst[1].trim(), relation };
+}
+
+function parseRelationSuffix(
+  trailingText: string,
+  notePath: string,
+  target: string,
+): { relation: Edge["relation"] | null; issue: ObsidianImportIssue | null } {
+  const match = trailingText.match(RELATION_SUFFIX_RE);
+  if (!match) return { relation: null, issue: null };
+  const relation = normalizeRelationName(match[1] ?? "");
+  if (relation) return { relation, issue: null };
+  return {
+    relation: null,
+    issue: {
+      code: "invalid_relation_annotation",
+      level: "error",
+      message: `Invalid relation annotation on Obsidian link "${target}" in ${notePath}.`,
+    },
+  };
+}
+
+function normalizeRelationName(value: string): Edge["relation"] | null {
+  const normalized = value.trim().toLowerCase() as Edge["relation"];
+  return SUPPORTED_RELATIONS.has(normalized) ? normalized : null;
 }
 
 function normalizeLinkTarget(rawTarget: string): string {
   let target = rawTarget.trim();
   if (target.startsWith("!")) target = target.slice(1).trim();
+  if (target.startsWith("[[") && target.endsWith("]]")) target = target.slice(2, -2).trim();
   if (target.includes("|")) target = target.split("|", 1)[0].trim();
   if (target.includes("#")) target = target.split("#", 1)[0].trim();
   if (target.includes("^")) target = target.split("^", 1)[0].trim();

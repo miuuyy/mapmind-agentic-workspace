@@ -33,6 +33,50 @@
   overflow: auto;
 }
 
+.obsidianVaultSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.obsidianVaultSummaryLabel {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.obsidianVaultSummaryValue {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.obsidianVaultSummaryEmpty .obsidianVaultSummaryValue {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.obsidianImportModal .obsidianPreviewStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.obsidianImportModal .previewStatCard {
+  min-height: auto;
+}
+
+.obsidianImportModal .settingsToggleRow {
+  align-items: flex-start;
+}
+
 .modalCloseButton {
   appearance: none;
   width: 22px;
@@ -247,8 +291,28 @@
   gap: 12px;
 }
 
+.quizActionsGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
 .quizActionsRight {
   justify-content: flex-end;
+}
+
+.exportSettingsGrid {
+  margin-top: 2px;
+}
+
+.exportSettingsToggleRow {
+  align-items: flex-start;
+}
+
+.exportGraphHint {
+  margin-top: -2px;
 }
 
 .quizSubmitButton {

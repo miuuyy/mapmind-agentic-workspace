@@ -458,6 +458,32 @@ export type GraphExportPackagePayload = {
   graph: GraphEnvelope;
 };
 
+export type GraphExportFormat = "mapmind_graph_export" | "mapmind_obsidian_export";
+
+export type ObsidianExportOptions = {
+  use_folders_as_zones: boolean;
+  include_descriptions: boolean;
+  include_resources: boolean;
+  include_artifacts: boolean;
+};
+
+export type ObsidianExportFilePayload = {
+  path: string;
+  body: string;
+};
+
+export type ObsidianGraphExportPackagePayload = {
+  kind: "mapmind_obsidian_export";
+  version: number;
+  exported_at: string;
+  source_graph_id: string;
+  title: string;
+  include_progress: boolean;
+  folder_name: string;
+  file_count: number;
+  files: ObsidianExportFilePayload[];
+};
+
 export type WorkspaceEnvelope = {
   snapshot: SnapshotRecord;
   workspace: {

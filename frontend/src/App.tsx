@@ -66,6 +66,7 @@ import {
   summarizeTopOperations,
   templatePrompt,
 } from "./lib/graph";
+import { supportsObsidianDirectoryExport, writeObsidianExportPackageToDirectory } from "./lib/obsidianExport";
 import {
   buildObsidianImportPreview,
   type ObsidianImportOptions,
@@ -81,7 +82,10 @@ import type {
   GraphAssessment,
   GraphChatStreamEvent,
   GraphChatThread,
+  GraphExportFormat,
   GraphExportPackagePayload,
+  ObsidianExportOptions,
+  ObsidianGraphExportPackagePayload,
   ProposalGenerateResponse,
   QuizQuestionReview,
   QuizStartResponse,
@@ -92,6 +96,15 @@ import type {
   TopicQuizSession,
   WorkspaceEnvelope,
 } from "./lib/types";
+
+function defaultObsidianExportOptions(): ObsidianExportOptions {
+  return {
+    use_folders_as_zones: true,
+    include_descriptions: true,
+    include_resources: true,
+    include_artifacts: true,
+  };
+}
 
 export default function App(): React.JSX.Element {
   const copy = APP_COPY;
@@ -140,6 +153,8 @@ export default function App(): React.JSX.Element {
   const [exportGraphError, setExportGraphError] = useState<string | null>(null);
   const [exportGraphTitleDraft, setExportGraphTitleDraft] = useState("");
   const [exportGraphIncludeProgressDraft, setExportGraphIncludeProgressDraft] = useState(true);
+  const [exportGraphFormatDraft, setExportGraphFormatDraft] = useState<GraphExportFormat>("mapmind_graph_export");
+  const [exportGraphObsidianOptionsDraft, setExportGraphObsidianOptionsDraft] = useState<ObsidianExportOptions>(defaultObsidianExportOptions);
   const [deleteConfirm, setDeleteConfirm] = useState<{ graphId: string; title: string } | null>(null);
   const [sessionDeleteConfirm, setSessionDeleteConfirm] = useState<{ sessionId: string; title: string } | null>(null);
   const [graphLayoutEditing, setGraphLayoutEditing] = useState(false);
@@ -211,6 +226,7 @@ export default function App(): React.JSX.Element {
   const [debugLogsLoading, setDebugLogsLoading] = useState(false);
   const [debugLogsError, setDebugLogsError] = useState<string | null>(null);
   const [composerUseGrounding, setComposerUseGrounding] = useState(true);
+  const [selectedChatModel, setSelectedChatModel] = useState<string | null>(null);
   const [viewportCenteredZoom, setViewportCenteredZoom] = useState(readStoredViewportCenteredZoom);
   const [straightEdgeLinesEnabled, setStraightEdgeLinesEnabled] = useState<boolean>(readStoredStraightEdgeLines);
   const [straightEdgeLinesDraft, setStraightEdgeLinesDraft] = useState<boolean>(readStoredStraightEdgeLines);
@@ -280,6 +296,8 @@ export default function App(): React.JSX.Element {
     setExportGraphLoading(false);
     setExportGraphTitleDraft("");
     setExportGraphIncludeProgressDraft(true);
+    setExportGraphFormatDraft("mapmind_graph_export");
+    setExportGraphObsidianOptionsDraft(defaultObsidianExportOptions());
   }, []);
   const openImportGraphModal = useCallback(() => {
     setCreateGraphOpen(false);
@@ -295,6 +313,8 @@ export default function App(): React.JSX.Element {
     setExportGraphTarget(graph);
     setExportGraphTitleDraft(graph.title);
     setExportGraphIncludeProgressDraft(true);
+    setExportGraphFormatDraft("mapmind_graph_export");
+    setExportGraphObsidianOptionsDraft(defaultObsidianExportOptions());
     setExportGraphError(null);
   }, []);
   const closeQuizModal = useCallback(() => {
@@ -513,6 +533,23 @@ export default function App(): React.JSX.Element {
     setQuizQuestionCountDraft(c.quiz_question_count);
     setQuizPassCountDraft(requiredCorrectAnswers(c.pass_threshold, c.quiz_question_count));
   }, [data?.workspace.config]);
+
+  const chatModelOptions = React.useMemo(() => {
+    const config = data?.workspace.config;
+    if (!config) return [] as string[];
+    return Array.from(new Set([...(config.model_options ?? []), config.default_model].filter(Boolean)));
+  }, [data?.workspace.config]);
+
+  useEffect(() => {
+    if (chatModelOptions.length === 0) {
+      setSelectedChatModel(null);
+      return;
+    }
+    setSelectedChatModel((current) => {
+      if (current && chatModelOptions.includes(current)) return current;
+      return data?.workspace.config.default_model ?? chatModelOptions[0];
+    });
+  }, [chatModelOptions, data?.workspace.config.default_model]);
 
   useEffect(() => {
     if (!isSettingsOpen) return;
@@ -1152,28 +1189,38 @@ export default function App(): React.JSX.Element {
     setExportGraphLoading(true);
     setExportGraphError(null);
     try {
+      if (exportGraphFormatDraft === "mapmind_obsidian_export" && !supportsObsidianDirectoryExport()) {
+        throw new Error(copy.errors.exportGraphObsidianUnsupported);
+      }
       const response = await apiFetch(`${API_BASE}/api/v1/workspace/graphs/${graph.graph_id}/export`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: exportGraphTitleDraft.trim() || graph.title,
           include_progress: exportGraphIncludeProgressDraft,
+          format: exportGraphFormatDraft,
+          obsidian: exportGraphFormatDraft === "mapmind_obsidian_export" ? exportGraphObsidianOptionsDraft : undefined,
         }),
       });
       if (!response.ok) {
         throw new Error(await readErrorMessage(response, copy.errors.exportGraph));
       }
-      const payload = (await response.json()) as GraphExportPackagePayload;
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      const safeBase = (exportGraphTitleDraft.trim() || graph.title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "graph";
-      link.href = objectUrl;
-      link.download = `${safeBase}.mapmind-graph.json`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(objectUrl);
+      if (exportGraphFormatDraft === "mapmind_obsidian_export") {
+        const payload = (await response.json()) as ObsidianGraphExportPackagePayload;
+        await writeObsidianExportPackageToDirectory(payload);
+      } else {
+        const payload = (await response.json()) as GraphExportPackagePayload;
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const safeBase = (exportGraphTitleDraft.trim() || graph.title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "graph";
+        link.href = objectUrl;
+        link.download = `${safeBase}.mapmind-graph.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(objectUrl);
+      }
       closeExportGraphModal();
     } catch (exportError) {
       setExportGraphError(exportError instanceof Error ? exportError.message : copy.errors.exportGraph);
@@ -1380,7 +1427,7 @@ export default function App(): React.JSX.Element {
             ? chatSessions.find((s) => s.session_id === activeSessionId)?.topic_id ?? selectedTopicId
             : selectedTopicId,
           session_id: activeSessionId,
-          model: data?.workspace.config.default_model ?? null,
+          model: selectedChatModel ?? data?.workspace.config.default_model ?? null,
           use_grounding: composerUseGrounding,
         }),
       });
@@ -1661,6 +1708,7 @@ export default function App(): React.JSX.Element {
   ];
   const suspendedSurfaceStateRef = useRef<{ leftSidebarOpen: boolean; assistantWidth: number } | null>(null);
   const overlayWasOpenRef = useRef(false);
+  const [overlayRestoreEpoch, setOverlayRestoreEpoch] = useState(0);
   const assistantOpen = assistantWidth >= ASSISTANT_MIN_WIDTH;
   const hasInlinePlanningWidget = currentChatState.messages.some((message) => Boolean(message.planning_status));
   const overlayLeftOffset = leftSidebarOpen ? 280 : 68;
@@ -1731,6 +1779,7 @@ export default function App(): React.JSX.Element {
       setLeftSidebarOpen(suspendedState.leftSidebarOpen);
       setAssistantWidth(suspendedState.assistantWidth);
       suspendedSurfaceStateRef.current = null;
+      setOverlayRestoreEpoch((current) => current + 1);
     }
     overlayWasOpenRef.current = overlayOpen;
   }, [assistantWidth, isLogsOpen, isSettingsOpen, leftSidebarOpen]);
@@ -1875,6 +1924,9 @@ export default function App(): React.JSX.Element {
         setSessionDeleteConfirm={setSessionDeleteConfirm}
         applyError={applyError}
         assistantTemplates={assistantTemplates}
+        chatModelOptions={chatModelOptions}
+        selectedChatModel={selectedChatModel}
+        setSelectedChatModel={setSelectedChatModel}
         composerUseGrounding={composerUseGrounding}
         setComposerUseGrounding={setComposerUseGrounding}
         chatComposerRef={chatComposerRef}
@@ -1885,6 +1937,7 @@ export default function App(): React.JSX.Element {
         debugModeEnabled={debugModeEnabled}
         themeMode={themeModeDraft}
         setThemeMode={setThemeModeDraft}
+        overlayRestoreEpoch={overlayRestoreEpoch}
       />
 
       <SettingsModal
@@ -2052,6 +2105,10 @@ export default function App(): React.JSX.Element {
         setExportGraphTitleDraft={setExportGraphTitleDraft}
         exportGraphIncludeProgressDraft={exportGraphIncludeProgressDraft}
         setExportGraphIncludeProgressDraft={setExportGraphIncludeProgressDraft}
+        exportGraphFormatDraft={exportGraphFormatDraft}
+        setExportGraphFormatDraft={setExportGraphFormatDraft}
+        exportGraphObsidianOptionsDraft={exportGraphObsidianOptionsDraft}
+        setExportGraphObsidianOptionsDraft={setExportGraphObsidianOptionsDraft}
         exportGraphError={exportGraphError}
         exportGraphLoading={exportGraphLoading}
         exportGraph={exportGraph}

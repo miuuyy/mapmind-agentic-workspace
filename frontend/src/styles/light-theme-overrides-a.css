@@ -54,6 +54,32 @@
   color: rgba(45, 43, 40, 0.94) !important;
 }
 
+@media (max-width: 1180px) {
+  :root[data-theme="light"] .mobileDockItemActive,
+  :root[data-theme="light"] .mobileDockItem:hover,
+  :root[data-theme="light"] .mobileDockItem:focus-visible {
+    background: rgba(195, 90, 44, 0.1) !important;
+    border-color: rgba(195, 90, 44, 0.24) !important;
+    color: rgba(145, 63, 28, 0.96) !important;
+    box-shadow: none !important;
+  }
+
+  :root[data-theme="light"] .mobileDockItemChat.mobileDockItemActive,
+  :root[data-theme="light"] .mobileDockItemChat:hover,
+  :root[data-theme="light"] .mobileDockItemChat:focus-visible {
+    background: rgba(195, 90, 44, 0.1) !important;
+    border-color: rgba(195, 90, 44, 0.24) !important;
+    color: rgba(145, 63, 28, 0.96) !important;
+    box-shadow: none !important;
+  }
+
+  :root[data-theme="light"] .mobileGraphCreate,
+  :root[data-theme="light"] .mobileGraphCreate:hover,
+  :root[data-theme="light"] .mobileGraphCreate:focus-visible {
+    box-shadow: none !important;
+  }
+}
+
 :root[data-theme="light"] .settingsTab:hover .sidebarIcon,
 :root[data-theme="light"] .settingsTabActive .sidebarIcon {
   color: rgba(145, 63, 28, 0.96) !important;

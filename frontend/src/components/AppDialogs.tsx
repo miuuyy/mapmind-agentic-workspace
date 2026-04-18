@@ -8,7 +8,9 @@ import type { ObsidianImportOptions, ObsidianImportPreview } from "../lib/obsidi
 import type {
   CreateGraphRequest,
   GraphEnvelope,
+  GraphExportFormat,
   GraphExportPackagePayload,
+  ObsidianExportOptions,
   QuizQuestionReview,
   Topic,
   TopicQuizSession,
@@ -88,6 +90,10 @@ type AppDialogsProps = {
   setExportGraphTitleDraft: StateSetter<string>;
   exportGraphIncludeProgressDraft: boolean;
   setExportGraphIncludeProgressDraft: StateSetter<boolean>;
+  exportGraphFormatDraft: GraphExportFormat;
+  setExportGraphFormatDraft: StateSetter<GraphExportFormat>;
+  exportGraphObsidianOptionsDraft: ObsidianExportOptions;
+  setExportGraphObsidianOptionsDraft: StateSetter<ObsidianExportOptions>;
   exportGraphError: string | null;
   exportGraphLoading: boolean;
   exportGraph: (graph: GraphEnvelope) => Promise<void>;
@@ -176,6 +182,10 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
     setExportGraphTitleDraft,
     exportGraphIncludeProgressDraft,
     setExportGraphIncludeProgressDraft,
+    exportGraphFormatDraft,
+    setExportGraphFormatDraft,
+    exportGraphObsidianOptionsDraft,
+    setExportGraphObsidianOptionsDraft,
     exportGraphError,
     exportGraphLoading,
     exportGraph,
@@ -198,6 +208,10 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
 
   function patchCreateGraphDraft(patch: Partial<CreateGraphRequest>): void {
     setCreateGraphDraft((current) => ({ ...current, ...patch }));
+  }
+
+  function patchObsidianExportOptions(patch: Partial<ObsidianExportOptions>): void {
+    setExportGraphObsidianOptionsDraft((current) => ({ ...current, ...patch }));
   }
 
   return (
@@ -312,7 +326,7 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
         <div className="quizOverlay">
           <div
             ref={createGraphModalRef}
-            className="quizModal"
+            className="quizModal workspaceCreateModal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="create-graph-dialog-title"
@@ -376,22 +390,23 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
               </label>
               {createGraphError ? <div className="inlineNotice inlineNoticeError">{createGraphError}</div> : null}
               <div className="quizActions">
-                <button
-                  className="btn btnImport"
-                  onClick={openImportGraphModal}
-                  type="button"
-                >
-                  <UploadSimple size={14} weight="bold" />
-                  <span>{copy.dialogs.importFromDisk}</span>
-                </button>
-                <button
-                  className="btn btnImport"
-                  onClick={openImportObsidianModal}
-                  type="button"
-                >
-                  <ObsidianMark />
-                  <span>{copy.dialogs.importFromObsidian}</span>
-                </button>
+                <div className="quizActionsGroup">
+                  <button
+                    className="btn btnImport"
+                    onClick={openImportObsidianModal}
+                    type="button"
+                  >
+                    <span>{copy.dialogs.importFromObsidian}</span>
+                  </button>
+                  <button
+                    className="btn btnImport"
+                    onClick={openImportGraphModal}
+                    type="button"
+                  >
+                    <UploadSimple size={14} weight="bold" />
+                    <span>{copy.dialogs.importFromDisk}</span>
+                  </button>
+                </div>
                 <button
                   className="assistantSendButton quizSubmitButton"
                   disabled={createGraphLoading || !createGraphDraft.title.trim() || !createGraphDraft.subject.trim()}
@@ -497,7 +512,7 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
         <div className="quizOverlay">
           <div
             ref={importObsidianModalRef}
-            className="quizModal quizModalWide"
+            className="quizModal quizModalWide obsidianImportModal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="import-obsidian-dialog-title"
@@ -528,11 +543,11 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
                   type="button"
                   onClick={() => importObsidianFolderInputRef.current?.click()}
                 >
-                  <ObsidianMark />
                   <span>{copy.dialogs.chooseVaultFolder}</span>
                 </button>
-                <div className={`inlineNotice ${obsidianVaultName ? "inlineNoticeSuccess" : "inlineNoticeWarn"}`}>
-                  {obsidianVaultName ?? copy.dialogs.noVaultChosen}
+                <div className={`obsidianVaultSummary ${obsidianVaultName ? "obsidianVaultSummaryReady" : "obsidianVaultSummaryEmpty"}`}>
+                  <span className="obsidianVaultSummaryLabel">{copy.dialogs.obsidianVault}</span>
+                  <strong className="obsidianVaultSummaryValue">{obsidianVaultName ?? copy.dialogs.noVaultChosen}</strong>
                 </div>
               </div>
 
@@ -592,6 +607,7 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
                         <option value="extends">{copy.dialogs.obsidianRelationOptions.extends}</option>
                         <option value="reviews">{copy.dialogs.obsidianRelationOptions.reviews}</option>
                       </select>
+                      <span className="mutedSmall">{copy.dialogs.obsidianRelationHelp}</span>
                     </label>
                   </div>
 
@@ -664,15 +680,11 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
 
                   {obsidianImportPreview ? (
                     <>
-                      <div className={`inlineNotice ${obsidianErrors.length > 0 ? "inlineNoticeError" : "inlineNoticeNeutral"}`}>
-                        {obsidianErrors.length > 0
-                          ? copy.dialogs.obsidianImportBlocked
-                          : copy.dialogs.obsidianImportReady(
-                              obsidianImportPreview.topicCount,
-                              obsidianImportPreview.edgeCount,
-                              obsidianImportPreview.zoneCount,
-                            )}
-                      </div>
+                      {obsidianErrors.length > 0 ? (
+                        <div className="inlineNotice inlineNoticeError">
+                          {copy.dialogs.obsidianImportBlocked}
+                        </div>
+                      ) : null}
                       <div className="obsidianPreviewStats">
                         <div className="previewStatCard">
                           <strong>{obsidianImportPreview.noteCount}</strong>
@@ -687,23 +699,20 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
                           <span>{copy.dialogs.obsidianErrorsCount}</span>
                         </div>
                       </div>
-                      <div className="stack" style={{ gap: 8 }}>
-                        <div className="fieldLabel">{copy.dialogs.obsidianIssues}</div>
-                        {obsidianIssues.length === 0 ? (
-                          <div className="inlineNotice inlineNoticeSuccess">{copy.dialogs.obsidianNoIssues}</div>
-                        ) : (
-                          <div className="obsidianIssueList">
-                            {obsidianIssues.map((issue, index) => (
-                              <div
-                                key={`${issue.code}-${index}`}
-                                className={`inlineNotice ${issue.level === "error" ? "inlineNoticeError" : "inlineNoticeWarn"}`}
-                              >
-                                {issue.message}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      {obsidianIssues.length === 0 ? (
+                        <div className="inlineNotice inlineNoticeSuccess">{copy.dialogs.obsidianNoIssues}</div>
+                      ) : (
+                        <div className="obsidianIssueList">
+                          {obsidianIssues.map((issue, index) => (
+                            <div
+                              key={`${issue.code}-${index}`}
+                              className={`inlineNotice ${issue.level === "error" ? "inlineNoticeError" : "inlineNoticeWarn"}`}
+                            >
+                              {issue.message}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </>
                   ) : null}
                 </>
@@ -735,7 +744,7 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
         <div className="quizOverlay">
           <div
             ref={exportGraphModalRef}
-            className="quizModal"
+            className="quizModal exportGraphModal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="export-graph-dialog-title"
@@ -760,14 +769,73 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
                   placeholder={copy.dialogs.exportTitlePlaceholder}
                 />
               </label>
-              <label className="settingsToggle">
+              <label className="field">
+                <span className="fieldLabel">{copy.dialogs.exportFormat}</span>
+                <select
+                  className="input"
+                  value={exportGraphFormatDraft}
+                  onChange={(event) => setExportGraphFormatDraft(event.target.value as GraphExportFormat)}
+                >
+                  <option value="mapmind_graph_export">{copy.dialogs.exportFormatMapMind}</option>
+                  <option value="mapmind_obsidian_export">{copy.dialogs.exportFormatObsidian}</option>
+                </select>
+              </label>
+              <label className="settingsToggleRow exportSettingsToggleRow">
                 <input
                   type="checkbox"
                   checked={exportGraphIncludeProgressDraft}
                   onChange={(event) => setExportGraphIncludeProgressDraft(event.target.checked)}
                 />
-                <span>{copy.dialogs.includeOwnProgress}</span>
+                <div className="settingsToggleCopy">
+                  <strong>{copy.dialogs.includeOwnProgress}</strong>
+                </div>
               </label>
+              {exportGraphFormatDraft === "mapmind_obsidian_export" ? (
+                <div className="obsidianSettingsGrid exportSettingsGrid">
+                  <label className="settingsToggleRow exportSettingsToggleRow">
+                    <input
+                      type="checkbox"
+                      checked={exportGraphObsidianOptionsDraft.use_folders_as_zones}
+                      onChange={(event) => patchObsidianExportOptions({ use_folders_as_zones: event.target.checked })}
+                    />
+                    <div className="settingsToggleCopy">
+                      <strong>{copy.dialogs.obsidianUseFoldersAsZones}</strong>
+                      <span>{copy.dialogs.obsidianUseFoldersAsZonesHelp}</span>
+                    </div>
+                  </label>
+                  <label className="settingsToggleRow exportSettingsToggleRow">
+                    <input
+                      type="checkbox"
+                      checked={exportGraphObsidianOptionsDraft.include_descriptions}
+                      onChange={(event) => patchObsidianExportOptions({ include_descriptions: event.target.checked })}
+                    />
+                    <div className="settingsToggleCopy">
+                      <strong>{copy.dialogs.obsidianIncludeDescriptions}</strong>
+                    </div>
+                  </label>
+                  <label className="settingsToggleRow exportSettingsToggleRow">
+                    <input
+                      type="checkbox"
+                      checked={exportGraphObsidianOptionsDraft.include_resources}
+                      onChange={(event) => patchObsidianExportOptions({ include_resources: event.target.checked })}
+                    />
+                    <div className="settingsToggleCopy">
+                      <strong>{copy.dialogs.obsidianIncludeResources}</strong>
+                    </div>
+                  </label>
+                  <label className="settingsToggleRow exportSettingsToggleRow">
+                    <input
+                      type="checkbox"
+                      checked={exportGraphObsidianOptionsDraft.include_artifacts}
+                      onChange={(event) => patchObsidianExportOptions({ include_artifacts: event.target.checked })}
+                    />
+                    <div className="settingsToggleCopy">
+                      <strong>{copy.dialogs.obsidianIncludeArtifacts}</strong>
+                    </div>
+                  </label>
+                </div>
+              ) : null}
+              {exportGraphFormatDraft === "mapmind_obsidian_export" ? <div className="mutedSmall exportGraphHint">{copy.dialogs.obsidianExportHint}</div> : null}
               {exportGraphError ? <div className="inlineNotice inlineNoticeError">{exportGraphError}</div> : null}
               <div className="quizActions quizActionsRight">
                 <button className="btn btnGhost" onClick={closeExportGraphModal} type="button">{copy.dialogs.cancel}</button>
@@ -858,13 +926,5 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
         </div>
       ) : null}
     </>
-  );
-}
-
-function ObsidianMark(): React.JSX.Element {
-  return (
-    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
-      <path d="M15.16 2.23c-1.08-.63-2.57-.18-3.08.96L7.04 12.1c-.24.42-.45.6-.86.78-1.86.82-3.02 2.54-3.02 4.5 0 2.66 2.18 4.62 5.08 4.62 1.83 0 3.46-.8 4.44-2.17l6.12-8.53c1.58-2.2.84-5.63-1.61-7.06L15.16 2.23Zm-3.58 13.13c.51.29.69.94.4 1.45l-.56.98c-.57.99-1.66 1.58-2.93 1.58-1.58 0-2.67-.95-2.67-2.3 0-.95.5-1.72 1.38-2.13.78-.36 1.32-.86 1.78-1.66l3.54-6.17c.29-.51.94-.69 1.45-.4.51.29.69.94.4 1.45l-3.54 6.17c-.51.88-.75 1.2-1.25 1.59l.31.18Zm5.3-5.47-4.31 6c-.29.41-.87.51-1.29.22-.41-.3-.51-.87-.22-1.29l4.31-6c.65-.91.39-2.36-.56-2.91l-.45-.26c-.44-.25-.59-.81-.34-1.25.25-.44.81-.59 1.25-.34l.45.26c2.04 1.19 2.57 4.01 1.16 5.97Z" />
-    </svg>
   );
 }

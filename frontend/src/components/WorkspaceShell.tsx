@@ -22,7 +22,7 @@ import { formatMinutes, formatTopicState } from "../lib/graph";
 import { useModalAccessibility } from "../lib/useModalAccessibility";
 import { GraphCanvas } from "./GraphCanvas";
 import type { TopicAnchorPoint } from "./GraphCanvas";
-import { LightChatWindow, LightWorkspaceWindow, TopicAssetModal } from "./WorkspaceShellAuxWindows";
+import { AssistantModelMenuTrigger, LightChatWindow, LightWorkspaceWindow, TopicAssetModal } from "./WorkspaceShellAuxWindows";
 import { GraphStatItems, OverlayControls } from "./WorkspaceShellOverlayControls";
 import type {
   Artifact,
@@ -169,6 +169,9 @@ type WorkspaceShellProps = {
   setSessionDeleteConfirm: StateSetter<{ sessionId: string; title: string } | null>;
   applyError: string | null;
   assistantTemplates: AssistantTemplate[];
+  chatModelOptions: string[];
+  selectedChatModel: string | null;
+  setSelectedChatModel: StateSetter<string | null>;
   composerUseGrounding: boolean;
   setComposerUseGrounding: StateSetter<boolean>;
   chatComposerRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -179,6 +182,7 @@ type WorkspaceShellProps = {
   debugModeEnabled: boolean;
   themeMode: ThemeMode;
   setThemeMode: StateSetter<ThemeMode>;
+  overlayRestoreEpoch: number;
 };
 
 export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
@@ -288,6 +292,9 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     setSessionDeleteConfirm,
     applyError,
     assistantTemplates,
+    chatModelOptions,
+    selectedChatModel,
+    setSelectedChatModel,
     composerUseGrounding,
     setComposerUseGrounding,
     chatComposerRef,
@@ -298,6 +305,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     debugModeEnabled,
     themeMode,
     setThemeMode,
+    overlayRestoreEpoch,
   } = props;
   const experimentalLightDesktop = !isMobileViewport;
   const shellSurfaceRef = React.useRef<HTMLDivElement | null>(null);
@@ -317,6 +325,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const lightDesktopLayoutInitializedRef = React.useRef(false);
   const prevLightWorkspacePanelOpenRef = React.useRef(false);
   const prevLightChatPanelOpenRef = React.useRef(false);
+  const lastOverlayRestoreEpochRef = React.useRef(overlayRestoreEpoch);
   const [dockPosition, setDockPosition] = React.useState<FloatingWindowPosition>(() => storedLightDesktopLayout?.dock ?? { x: 18, y: 82 });
   const [workspaceWindowPosition, setWorkspaceWindowPosition] = React.useState<FloatingWindowPosition>(() => storedLightDesktopLayout?.workspace ?? { x: 92, y: 86 });
   const [chatWindowPosition, setChatWindowPosition] = React.useState<FloatingWindowPosition>(() => storedLightDesktopLayout?.chat ?? { x: 0, y: 84 });
@@ -459,9 +468,11 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     if (!experimentalLightDesktop) return;
     const workspaceJustOpened = lightWorkspacePanelOpen && !prevLightWorkspacePanelOpenRef.current;
     const chatJustOpened = lightChatPanelOpen && !prevLightChatPanelOpenRef.current;
-    if (workspaceJustOpened || chatJustOpened) {
+    const restoredFromOverlay = overlayRestoreEpoch !== lastOverlayRestoreEpochRef.current;
+    if ((workspaceJustOpened || chatJustOpened) && !restoredFromOverlay) {
       applyCanonicalLightDesktopLayout();
     }
+    lastOverlayRestoreEpochRef.current = overlayRestoreEpoch;
     prevLightWorkspacePanelOpenRef.current = lightWorkspacePanelOpen;
     prevLightChatPanelOpenRef.current = lightChatPanelOpen;
   }, [
@@ -469,6 +480,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     experimentalLightDesktop,
     lightChatPanelOpen,
     lightWorkspacePanelOpen,
+    overlayRestoreEpoch,
   ]);
 
   React.useLayoutEffect(() => {
@@ -701,6 +713,9 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       composerUseGrounding={composerUseGrounding}
       setComposerUseGrounding={setComposerUseGrounding}
       assistantTemplates={assistantTemplates}
+      chatModelOptions={chatModelOptions}
+      selectedChatModel={selectedChatModel}
+      setSelectedChatModel={setSelectedChatModel}
       sendChat={sendChat}
     />
   ) : null;
@@ -1345,8 +1360,16 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
             />
             <div className="assistantDockHeader">
               <div>
-                <div className="assistantDockTitle">
-                  {activeSession?.title ?? copy.sessions.assistantTitle}
+                <div className="assistantDockTitleRow">
+                  <div className="assistantDockTitle">
+                    {activeSession?.title ?? copy.sessions.assistantTitle}
+                  </div>
+                  <AssistantModelMenuTrigger
+                    options={chatModelOptions}
+                    selectedModel={selectedChatModel}
+                    setSelectedModel={setSelectedChatModel}
+                    ariaLabel={copy.sessions.modelPicker}
+                  />
                 </div>
                 <div className="assistantDockSubtle">
                   {activeSession?.topic_id
@@ -1509,10 +1532,9 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                             </div>
                           );
                         })() : null}
-                        {message.role === "assistant" ? (
+                        {message.role === "assistant" && message.fallback_used ? (
                           <div className="chatMetaRow">
-                            {message.model ? <span className="badge badge-gray">{message.model}</span> : null}
-                            {message.fallback_used ? <span className="badge badge-yellow">{copy.sessions.fallbackUsed}</span> : null}
+                            <span className="badge badge-yellow">{copy.sessions.fallbackUsed}</span>
                           </div>
                         ) : null}
                         {message.planning_status ? (
@@ -1683,7 +1705,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                       <path d="M12 2a10 10 0 0 1 10 10"></path>
                     </svg>
                   ) : (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 19V5"></path>
                       <path d="M5 12L12 5L19 12"></path>
                     </svg>

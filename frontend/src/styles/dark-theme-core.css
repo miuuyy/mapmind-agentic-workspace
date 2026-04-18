@@ -195,7 +195,7 @@
 }
 
 :root[data-theme="dark"] .topicAssetModalBody {
-  gap: 12px !important;
+  gap: 8px !important;
 }
 
 :root[data-theme="dark"] .topicAssetField {
@@ -1614,4 +1614,12 @@
   padding-left: 16px !important;
   padding-right: 16px !important;
   text-indent: 0 !important;
+}
+
+:root[data-theme="dark"] .quizModal.exportGraphModal .quizModalHeader {
+  padding: 22px 18px 12px !important;
+}
+
+:root[data-theme="dark"] .quizModal.exportGraphModal .quizModalBody {
+  padding: 0 0 18px !important;
 }
