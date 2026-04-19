@@ -98,6 +98,8 @@ import type {
   WorkspaceEnvelope,
 } from "./lib/types";
 
+const ACTIVE_GRAPH_STORAGE_KEY = "knowledge_graph_active_graph_v1";
+
 function defaultObsidianExportOptions(): ObsidianExportOptions {
   return {
     use_folders_as_zones: true,
@@ -164,7 +166,14 @@ export default function App(): React.JSX.Element {
   const [renamingGraphId, setRenamingGraphId] = useState<string | null>(null);
   const [renameGraphDraft, setRenameGraphDraft] = useState("");
   const [renameGraphSaving, setRenameGraphSaving] = useState(false);
-  const [activeGraphId, setActiveGraphId] = useState<string | null>(null);
+  const [activeGraphId, setActiveGraphId] = useState<string | null>(() => {
+    try {
+      const raw = localStorage.getItem(ACTIVE_GRAPH_STORAGE_KEY);
+      return raw && raw.trim() ? raw : null;
+    } catch {
+      return null;
+    }
+  });
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [selectedTopicAnchor, setSelectedTopicAnchor] = useState<TopicAnchorPoint | null>(null);
   const [popoverPosition, setPopoverPosition] = useState<PopoverPosition | null>(null);
@@ -204,6 +213,7 @@ export default function App(): React.JSX.Element {
   const [orchestratorMaxTokensDraft, setOrchestratorMaxTokensDraft] = useState(16384);
   const [quizMaxTokensDraft, setQuizMaxTokensDraft] = useState(4096);
   const [assistantMaxTokensDraft, setAssistantMaxTokensDraft] = useState(800);
+  const [assistantNicknameDraft, setAssistantNicknameDraft] = useState("");
   const [disableIdleAnimationsDraft, setDisableIdleAnimationsDraft] = useState(false);
   const [enableClosureTestsDraft, setEnableClosureTestsDraft] = useState(true);
   const [debugModeEnabledDraft, setDebugModeEnabledDraft] = useState(false);
@@ -366,6 +376,18 @@ export default function App(): React.JSX.Element {
   });
 
   useEffect(() => {
+    try {
+      if (activeGraphId) {
+        localStorage.setItem(ACTIVE_GRAPH_STORAGE_KEY, activeGraphId);
+      } else {
+        localStorage.removeItem(ACTIVE_GRAPH_STORAGE_KEY);
+      }
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [activeGraphId]);
+
+  useEffect(() => {
     const input = importObsidianFolderInputRef.current;
     if (!input) return;
     input.setAttribute("webkitdirectory", "");
@@ -521,6 +543,7 @@ export default function App(): React.JSX.Element {
     setOrchestratorMaxTokensDraft(c.orchestrator_max_output_tokens);
     setQuizMaxTokensDraft(c.quiz_max_output_tokens);
     setAssistantMaxTokensDraft(c.assistant_max_output_tokens);
+    setAssistantNicknameDraft(c.assistant_nickname ?? "");
     setDisableIdleAnimationsDraft(c.disable_idle_animations ?? false);
     setEnableClosureTestsDraft(c.enable_closure_tests ?? true);
     setDebugModeEnabledDraft(c.debug_mode_enabled ?? false);
@@ -691,6 +714,7 @@ export default function App(): React.JSX.Element {
           memoryIncludeSelectedTopicContextDraft !== (currentConfig.memory_include_selected_topic_context ?? true)
         )
       ) ||
+      assistantNicknameDraft !== (currentConfig.assistant_nickname ?? "") ||
       disableIdleAnimationsDraft !== (currentConfig.disable_idle_animations ?? false) ||
       enableClosureTestsDraft !== (currentConfig.enable_closure_tests ?? true) ||
       debugModeEnabledDraft !== (currentConfig.debug_mode_enabled ?? false) ||
@@ -1292,6 +1316,7 @@ export default function App(): React.JSX.Element {
     orchestrator_max_output_tokens?: number;
     quiz_max_output_tokens?: number;
     assistant_max_output_tokens?: number;
+    assistant_nickname?: string;
     disable_idle_animations?: boolean;
     persona_rules?: string;
     quiz_question_count?: number;
@@ -1345,6 +1370,7 @@ export default function App(): React.JSX.Element {
       if (quizMaxTokensDraft !== currentConfig.quiz_max_output_tokens) patch.quiz_max_output_tokens = quizMaxTokensDraft;
       if (assistantMaxTokensDraft !== currentConfig.assistant_max_output_tokens) patch.assistant_max_output_tokens = assistantMaxTokensDraft;
     }
+    if (assistantNicknameDraft !== (currentConfig.assistant_nickname ?? "")) patch.assistant_nickname = assistantNicknameDraft;
     if (memoryModeDraft === "custom") {
       if (memoryHistoryLimitDraft !== (currentConfig.memory_history_message_limit ?? 32)) patch.memory_history_message_limit = memoryHistoryLimitDraft;
       if (memoryIncludeGraphContextDraft !== (currentConfig.memory_include_graph_context ?? true)) patch.memory_include_graph_context = memoryIncludeGraphContextDraft;
@@ -1829,6 +1855,7 @@ export default function App(): React.JSX.Element {
         openConfigurationSettings={openConfigurationSettings}
         openDebugLogs={toggleDebugLogs}
         isLogsOpen={isLogsOpen}
+        modalSurfaceLocked={isSettingsOpen || isLogsOpen}
         isMobileViewport={isMobileViewport}
         leftSidebarOpen={leftSidebarOpen}
         openSidebar={openSidebar}
@@ -1944,6 +1971,7 @@ export default function App(): React.JSX.Element {
           orchestratorMaxTokens: orchestratorMaxTokensDraft,
           quizMaxTokens: quizMaxTokensDraft,
           assistantMaxTokens: assistantMaxTokensDraft,
+          assistantNickname: assistantNicknameDraft,
           persona: personaDraft,
           disableIdleAnimations: disableIdleAnimationsDraft,
           memoryMode: memoryModeDraft,
@@ -1974,6 +2002,7 @@ export default function App(): React.JSX.Element {
           orchestratorMaxTokens: setOrchestratorMaxTokensDraft,
           quizMaxTokens: setQuizMaxTokensDraft,
           assistantMaxTokens: setAssistantMaxTokensDraft,
+          assistantNickname: setAssistantNicknameDraft,
           persona: setPersonaDraft,
           disableIdleAnimations: setDisableIdleAnimationsDraft,
           memoryMode: setMemoryModeDraft,

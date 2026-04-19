@@ -429,6 +429,7 @@ export function LightChatWindow({
   chatWindowPosition,
   assistantWidth,
   beginFloatingDrag,
+  assistantDisplayName,
   activeSession,
   selectedTopic,
   activeGraph,
@@ -469,6 +470,7 @@ export function LightChatWindow({
   chatWindowPosition: { x: number; y: number };
   assistantWidth: number;
   beginFloatingDrag: (target: "chat", event: React.PointerEvent<HTMLElement>) => void;
+  assistantDisplayName: string;
   activeSession: ChatSessionSummary | null;
   selectedTopic: { id: string; title: string } | null;
   activeGraph: GraphEnvelope | null;
@@ -518,7 +520,7 @@ export function LightChatWindow({
       <div className="lightFloatingWindowHeader" onPointerDown={(event) => beginFloatingDrag("chat", event)}>
         <div>
           <div className="assistantDockTitleRow">
-            <div className="lightFloatingWindowTitle">{activeSession?.title ?? copy.sessions.assistantTitle}</div>
+            <div className="lightFloatingWindowTitle">{assistantDisplayName}</div>
             <AssistantModelMenuTrigger
               options={chatModelOptions}
               selectedModel={selectedChatModel}
@@ -662,7 +664,7 @@ export function LightChatWindow({
                                   }));
                                 }}
                               >
-                                {choice}
+                                {renderDisplayText(choice)}
                               </button>
                             );
                           })}

@@ -391,6 +391,7 @@ export type WorkspaceConfig = {
   disable_idle_animations: boolean;
   thinking_mode: "low" | "default" | "custom";
   memory_mode: "balanced" | "max" | "custom";
+  assistant_nickname: string;
   persona_rules: string;
   quiz_question_count: number;
   pass_threshold: number;

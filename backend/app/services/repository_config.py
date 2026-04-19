@@ -65,6 +65,10 @@ def apply_workspace_config_update(workspace: WorkspaceDocument, request: UpdateW
             workspace.config.memory_include_selected_topic_context = bool(memory_preset["memory_include_selected_topic_context"])
         reasons.append(f"memory mode {request.memory_mode}")
 
+    if request.assistant_nickname is not None:
+        workspace.config.assistant_nickname = request.assistant_nickname.strip()
+        reasons.append("assistant nickname updated")
+
     if request.persona_rules is not None:
         workspace.config.persona_rules = request.persona_rules.strip()
         reasons.append("persona rules updated")

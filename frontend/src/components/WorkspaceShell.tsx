@@ -39,7 +39,8 @@ import type {
 
 type StateSetter<T> = React.Dispatch<React.SetStateAction<T>>;
 
-const noop = () => {};
+  const noop = () => {};
+  const LIGHT_WORKSPACE_EXPANDED_GRAPH_STORAGE_KEY = "knowledge_graph_light_workspace_expanded_graph_v1";
 
 type GraphSummary = {
   topicCount: number;
@@ -89,6 +90,7 @@ type WorkspaceShellProps = {
   openConfigurationSettings: () => void;
   openDebugLogs: () => void;
   isLogsOpen: boolean;
+  modalSurfaceLocked: boolean;
   isMobileViewport: boolean;
   leftSidebarOpen: boolean;
   openSidebar: () => void;
@@ -212,6 +214,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     openConfigurationSettings,
     openDebugLogs,
     isLogsOpen,
+    modalSurfaceLocked,
     isMobileViewport,
     leftSidebarOpen,
     openSidebar,
@@ -307,6 +310,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     setThemeMode,
     overlayRestoreEpoch,
   } = props;
+  const assistantDisplayName = data?.workspace.config.assistant_nickname?.trim() || copy.sessions.assistantTitle;
   const experimentalLightDesktop = !isMobileViewport;
   const shellSurfaceRef = React.useRef<HTMLDivElement | null>(null);
   const dockRef = React.useRef<HTMLDivElement | null>(null);
@@ -329,7 +333,14 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const [dockPosition, setDockPosition] = React.useState<FloatingWindowPosition>(() => storedLightDesktopLayout?.dock ?? { x: 18, y: 82 });
   const [workspaceWindowPosition, setWorkspaceWindowPosition] = React.useState<FloatingWindowPosition>(() => storedLightDesktopLayout?.workspace ?? { x: 92, y: 86 });
   const [chatWindowPosition, setChatWindowPosition] = React.useState<FloatingWindowPosition>(() => storedLightDesktopLayout?.chat ?? { x: 0, y: 84 });
-  const [lightWorkspaceExpandedGraphId, setLightWorkspaceExpandedGraphId] = React.useState<string | null>(null);
+  const [lightWorkspaceExpandedGraphId, setLightWorkspaceExpandedGraphId] = React.useState<string | null>(() => {
+    try {
+      const stored = localStorage.getItem(LIGHT_WORKSPACE_EXPANDED_GRAPH_STORAGE_KEY);
+      return stored && stored.trim() ? stored : null;
+    } catch {
+      return null;
+    }
+  });
   const showMobileOverlay = isMobileViewport && !isSettingsOpen;
   const showCompactDesktopOverlay = topOverlayCompact && !isMobileViewport && !isSettingsOpen;
   const showInlineDesktopOverlay = !topOverlayCompact && !isMobileViewport && !isSettingsOpen;
@@ -466,10 +477,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
 
   React.useLayoutEffect(() => {
     if (!experimentalLightDesktop) return;
-    const workspaceJustOpened = lightWorkspacePanelOpen && !prevLightWorkspacePanelOpenRef.current;
-    const chatJustOpened = lightChatPanelOpen && !prevLightChatPanelOpenRef.current;
     const restoredFromOverlay = overlayRestoreEpoch !== lastOverlayRestoreEpochRef.current;
-    if ((workspaceJustOpened || chatJustOpened) && !restoredFromOverlay) {
+    if (restoredFromOverlay) {
       applyCanonicalLightDesktopLayout();
     }
     lastOverlayRestoreEpochRef.current = overlayRestoreEpoch;
@@ -585,6 +594,26 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     setLightWorkspaceExpandedGraphId((current) => current ?? activeGraph.graph_id);
   }, [activeGraph?.graph_id, experimentalLightDesktop]);
 
+  React.useEffect(() => {
+    if (!experimentalLightDesktop) return;
+    if (!lightWorkspaceExpandedGraphId) return;
+    if (availableGraphs.some((graph) => graph.graph_id === lightWorkspaceExpandedGraphId)) return;
+    setLightWorkspaceExpandedGraphId(activeGraph?.graph_id ?? null);
+  }, [activeGraph?.graph_id, availableGraphs, experimentalLightDesktop, lightWorkspaceExpandedGraphId]);
+
+  React.useEffect(() => {
+    if (!experimentalLightDesktop) return;
+    try {
+      if (lightWorkspaceExpandedGraphId) {
+        localStorage.setItem(LIGHT_WORKSPACE_EXPANDED_GRAPH_STORAGE_KEY, lightWorkspaceExpandedGraphId);
+      } else {
+        localStorage.removeItem(LIGHT_WORKSPACE_EXPANDED_GRAPH_STORAGE_KEY);
+      }
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [experimentalLightDesktop, lightWorkspaceExpandedGraphId]);
+
   function openTopicAssetDialog(kind: "resource" | "artifact"): void {
     if (!selectedTopic) return;
     setTopicAssetDialog({ kind, topicId: selectedTopic.id, topicTitle: selectedTopic.title });
@@ -618,21 +647,21 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   }
 
   const toggleExperimentalWorkspaceWindow = (): void => {
+    if (modalSurfaceLocked) return;
     if (leftSidebarOpen) {
       closeSidebar();
       return;
     }
-    applyCanonicalLightDesktopLayout();
     openSidebar();
   };
 
   const toggleExperimentalChatWindow = (): void => {
+    if (modalSurfaceLocked) return;
     if (assistantOpen) {
       setAssistantWidth(0);
       return;
     }
     setAssistantWidth((current) => (current < ASSISTANT_MIN_WIDTH ? 390 : current));
-    applyCanonicalLightDesktopLayout();
   };
 
   const lightWorkspaceWindow = lightWorkspacePanelOpen ? (
@@ -682,6 +711,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       chatWindowPosition={chatWindowPosition}
       assistantWidth={assistantWidth}
       beginFloatingDrag={beginFloatingDrag}
+      assistantDisplayName={assistantDisplayName}
       activeSession={activeSession}
       selectedTopic={selectedTopic}
       activeGraph={activeGraph}
@@ -1362,7 +1392,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
               <div>
                 <div className="assistantDockTitleRow">
                   <div className="assistantDockTitle">
-                    {activeSession?.title ?? copy.sessions.assistantTitle}
+                    {assistantDisplayName}
                   </div>
                   <AssistantModelMenuTrigger
                     options={chatModelOptions}
@@ -1524,7 +1554,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                                         }));
                                       }}
                                     >
-                                      {choice}
+                                      {renderDisplayText(choice)}
                                     </button>
                                   );
                                 })}
@@ -1728,6 +1758,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   className={`lightDockButton ${lightWorkspacePanelOpen ? "lightDockButtonActive" : ""}`}
                   onClick={toggleExperimentalWorkspaceWindow}
                   title={copy.shell.workspace}
+                  disabled={modalSurfaceLocked}
                   type="button"
                 >
                   <SquaresFour size={28} weight={dockIconWeight} />
@@ -1736,6 +1767,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   className={`lightDockButton ${lightChatPanelOpen ? "lightDockButtonActive" : ""}`}
                   onClick={toggleExperimentalChatWindow}
                   title={copy.shell.chat}
+                  disabled={modalSurfaceLocked}
                   type="button"
                 >
                   <ChatCircleDots size={28} weight={dockIconWeight} />
@@ -1773,7 +1805,9 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
               <button
                 className={`mobileDockItem mobileDockItemChat ${assistantOpen ? "mobileDockItemActive" : ""}`}
                 type="button"
+                disabled={modalSurfaceLocked}
                 onClick={() => {
+                  if (modalSurfaceLocked) return;
                   setMobileMenuOpen(false);
                   setAssistantWidth((current) => {
                     const opening = current < ASSISTANT_MIN_WIDTH;
@@ -1790,7 +1824,11 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
             <button
               className={`mobileDockItem ${mobileMenuOpen ? "mobileDockItemActive" : ""}`}
               type="button"
-              onClick={() => setMobileMenuOpen((current) => !current)}
+              disabled={modalSurfaceLocked}
+              onClick={() => {
+                if (modalSurfaceLocked) return;
+                setMobileMenuOpen((current) => !current);
+              }}
             >
               <span className="mobileDockLabel">{copy.shell.menu}</span>
             </button>

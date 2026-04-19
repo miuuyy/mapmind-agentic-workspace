@@ -34,6 +34,15 @@
   display: none !important;
 }
 
+:root[data-theme="dark"] .topicPopover {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+:root[data-theme="dark"] .topicPopover::-webkit-scrollbar {
+  display: none !important;
+}
+
 :root[data-theme="dark"] .settingsContentHeader,
 :root[data-theme="dark"] .settingsPanelHeader {
   border-bottom: 0 !important;
@@ -1284,7 +1293,58 @@
 :root[data-theme="dark"] .lightWorkspaceFolderAction {
   width: 28px !important;
   height: 28px !important;
-  border-radius: 10px !important;
+  border-radius: 999px !important;
+}
+
+:root[data-theme="dark"] .assistantHello {
+  min-height: 204px !important;
+  gap: 11px !important;
+  padding: 18px 12px 8px !important;
+}
+
+:root[data-theme="dark"] .assistantHelloCopy {
+  line-height: 1.5 !important;
+  max-width: 30ch !important;
+}
+
+:root[data-theme="dark"] .lightChatWindow .lightFloatingWindowHeader {
+  position: relative !important;
+  z-index: 12 !important;
+}
+
+:root[data-theme="dark"] .lightChatWindow .assistantDockTitleRow,
+:root[data-theme="dark"] .lightChatWindow .assistantInlineModelTrigger {
+  position: relative !important;
+  z-index: 14 !important;
+}
+
+:root[data-theme="dark"] .lightChatWindow .sessionListWrap {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+:root[data-theme="dark"] .lightChatWindow .assistantModelMenu {
+  left: 0 !important;
+  right: auto !important;
+  top: calc(100% + 8px) !important;
+  min-width: 180px !important;
+  max-width: min(240px, calc(100vw - 48px)) !important;
+  z-index: 30 !important;
+}
+
+:root[data-theme="dark"] .quizModal.confirmModal {
+  background: #0a0a0b !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="dark"] .quizModal.confirmModal .quizModalHeader,
+:root[data-theme="dark"] .quizModal.confirmModal .quizModalBody {
+  background: #0a0a0b !important;
+}
+
+:root[data-theme="dark"] .quizModal.confirmModal .quizModalHeader::after {
+  display: none !important;
 }
 
 :root[data-theme="dark"] .lightWorkspaceTopicList {
@@ -1622,4 +1682,51 @@
 
 :root[data-theme="dark"] .quizModal.exportGraphModal .quizModalBody {
   padding: 0 0 18px !important;
+}
+
+/* Final dark chat/delete cleanup */
+:root[data-theme="dark"] .quizOverlay.confirmOverlay {
+  background: rgba(0, 0, 0, 0.28) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="dark"] .quizModal.confirmModal,
+:root[data-theme="dark"] .quizModal.confirmModal .quizModalHeader,
+:root[data-theme="dark"] .quizModal.confirmModal .quizModalBody {
+  background: #0a0a0b !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="dark"] .quizModal.confirmModal .quizModalBody p {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="dark"] .assistantHello {
+  min-height: 220px !important;
+  gap: 12px !important;
+  padding: 20px 12px 8px !important;
+}
+
+:root[data-theme="dark"] .assistantHelloTitle {
+  font-size: 36px !important;
+  line-height: 1.02 !important;
+  letter-spacing: -0.01em !important;
+  font-weight: 520 !important;
+}
+
+:root[data-theme="dark"] .assistantHelloCopy {
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+  max-width: 30ch !important;
+}
+
+:root[data-theme="dark"] .lightChatWindow .assistantModelMenu {
+  background: #0a0a0b !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  opacity: 1 !important;
 }

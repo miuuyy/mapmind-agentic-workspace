@@ -136,6 +136,18 @@ def _workspace_config_payload(envelope, settings: Settings) -> dict:
     return payload
 
 
+def _assistant_persona_rules(workspace_config) -> str:
+    base_rules = (workspace_config.persona_rules or "").strip()
+    nickname = (getattr(workspace_config, "assistant_nickname", "") or "").strip()
+    if not nickname:
+        return base_rules
+    nickname_rule = (
+        f"Your nickname in this workspace is '{nickname}'. "
+        "If the learner refers to you by name, respond to this nickname naturally."
+    )
+    return f"{nickname_rule}\n{base_rules}" if base_rules else nickname_rule
+
+
 def _resource_label_from_url(url: str) -> str:
     parsed = urlparse(url.strip())
     host = parsed.netloc.replace("www.", "") if parsed.netloc else ""
@@ -700,7 +712,7 @@ def graph_study_assistant(
         graph = repository.graph(graph_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"graph {graph_id} not found") from exc
-    persona_rules = repository.current().workspace.config.persona_rules
+    persona_rules = _assistant_persona_rules(repository.current().workspace.config)
     try:
         return assistant.answer(graph, request, persona_rules=persona_rules).model_dump(mode="json")
     except StudyAssistantError as exc:
@@ -794,7 +806,7 @@ def graph_chat(
         use_grounding=request.use_grounding,
     )
     workspace_config = repository.current().workspace.config
-    persona_rules = workspace_config.persona_rules
+    persona_rules = _assistant_persona_rules(workspace_config)
     if not orchestrator.has_live_provider():
         raise HTTPException(status_code=503, detail="The selected AI provider is unavailable: missing API key")
     try:
@@ -843,7 +855,7 @@ def graph_chat_stream(
     def event_stream():
         workspace_config = repository.current().workspace.config
         model_name = request.model or workspace_config.default_model
-        persona_rules = workspace_config.persona_rules
+        persona_rules = _assistant_persona_rules(workspace_config)
         user_message = ChatMessage(role="user", content=request.prompt)
         user_message.hidden = request.hidden_user_message
         effective_topic_id = request.selected_topic_id or existing_thread.topic_id

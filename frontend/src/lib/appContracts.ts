@@ -115,6 +115,7 @@ export type SettingsDrafts = {
   orchestratorMaxTokens: number;
   quizMaxTokens: number;
   assistantMaxTokens: number;
+  assistantNickname: string;
   persona: string;
   disableIdleAnimations: boolean;
   memoryMode: MemoryMode;
@@ -146,6 +147,7 @@ export type SettingsDraftSetters = {
   orchestratorMaxTokens: Dispatch<SetStateAction<number>>;
   quizMaxTokens: Dispatch<SetStateAction<number>>;
   assistantMaxTokens: Dispatch<SetStateAction<number>>;
+  assistantNickname: Dispatch<SetStateAction<string>>;
   persona: Dispatch<SetStateAction<string>>;
   disableIdleAnimations: Dispatch<SetStateAction<boolean>>;
   memoryMode: Dispatch<SetStateAction<MemoryMode>>;

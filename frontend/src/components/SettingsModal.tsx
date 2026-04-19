@@ -88,6 +88,7 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
     orchestratorMaxTokens: orchestratorMaxTokensDraft,
     quizMaxTokens: quizMaxTokensDraft,
     assistantMaxTokens: assistantMaxTokensDraft,
+    assistantNickname: assistantNicknameDraft,
     persona: personaDraft,
     disableIdleAnimations: disableIdleAnimationsDraft,
     memoryMode: memoryModeDraft,
@@ -118,6 +119,7 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
     orchestratorMaxTokens: setOrchestratorMaxTokensDraft,
     quizMaxTokens: setQuizMaxTokensDraft,
     assistantMaxTokens: setAssistantMaxTokensDraft,
+    assistantNickname: setAssistantNicknameDraft,
     persona: setPersonaDraft,
     disableIdleAnimations: setDisableIdleAnimationsDraft,
     memoryMode: setMemoryModeDraft,
@@ -380,6 +382,17 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                           </label>
                         </div>
                       ) : null}
+                      <label className="field">
+                        <span className="fieldLabel">{copy.settingsPanel.assistantNickname}</span>
+                        <input
+                          className="input"
+                          value={assistantNicknameDraft}
+                          onChange={(event) => setAssistantNicknameDraft(event.target.value)}
+                          placeholder={copy.settingsPanel.assistantNicknamePlaceholder}
+                          maxLength={80}
+                        />
+                        <span className="mutedSmall">{copy.settingsPanel.assistantNicknameHelp}</span>
+                      </label>
                       <label className="field">
                         <span className="fieldLabel">{copy.settingsPanel.personaRules}</span>
                         <textarea

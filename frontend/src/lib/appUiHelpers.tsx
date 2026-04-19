@@ -106,6 +106,109 @@ function sanitizeDisplayText(value: string): string {
   return lines.join("\n").trim();
 }
 
+const GREEK_SYMBOLS: Record<string, string> = {
+  alpha: "α",
+  beta: "β",
+  gamma: "γ",
+  delta: "δ",
+  epsilon: "ε",
+  theta: "θ",
+  lambda: "λ",
+  mu: "μ",
+  pi: "π",
+  sigma: "σ",
+  phi: "φ",
+  omega: "ω",
+};
+
+const GREEK_WORD_RE = /\b(?:alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|phi|omega)\b/gi;
+const SCRIPTED_TOKEN_RE = /[A-Za-z]+(?:_\{[^}]+\}|_[A-Za-z0-9+\-*/=()]+|\^\{[^}]+\}|\^[A-Za-z0-9+\-*/=()]+)+/g;
+const FRACTION_TOKEN_RE = /(?<!\w)([A-Za-z0-9.]+)\s*\/\s*([A-Za-z0-9.]+)(?!\w)/g;
+const MATHISH_TOKEN_RE = /([A-Za-z]+(?:_\{[^}]+\}|_[A-Za-z0-9+\-*/=()]+|\^\{[^}]+\}|\^[A-Za-z0-9+\-*/=()]+)+)|((?<!\w)[A-Za-z0-9.]+\s*\/\s*[A-Za-z0-9.]+(?!\w))|(\b(?:alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|phi|omega)\b)/gi;
+
+function replaceGreekWords(value: string): string {
+  return value.replace(GREEK_WORD_RE, (token) => GREEK_SYMBOLS[token.toLowerCase()] ?? token);
+}
+
+function renderScriptedToken(token: string, key: string): React.ReactNode {
+  const baseMatch = token.match(/^[A-Za-z]+/);
+  if (!baseMatch) return token;
+  const base = replaceGreekWords(baseMatch[0]);
+  const suffix = token.slice(baseMatch[0].length);
+  const scriptPattern = /(_\{([^}]+)\}|_([A-Za-z0-9+\-*/=()]+)|\^\{([^}]+)\}|\^([A-Za-z0-9+\-*/=()]+))/g;
+  const scripts: React.ReactNode[] = [];
+  let match: RegExpExecArray | null;
+  let scriptIndex = 0;
+  while ((match = scriptPattern.exec(suffix)) !== null) {
+    const isSub = match[0].startsWith("_");
+    const content = replaceGreekWords((match[2] ?? match[3] ?? match[4] ?? match[5] ?? "").trim());
+    if (!content) continue;
+    scripts.push(
+      isSub ? (
+        <sub key={`${key}-sub-${scriptIndex}`} className="richTextSub">
+          {content}
+        </sub>
+      ) : (
+        <sup key={`${key}-sup-${scriptIndex}`} className="richTextSup">
+          {content}
+        </sup>
+      ),
+    );
+    scriptIndex += 1;
+  }
+  return (
+    <span key={key} className="richMathToken">
+      <span>{base}</span>
+      {scripts}
+    </span>
+  );
+}
+
+function renderFractionToken(token: string, key: string): React.ReactNode {
+  const match = token.match(/^\s*([A-Za-z0-9.]+)\s*\/\s*([A-Za-z0-9.]+)\s*$/);
+  if (!match) return token;
+  return (
+    <span key={key} className="richFraction" aria-label={`${match[1]} over ${match[2]}`}>
+      <span className="richFractionNumerator">{replaceGreekWords(match[1])}</span>
+      <span className="richFractionBar" aria-hidden="true" />
+      <span className="richFractionDenominator">{replaceGreekWords(match[2])}</span>
+    </span>
+  );
+}
+
+function renderMathishText(text: string, keyPrefix: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let cursor = 0;
+
+  for (const match of text.matchAll(MATHISH_TOKEN_RE)) {
+    const token = match[0];
+    const index = match.index ?? 0;
+    if (index > cursor) {
+      nodes.push(text.slice(cursor, index));
+    }
+
+    if (token.includes("_") || token.includes("^")) {
+      nodes.push(renderScriptedToken(token, `${keyPrefix}-script-${index}`));
+    } else if (token.includes("/")) {
+      nodes.push(renderFractionToken(token, `${keyPrefix}-fraction-${index}`));
+    } else {
+      nodes.push(
+        <span key={`${keyPrefix}-greek-${index}`} className="richMathToken">
+          {replaceGreekWords(token)}
+        </span>,
+      );
+    }
+
+    cursor = index + token.length;
+  }
+
+  if (cursor < text.length) {
+    nodes.push(text.slice(cursor));
+  }
+
+  return nodes.length > 0 ? nodes : [text];
+}
+
 export function renderDisplayText(value: string): React.ReactNode {
   const normalized = sanitizeDisplayText(value) || value;
   const lines = normalized.split("\n");
@@ -117,18 +220,18 @@ export function renderDisplayText(value: string): React.ReactNode {
           if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
             return (
               <strong key={`part-${lineIndex}-${partIndex}`} className="chatEmphasis">
-                {part.slice(2, -2)}
+                {renderMathishText(part.slice(2, -2), `strong-${lineIndex}-${partIndex}`)}
               </strong>
             );
           }
           if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
             return (
               <strong key={`part-${lineIndex}-${partIndex}`} className="chatEmphasis">
-                {part.slice(1, -1)}
+                {renderMathishText(part.slice(1, -1), `em-${lineIndex}-${partIndex}`)}
               </strong>
             );
           }
-          return <React.Fragment key={`part-${lineIndex}-${partIndex}`}>{part}</React.Fragment>;
+          return <React.Fragment key={`part-${lineIndex}-${partIndex}`}>{renderMathishText(part, `plain-${lineIndex}-${partIndex}`)}</React.Fragment>;
         })}
         {lineIndex < lines.length - 1 ? <br /> : null}
       </React.Fragment>

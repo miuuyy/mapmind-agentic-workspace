@@ -5,7 +5,7 @@ import { ExportGraphDialog } from "./dialogs/ExportGraphDialog";
 import { ObsidianImportDialog } from "./dialogs/ObsidianImportDialog";
 import { API_BASE } from "../lib/api";
 import type { AppCopy } from "../lib/appCopy";
-import type { apiFetch, readErrorMessage } from "../lib/appUiHelpers";
+import { renderDisplayText, type apiFetch, type readErrorMessage } from "../lib/appUiHelpers";
 import type { ObsidianImportOptions, ObsidianImportPreview } from "../lib/obsidianImport";
 import type {
   CreateGraphRequest,
@@ -215,10 +215,10 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
   return (
     <>
       {deleteConfirm ? (
-        <div className="quizOverlay">
+        <div className="quizOverlay confirmOverlay">
           <div
             ref={deleteGraphModalRef}
-            className="quizModal"
+            className="quizModal confirmModal"
             style={{ maxWidth: 400 }}
             role="dialog"
             aria-modal="true"
@@ -268,10 +268,10 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
       ) : null}
 
       {sessionDeleteConfirm && activeGraph ? (
-        <div className="quizOverlay">
+        <div className="quizOverlay confirmOverlay">
           <div
             ref={sessionDeleteModalRef}
-            className="quizModal"
+            className="quizModal confirmModal"
             style={{ maxWidth: 400 }}
             role="dialog"
             aria-modal="true"
@@ -577,12 +577,12 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
                 <div className="stack">
                   {quizReviews.map((review) => (
                     <div key={review.question_id} className="quizQuestion">
-                      <div className="quizPrompt">{review.prompt}</div>
+                      <div className="quizPrompt">{renderDisplayText(review.prompt)}</div>
                       <div className={review.was_correct ? "inlineNotice inlineNoticeSuccess" : "inlineNotice inlineNoticeError"}>
-                        {review.was_correct ? copy.quiz.correct : copy.quiz.incorrect} · {copy.quiz.correctAnswer(review.correct_choice)}
+                        {review.was_correct ? copy.quiz.correct : copy.quiz.incorrect} · {renderDisplayText(copy.quiz.correctAnswer(review.correct_choice))}
                       </div>
-                      {!review.was_correct && review.selected_choice ? <div className="quizReviewLine quizReviewWrong">{copy.quiz.yourAnswer(review.selected_choice)}</div> : null}
-                      {review.explanation ? <div className="quizReviewLine">{review.explanation}</div> : null}
+                      {!review.was_correct && review.selected_choice ? <div className="quizReviewLine quizReviewWrong">{renderDisplayText(copy.quiz.yourAnswer(review.selected_choice))}</div> : null}
+                      {review.explanation ? <div className="quizReviewLine">{renderDisplayText(review.explanation)}</div> : null}
                     </div>
                   ))}
                 </div>
@@ -590,7 +590,7 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
                 <div className="stack">
                   {quizSession.questions.map((question) => (
                     <div key={question.id} className="quizQuestion">
-                      <div className="quizPrompt">{question.prompt}</div>
+                      <div className="quizPrompt">{renderDisplayText(question.prompt)}</div>
                       <div className="quizChoices">
                         {question.choices.map((choice: string, index: number) => (
                           <button
@@ -599,7 +599,7 @@ export function AppDialogs(props: AppDialogsProps): React.JSX.Element {
                             onClick={() => setQuizAnswers((current) => ({ ...current, [question.id]: index }))}
                             type="button"
                           >
-                            <span className="quizChoiceText">{choice}</span>
+                            <span className="quizChoiceText">{renderDisplayText(choice)}</span>
                           </button>
                         ))}
                       </div>

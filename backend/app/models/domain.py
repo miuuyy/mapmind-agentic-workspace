@@ -307,6 +307,7 @@ class WorkspaceConfig(BaseModel):
     disable_idle_animations: bool = False
     thinking_mode: ThinkingMode = "default"
     memory_mode: MemoryMode = "balanced"
+    assistant_nickname: str = ""
     persona_rules: str = ""
     quiz_question_count: int = 12
     pass_threshold: float = 0.75
@@ -363,6 +364,7 @@ class UpdateWorkspaceConfigRequest(BaseModel):
     disable_idle_animations: bool | None = None
     thinking_mode: ThinkingMode | None = None
     memory_mode: MemoryMode | None = None
+    assistant_nickname: str | None = None
     persona_rules: str | None = None
     quiz_question_count: int | None = None
     pass_threshold: float | None = None

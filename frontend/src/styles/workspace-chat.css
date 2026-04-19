@@ -152,8 +152,8 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 8px;
-  padding: 12px 10px 4px;
+  gap: 11px;
+  padding: 18px 12px 8px;
 }
 
 .assistantHelloTitle {
@@ -167,8 +167,8 @@
 .assistantHelloCopy {
   color: rgba(255, 255, 255, 0.58);
   font-size: 13px;
-  line-height: 1.45;
-  max-width: 28ch;
+  line-height: 1.5;
+  max-width: 30ch;
   margin: 0 auto;
 }
 
@@ -312,6 +312,56 @@
   color: rgba(255, 255, 255, 0.98);
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+
+.richMathToken {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+}
+
+.richTextSup,
+.richTextSub {
+  font-size: 0.78em;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+.richTextSup {
+  top: -0.45em;
+}
+
+.richTextSub {
+  top: 0.2em;
+}
+
+.richFraction {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  margin: 0 0.08em;
+  min-width: 1.1em;
+}
+
+.richFractionNumerator,
+.richFractionDenominator {
+  display: block;
+  font-size: 0.76em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.richFractionBar {
+  width: 100%;
+  min-width: 1em;
+  height: 1px;
+  margin: 0.1em 0 0.08em;
+  background: currentColor;
+  border-radius: 999px;
+  opacity: 0.78;
 }
 
 .chatMetaRow {
@@ -1220,6 +1270,7 @@ select.input {
   background: rgba(220, 60, 50, 0.25);
   color: #ff6b6b;
   font-weight: 600;
+  border-radius: 999px;
 }
 
 .btn.btnDanger:hover {
@@ -1618,6 +1669,12 @@ select.input {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
   cursor: move;
+}
+
+.topicPopover::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 .topicPopover::after {
