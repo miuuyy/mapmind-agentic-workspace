@@ -27,7 +27,8 @@ from app.services.repository import GraphRepository
 from . import tools as tool_impls
 
 
-logger = logging.getLogger("mapmind.mcp")
+logger = logging.getLogger("clew.study_assist")
+SERVER_NAME = "Clew Study Assist"
 
 
 SERVER_INSTRUCTIONS = """\
@@ -171,7 +172,7 @@ def _error_result(message: str, *, payload: dict[str, Any] | None = None) -> typ
 
 
 def build_server(repository: GraphRepository) -> Server:
-    server: Server = Server("mapmind-mcp", instructions=SERVER_INSTRUCTIONS)
+    server: Server = Server(SERVER_NAME, instructions=SERVER_INSTRUCTIONS)
 
     handlers: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
         "list_graphs": lambda _args: tool_impls.list_graphs(repository.current().workspace),
@@ -212,7 +213,7 @@ def build_server(repository: GraphRepository) -> Server:
         except Exception as exc:  # pragma: no cover - defensive
             logger.exception("mcp tool %s failed", name)
             return _error_result(
-                "internal error while executing the Clew MCP tool",
+                "internal error while executing the Clew Study Assist MCP tool",
                 payload={"error": f"internal error: {exc}"},
             )
 
@@ -226,7 +227,7 @@ async def run_stdio() -> None:
             "Clew database not found. Run Clew once to create it or set "
             f"MAPMIND_DB_PATH/KG_DB_PATH explicitly. Expected path: {db_path}"
         )
-    logger.info("mapmind-mcp starting with db=%s", db_path)
+    logger.info("clew-study-assist starting with db=%s", db_path)
     repository = GraphRepository(db_path)
     server = build_server(repository)
     async with stdio_server() as (read_stream, write_stream):

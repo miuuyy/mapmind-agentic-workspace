@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-mapmind-mcp = "app.mcp_server.__main__:main"
+clew-study-assist = "app.mcp_server.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

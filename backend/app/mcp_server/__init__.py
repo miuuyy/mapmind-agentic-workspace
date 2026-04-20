@@ -1,4 +1,4 @@
-"""Clew MCP server.
+"""Clew Study Assist MCP server.
 
 Read-only Model Context Protocol bridge over the local Clew workspace.
 Lets any MCP-capable client (Claude Desktop, Claude Code, Cursor, ...) see

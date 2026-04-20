@@ -1,4 +1,4 @@
-# Connecting Clew to Claude Desktop, Claude Code, and Cursor
+# Connecting Clew Study Assist to Claude Desktop, Claude Code, and Cursor
 
 Clew ships a built-in [Model Context Protocol](https://modelcontextprotocol.io)
 server so any MCP-capable AI client can see your learning graphs directly.
@@ -33,12 +33,12 @@ your workspace.
    ./scripts/dev.sh
    ```
 
-   After this, the binary lives at `./.venv/bin/mapmind-mcp` inside your
+   After this, the binary lives at `./.venv/bin/clew-study-assist` inside your
    clone. You do not need the backend to be running while MCP is in use —
    the server reads the same SQLite database directly.
 
 2. **Tell your AI client where to find it.** Pick the section below that
-   matches your client, replace `/absolute/path/to/mapmind` with the
+   matches your client, replace `/absolute/path/to/clew` with the
    absolute path to your clone, and paste.
 
 ## Claude Desktop
@@ -48,26 +48,26 @@ Open (or create) the config file:
 - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
-Add a `mapmind` entry inside `mcpServers`:
+Add a `Clew Study Assist` entry inside `mcpServers`:
 
 ```json
 {
   "mcpServers": {
-    "mapmind": {
-      "command": "/absolute/path/to/mapmind/.venv/bin/mapmind-mcp"
+    "Clew Study Assist": {
+      "command": "/absolute/path/to/clew/.venv/bin/clew-study-assist"
     }
   }
 }
 ```
 
 Fully quit Claude Desktop (`Cmd+Q` on macOS, not just closing the window)
-and reopen it. `mapmind` will appear under Connectors → Desktop with the
+and reopen it. `Clew Study Assist` will appear under Connectors → Desktop with the
 four tools enabled.
 
 ## Claude Code
 
 ```bash
-claude mcp add mapmind /absolute/path/to/mapmind/.venv/bin/mapmind-mcp
+claude mcp add "Clew Study Assist" /absolute/path/to/clew/.venv/bin/clew-study-assist
 ```
 
 Or add an entry to `~/.claude.json` under `mcpServers` with the same
@@ -79,8 +79,8 @@ Open Cursor Settings → MCP → Add Server and paste:
 
 ```json
 {
-  "mapmind": {
-    "command": "/absolute/path/to/mapmind/.venv/bin/mapmind-mcp"
+  "Clew Study Assist": {
+    "command": "/absolute/path/to/clew/.venv/bin/clew-study-assist"
   }
 }
 ```
@@ -109,8 +109,8 @@ database (for example a second workspace, or a shared path), set
 ```json
 {
   "mcpServers": {
-    "mapmind": {
-      "command": "/absolute/path/to/mapmind/.venv/bin/mapmind-mcp",
+    "Clew Study Assist": {
+      "command": "/absolute/path/to/clew/.venv/bin/clew-study-assist",
       "env": {
         "MAPMIND_DB_PATH": "/path/to/other/knowledge_graph.sqlite3"
       }
@@ -135,8 +135,8 @@ new binary is picked up.
 
 ## Troubleshooting
 
-- **`mapmind` doesn't appear in the client.** Double-check the absolute
-  path to `mapmind-mcp` and that your JSON is valid (a missing comma
+- **`Clew Study Assist` doesn't appear in the client.** Double-check the absolute
+  path to `clew-study-assist` and that your JSON is valid (a missing comma
   between entries is the usual culprit). Restart the client fully after
   editing the config.
 - **Tools load but return nothing interesting.** Confirm the database
@@ -147,6 +147,6 @@ new binary is picked up.
   line above. Short conversational questions like "what am I learning?"
   sometimes don't trigger tool use on their own.
 - **You want to verify the server works outside of any client.** Run
-  `./.venv/bin/mapmind-mcp` directly; it will wait on stdin for MCP
+  `./.venv/bin/clew-study-assist` directly; it will wait on stdin for MCP
   protocol frames. Ctrl-C to quit. If it exits immediately with a
   traceback, that surfaces the real problem.
