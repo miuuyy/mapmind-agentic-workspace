@@ -20,7 +20,7 @@ def build_obsidian_export_package(
     include_progress: bool,
     options: ObsidianExportOptions,
 ) -> ObsidianGraphExportPackage:
-    folder_name = _sanitize_path_segment(title, fallback="MapMind Export")
+    folder_name = _sanitize_path_segment(title, fallback="Clew Export")
     zones_by_id = {zone.id: zone for zone in graph.zones}
     topics_by_id = {topic.id: topic for topic in graph.topics}
     topic_basenames = _build_topic_basenames(graph.topics)
@@ -72,7 +72,7 @@ def _build_readme(
     lines = [
         f"# {title}",
         "",
-        "Exported from MapMind for Obsidian.",
+        "Exported from Clew for Obsidian.",
         "",
         "## Graph summary",
         f"- Subject: {graph.subject}",

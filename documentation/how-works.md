@@ -1,6 +1,6 @@
 # How it works
 
-MapMind works by combining a persistent graph workspace with a constrained AI loop.
+Clew works by combining a persistent graph workspace with a constrained AI loop.
 
 ## 1. The graph is the world state
 
@@ -74,7 +74,7 @@ Without that, AI-assisted editing would be much harder to trust.
 
 Completion is not only visual.
 
-MapMind supports closure tests so topics can be marked complete through actual verification. If a workspace does not need that strictness, the quiz flow can be disabled and the user can mark a topic as finished directly.
+Clew supports closure tests so topics can be marked complete through actual verification. If a workspace does not need that strictness, the quiz flow can be disabled and the user can mark a topic as finished directly.
 
 That makes the system usable across both:
 
@@ -92,4 +92,4 @@ The provider boundary is explicit, so developers can add their own providers lat
 
 ## In one sentence
 
-MapMind works by keeping a graph as the persistent learning state, building dynamic context from that state, letting AI produce typed actions instead of silent edits, and keeping accepted changes reviewable and reversible.
+Clew works by keeping a graph as the persistent learning state, building dynamic context from that state, letting AI produce typed actions instead of silent edits, and keeping accepted changes reviewable and reversible.

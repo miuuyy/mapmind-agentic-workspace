@@ -7,7 +7,7 @@ import unittest
 from app.llm.base import LLMProviderError, LLMStructuredResponse, LLMStructuredStreamChunk
 from app.models.domain import ProposalGenerateRequest
 from app.services.bootstrap import build_seed_workspace
-from app.services.gemini_planner import ProposalPlanner, GeminiPlannerError
+from app.services.proposal_planner import ProposalPlanner, ProposalPlannerError
 from app.services.proposal_normalizer import ProposalNormalizer
 
 
@@ -48,7 +48,7 @@ class _ProviderStub:
         return iter([response])
 
 
-class GeminiPlannerRuntimeTests(unittest.TestCase):
+class ProposalPlannerRuntimeTests(unittest.TestCase):
     def setUp(self) -> None:
         self.graph = next(graph for graph in build_seed_workspace().graphs if graph.graph_id == "mathematics-demo")
 
@@ -127,7 +127,7 @@ class GeminiPlannerRuntimeTests(unittest.TestCase):
             LLMProviderError("provider returned invalid JSON")
         )
 
-        with self.assertRaisesRegex(GeminiPlannerError, "invalid JSON"):
+        with self.assertRaisesRegex(ProposalPlannerError, "invalid JSON"):
             planner.generate_proposal(
                 self.graph,
                 ProposalGenerateRequest(mode="ingest_topics", raw_text="- arithmetic"),
@@ -140,7 +140,7 @@ class GeminiPlannerRuntimeTests(unittest.TestCase):
             LLMProviderError("Gemini proposal hit the output token limit (200000) before closing JSON")
         )
 
-        with self.assertRaisesRegex(GeminiPlannerError, "output token limit"):
+        with self.assertRaisesRegex(ProposalPlannerError, "output token limit"):
             planner.generate_proposal(
                 self.graph,
                 ProposalGenerateRequest(mode="ingest_topics", raw_text="- arithmetic"),
@@ -216,8 +216,83 @@ class GeminiPlannerRuntimeTests(unittest.TestCase):
         kwargs = planner._provider.last_kwargs or {}
         self.assertEqual(kwargs.get("model"), "gemini-3-flash-preview")
         self.assertEqual(kwargs.get("schema_name"), "graph_proposal_draft")
+        self.assertIsNotNone(kwargs.get("response_json_schema"))
         self.assertEqual(kwargs.get("max_output_tokens"), planner._settings.planner_max_output_tokens)
         self.assertEqual(kwargs.get("temperature"), 0.0)
+
+    def test_system_instruction_explicitly_forbids_prerequisite_relation_synonym(self) -> None:
+        planner = self._planner_with_responses()
+
+        instruction = planner._build_system_instruction()
+
+        self.assertIn('edge.relation MUST be exactly one of "requires", "supports", "bridges", "extends", or "reviews"', instruction)
+        self.assertIn('Never output "prerequisite"', instruction)
+
+    def test_system_instruction_requires_upsert_zone_for_new_topic_zone_ids(self) -> None:
+        planner = self._planner_with_responses()
+
+        instruction = planner._build_system_instruction()
+        prompt = planner._build_prompt(
+            self.graph,
+            ProposalGenerateRequest(mode="expand_goal", raw_text="- neurobiology major"),
+            sanitized_raw_text="- neurobiology major",
+        )
+
+        self.assertIn("If any topic.zones entry uses a zone id that does not already exist in the graph, you MUST include an upsert_zone", instruction)
+        self.assertIn("if topic.zones references a new zone id, include an upsert_zone for that exact id in the same proposal", prompt)
+
+    def test_generate_proposal_auto_creates_missing_zone_from_topic_references(self) -> None:
+        planner = self._planner_with_responses(
+            {
+                "summary": "Expanded biology",
+                "assistant_message": "Added one molecular biology topic.",
+                "operations": [
+                    {
+                        "op_id": "topic_1",
+                        "op": "upsert_topic",
+                        "entity_kind": "topic",
+                        "rationale": "needed",
+                        "topic": {
+                            "id": "bio-mol-dna-repair",
+                            "title": "DNA Repair",
+                            "slug": "dna-repair",
+                            "zones": ["genetics-molecular"],
+                        },
+                    },
+                    {
+                        "op_id": "edge_1",
+                        "op": "upsert_edge",
+                        "entity_kind": "edge",
+                        "rationale": "connect to existing graph",
+                        "edge": {
+                            "id": "edge-functions-dna-repair",
+                            "source_topic_id": "functions",
+                            "target_topic_id": "bio-mol-dna-repair",
+                            "relation": "requires",
+                        },
+                    },
+                ],
+            }
+        )
+
+        result = planner.generate_proposal(
+            self.graph,
+            ProposalGenerateRequest(mode="expand_goal", raw_text="- dna repair"),
+        )
+
+        zone_operations = [
+            operation for operation in result.proposal_envelope.operations
+            if operation.op == "upsert_zone" and operation.zone is not None
+        ]
+        self.assertTrue(any(operation.zone.id == "genetics-molecular" for operation in zone_operations))
+        created_zone = next(operation.zone for operation in zone_operations if operation.zone.id == "genetics-molecular")
+        self.assertEqual(created_zone.topic_ids, ["bio-mol-dna-repair"])
+        self.assertTrue(
+            any(
+                "mentioned a new zone (genetics-molecular)" in warning
+                for warning in result.proposal_envelope.warnings
+            )
+        )
 
     def test_stream_proposal_emits_status_delta_and_result(self) -> None:
         planner = self._planner_with_responses(

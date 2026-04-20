@@ -83,7 +83,7 @@ export function ExportGraphDialog({
               value={formatDraft}
               onChange={(event) => setFormatDraft(event.target.value as GraphExportFormat)}
             >
-              <option value="mapmind_graph_export">{copy.dialogs.exportFormatMapMind}</option>
+              <option value="mapmind_graph_export">{copy.dialogs.exportFormatClew}</option>
               <option value="mapmind_obsidian_export">{copy.dialogs.exportFormatObsidian}</option>
             </select>
           </label>

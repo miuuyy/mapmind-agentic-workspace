@@ -1,14 +1,14 @@
 # Quick start
 
-If Obsidian is where you collect notes, **MapMind is where you operate on a learning graph**.
+If Obsidian is where you collect notes, **Clew is where you operate on a learning graph**.
 
-MapMind is a graph-first workspace for structured study, with an AI agent layer that can expand, audit, and reshape your path without silently rewriting your state.
+Clew is a graph-first workspace for structured study, with an AI agent layer that can expand, audit, and reshape your path without silently rewriting your state.
 
-![MapMind walkthrough](/docs-assets/walkthrough.gif)
+![Clew walkthrough](/docs-assets/walkthrough.gif)
 
 ## Two entry paths
 
-You can approach MapMind in two ways:
+You can approach Clew in two ways:
 
 - use the **hosted site** if you want to try it immediately
 - run the **local edition** if you want full control over providers, data, and graph packs
@@ -26,7 +26,7 @@ The hosted route is the fastest way to understand the product shape:
 - apply it or reject it
 
 The hosted product also includes a library surface for shared graphs and discovery.
-It is also the easier route if you want to use MapMind on a phone or tablet instead of staying at a desktop-only local setup.
+It is also the easier route if you want to use Clew on a phone or tablet instead of staying at a desktop-only local setup.
 
 ## Local route
 
@@ -67,7 +67,7 @@ You can keep it, modify it, delete it, export it, or use it as a template for yo
 
 ## The shortest useful first session
 
-If you want the fastest honest tour of MapMind, do this:
+If you want the fastest honest tour of Clew, do this:
 
 1. open the starter graph
 2. inspect a few topics and their attached resources
@@ -91,4 +91,4 @@ After that first run, the best next steps are usually:
 - import a graph pack from disk
 - customize the graph until it matches how you actually think
 
-MapMind is intentionally flexible here. It is a generative graph workspace, not a fixed curriculum player.
+Clew is intentionally flexible here. It is a generative graph workspace, not a fixed curriculum player.

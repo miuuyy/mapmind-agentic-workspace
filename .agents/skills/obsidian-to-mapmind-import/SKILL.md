@@ -1,16 +1,16 @@
 ---
 name: obsidian-to-mapmind-import
-description: Convert an Obsidian vault or wiki-linked markdown graph into a validated structured-learning graph package for MapMind. Use when the user wants to inspect a vault, preview whether it imports cleanly, preserve explicit relation markers, choose only the few import settings that matter, and produce a fail-closed package without hidden semantic guesses.
+description: Convert an Obsidian vault or wiki-linked markdown graph into a validated structured-learning graph package for Clew. Use when the user wants to inspect a vault, preview whether it imports cleanly, preserve explicit relation markers, choose only the few import settings that matter, and produce a fail-closed package without hidden semantic guesses.
 ---
 
-# Obsidian To MapMind Import
+# Obsidian To Clew Import
 
-Use this skill when a user wants to move an Obsidian vault, a folder of markdown notes, or a wiki-linked markdown graph into MapMind.
+Use this skill when a user wants to move an Obsidian vault, a folder of markdown notes, or a wiki-linked markdown graph into Clew.
 
 This skill has one job:
 
 - inspect the source vault
-- map it into the MapMind import contract
+- map it into the Clew import contract
 - preserve explicit structure
 - ask only the minimum important questions
 - produce either a validated package preview or a clear reshape recommendation
@@ -19,7 +19,7 @@ Do not turn this into a generic Obsidian copilot or a fuzzy consultation flow.
 
 ## Product truth
 
-MapMind is already opinionated:
+Clew is already opinionated:
 
 - it is a graph-first workspace for structured learning
 - the graph is the center of truth
@@ -66,7 +66,7 @@ Unless the user explicitly asks otherwise, use these defaults:
 
 Do not assume every link is a prerequisite.
 
-When a vault does **not** contain explicit MapMind relation markers:
+When a vault does **not** contain explicit Clew relation markers:
 
 - preserve internal links as neutral edges
 - default the relation to `bridges`
@@ -141,7 +141,7 @@ Check:
 Then classify the source into one of these states:
 
 1. **Importable as-is**
-   - structure is already good enough for MapMind
+   - structure is already good enough for Clew
    - only normal import settings are needed
 
 2. **Importable with user choices**
@@ -310,9 +310,9 @@ When building the final package:
 
 - use stable ids derived from relative note paths
 - keep source metadata such as path, aliases, tags, and placeholder status
-- preserve explicit MapMind relation markers
+- preserve explicit Clew relation markers
 - do not fabricate progress, mastery, quiz state, or closure state
-- keep the package aligned with the existing MapMind import contract
+- keep the package aligned with the existing Clew import contract
 
 ## Reshaping policy
 

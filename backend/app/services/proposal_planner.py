@@ -12,6 +12,8 @@ from app.llm.prompt_templates import planner_system_instruction
 from app.llm.schemas import GeminiProposalDraft, planner_response_json_schema
 from app.models.domain import GraphOperation, GraphProposalEnvelope, ProposalDisplay, ProposalGenerateRequest, ProposalGenerateResponse, ProposalIntent, ProposalOpenQuestion, ProposalProvenance, ProposalSourceBundle, ProposalTrace, StudyGraph
 from app.services.proposal_normalizer import ProposalNormalizer
+from app.services.proposal_repairer import ProposalRepairer
+from app.services.proposal_validator import ProposalValidator
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +23,10 @@ URL_RE = re.compile(r"https?://[^\s)>\]}]+", re.IGNORECASE)
 MARKDOWN_LINK_URL_RE = re.compile(r"\[[^\]]+\]\((https?://[^)\s]+)\)", re.IGNORECASE)
 
 
-class GeminiPlannerError(RuntimeError):
-    pass
+class ProposalPlannerError(RuntimeError):
+    def __init__(self, message: str, *, diagnostics: dict[str, Any] | None = None):
+        super().__init__(message)
+        self.diagnostics = diagnostics or {}
 
 class ProposalPlanner:
     def __init__(self, settings: Settings):
@@ -30,26 +34,36 @@ class ProposalPlanner:
         self._provider = build_llm_provider(settings)
         if self._provider is None:
             provider_name = (settings.ai_provider or "gemini").upper()
-            raise GeminiPlannerError(f"{provider_name}_API_KEY is not configured")
+            raise ProposalPlannerError(f"{provider_name}_API_KEY is not configured")
         self._normalizer = ProposalNormalizer()
+        self._repairer = ProposalRepairer()
 
     def generate_proposal(self, graph: StudyGraph, request: ProposalGenerateRequest) -> ProposalGenerateResponse:
         model_name = request.model or self._settings.default_model
         sanitized_raw_text = self._sanitize_raw_text(request.raw_text)
         prompt = self._build_prompt(graph, request, sanitized_raw_text=sanitized_raw_text)
+        system_instruction = self._build_system_instruction()
         draft, usage_metadata = self._generate_draft_with_provider(
+            system_instruction=system_instruction,
             prompt=prompt,
             request=request,
             model_name=model_name,
         )
-        return self._finalize_proposal(
-            graph=graph,
-            request=request,
-            model_name=model_name,
-            sanitized_raw_text=sanitized_raw_text,
-            draft=draft,
-            usage_metadata=usage_metadata,
-        )
+        try:
+            return self._finalize_proposal(
+                graph=graph,
+                request=request,
+                model_name=model_name,
+                sanitized_raw_text=sanitized_raw_text,
+                draft=draft,
+                usage_metadata=usage_metadata,
+            )
+        except ProposalPlannerError as exc:
+            diagnostics = dict(getattr(exc, "diagnostics", {}) or {})
+            diagnostics.setdefault("planner_system_instruction", system_instruction)
+            diagnostics.setdefault("planner_prompt", prompt)
+            diagnostics.setdefault("draft_payload", draft.model_dump(mode="json"))
+            raise ProposalPlannerError(str(exc), diagnostics=diagnostics) from exc
 
     def stream_proposal(
         self,
@@ -59,13 +73,14 @@ class ProposalPlanner:
         model_name = request.model or self._settings.default_model
         sanitized_raw_text = self._sanitize_raw_text(request.raw_text)
         prompt = self._build_prompt(graph, request, sanitized_raw_text=sanitized_raw_text)
+        system_instruction = self._build_system_instruction()
         yield {"type": "status", "stage": "started", "model": model_name}
         collected_text = ""
         usage_metadata: Any = None
         finish_reason = ""
         stream = self._provider.stream_structured(
             model=model_name,
-            system_instruction=self._build_system_instruction(),
+            system_instruction=system_instruction,
             prompt=prompt,
             schema=GeminiProposalDraft,
             schema_name="graph_proposal_draft",
@@ -104,39 +119,66 @@ class ProposalPlanner:
                 logger.warning(f"Stream repetition detected! Duplicate op_ids: {dupes}")
         except Exception:
             pass
-        result = self._finalize_proposal(
-            graph=graph,
-            request=request,
-            model_name=model_name,
-            sanitized_raw_text=sanitized_raw_text,
-            draft=draft,
-            usage_metadata=usage_metadata,
-        )
+        try:
+            result = self._finalize_proposal(
+                graph=graph,
+                request=request,
+                model_name=model_name,
+                sanitized_raw_text=sanitized_raw_text,
+                draft=draft,
+                usage_metadata=usage_metadata,
+            )
+        except ProposalPlannerError as exc:
+            diagnostics = dict(getattr(exc, "diagnostics", {}) or {})
+            diagnostics.setdefault("planner_system_instruction", system_instruction)
+            diagnostics.setdefault("planner_prompt", prompt)
+            diagnostics.setdefault("raw_model_response_text", collected_text[:12000] or None)
+            diagnostics.setdefault("draft_payload", draft.model_dump(mode="json"))
+            raise ProposalPlannerError(str(exc), diagnostics=diagnostics) from exc
         yield {"type": "result", "result": result.model_dump(mode="json")}
 
     def _generate_draft_with_provider(
         self,
         *,
+        system_instruction: str,
         prompt: str,
         request: ProposalGenerateRequest,
         model_name: str,
     ) -> tuple[GeminiProposalDraft, Any]:
         if self._provider is None:
-            raise GeminiPlannerError("AI provider is not configured")
+            raise ProposalPlannerError("AI provider is not configured")
         try:
             response = self._provider.generate_structured(
                 model=model_name,
-                system_instruction=self._build_system_instruction(),
+                system_instruction=system_instruction,
                 prompt=prompt,
                 schema=GeminiProposalDraft,
                 schema_name="graph_proposal_draft",
+                response_json_schema=self._proposal_response_schema(),
                 max_output_tokens=int(self._settings.planner_max_output_tokens),
                 temperature=0.0,
                 use_grounding=request.use_grounding,
             )
             return response.parsed, response.usage
         except LLMProviderError as exc:
-            raise GeminiPlannerError(str(exc)) from exc
+            diagnostics = dict(getattr(exc, "diagnostics", {}) or {})
+            diagnostics.setdefault("planner_system_instruction", system_instruction)
+            diagnostics.setdefault("planner_prompt", prompt)
+            raise ProposalPlannerError(str(exc), diagnostics=diagnostics) from exc
+        except Exception as exc:
+            raise ProposalPlannerError(
+                str(exc),
+                diagnostics={
+                    "provider": getattr(self._provider, "provider_id", None),
+                    "model": model_name,
+                    "mode": request.mode,
+                    "target_goal": request.target_goal,
+                    "selected_topic_id": request.selected_topic_id,
+                    "use_grounding": request.use_grounding,
+                    "planner_system_instruction": system_instruction,
+                    "planner_prompt": prompt,
+                },
+            ) from exc
 
     def _build_system_instruction(self) -> str:
         instruction = (
@@ -150,11 +192,16 @@ class ProposalPlanner:
             "Before writing the final JSON, mentally verify: can you walk from every new topic to at least one existing topic through proposed + existing edges? If not, add the missing edges. "
             'The validator will reject this exact failure with: "proposal would create disconnected graph islands; link new topics through meaningful prerequisites". Do not trigger that error.\n'
             "2. ZONE INTEGRITY: Every topic_id in a zone's topic_ids MUST exist in the graph or be created by upsert_topic in the SAME proposal. "
-            "If you reference a topic_id in a zone but do not propose that topic, the proposal fails.\n"
+            "If you reference a topic_id in a zone but do not propose that topic, the proposal fails. "
+            "If any topic.zones entry uses a zone id that does not already exist in the graph, you MUST include an upsert_zone for that exact zone id in the SAME proposal. "
+            "Never reference a new zone id from topic.zones without also creating that zone.\n"
             "3. FIDELITY: For ingest mode, proposed topic count MUST be >= 80% of the source item count. "
             "Do not collapse 60 source items into 13 topics. Preserve user-provided URLs as resource links; do not replace them.\n"
             "4. NO DELETIONS: Do not remove topics or edges. Graph proposals are additive.\n"
             "5. NO COMPLETION STATES: Default new topics to not_started.\n"
+            "6. EDGE RELATION ENUM: edge.relation MUST be exactly one of "
+            '"requires", "supports", "bridges", "extends", or "reviews". '
+            'Never output "prerequisite" or any synonym; use "requires" for prerequisite edges.\n'
             "\nGENERAL GUIDELINES:\n"
             "- This is a study plan, not a semester outline. Produce concrete study units.\n"
             "- Build prerequisite chains toward the user's target, reusing existing topics when possible. "
@@ -255,7 +302,7 @@ class ProposalPlanner:
                     "operation_order": "emit upsert_topic ops first, then upsert_edge ops, then upsert_zone ops; this ensures every topic exists before edges reference it and every edge exists before zones assume connectivity",
                     "edge_policy": "for each new topic, emit at least one edge connecting it to the existing graph or to another new topic that connects back; prefer nearest prerequisites, avoid redundant transitive edges",
                     "topic_policy": "topic is the primary entity; resources and artifacts attach to topics; each topic must be a concrete study unit",
-                    "zone_policy": "zones group related topics into macro regions; all topic_ids in a zone must exist in graph or be proposed",
+                    "zone_policy": "zones group related topics into macro regions; all topic_ids in a zone must exist in graph or be proposed; if topic.zones references a new zone id, include an upsert_zone for that exact id in the same proposal",
                     "scope_policy": "be honest about prerequisite breadth; do not compress large source into a tiny graph",
                     "mode_specific_policy": {
                         "ingest_topics": "preserve most distinct source items as distinct study units; only merge exact duplicates; proposed topic count MUST be >= 80% of source_item_count; preserve user-provided URLs as topic resources",
@@ -290,14 +337,24 @@ class ProposalPlanner:
     def _coerce_proposal_draft_from_text(self, text: str, *, finish_reason: str = "") -> GeminiProposalDraft:
         try:
             return GeminiProposalDraft.model_validate_json(text)
-        except Exception:
+        except Exception as exc:
             candidate = self._extract_json_candidate(text)
             if candidate:
                 try:
                     return GeminiProposalDraft.model_validate_json(candidate)
-                except Exception as exc:
-                    raise self._invalid_json_error(finish_reason=finish_reason) from exc
-            raise self._invalid_json_error(finish_reason=finish_reason)
+                except Exception as candidate_exc:
+                    raise self._invalid_json_error(
+                        finish_reason=finish_reason,
+                        raw_text=text,
+                        json_candidate=candidate,
+                        cause=exc,
+                    ) from candidate_exc
+            raise self._invalid_json_error(
+                finish_reason=finish_reason,
+                raw_text=text,
+                json_candidate=None,
+                cause=exc,
+            )
 
     def _sanitize_raw_text(self, raw_text: str) -> str:
         collapsed = SEPARATOR_RE.sub("", raw_text)
@@ -346,13 +403,34 @@ class ProposalPlanner:
             return current_text[len(previous_text) :]
         return current_text
 
-    def _invalid_json_error(self, *, finish_reason: str = "") -> GeminiPlannerError:
+    def _invalid_json_error(
+        self,
+        *,
+        finish_reason: str = "",
+        raw_text: str = "",
+        json_candidate: str | None = None,
+        cause: Exception | None = None,
+    ) -> ProposalPlannerError:
         finish_reason = str(finish_reason or "").upper()
         if "MAX_TOKENS" in finish_reason:
-            return GeminiPlannerError(
-                f"Gemini proposal hit the output token limit ({int(self._settings.planner_max_output_tokens)}) before closing JSON"
+            return ProposalPlannerError(
+                f"Proposal generation hit the output token limit ({int(self._settings.planner_max_output_tokens)}) before closing JSON",
+                diagnostics={
+                    "finish_reason": finish_reason,
+                    "raw_model_response_text": raw_text[:12000] or None,
+                    "json_candidate": json_candidate[:12000] if json_candidate else None,
+                    "parse_error": str(cause) if cause else None,
+                },
             )
-        return GeminiPlannerError("Gemini returned invalid proposal JSON")
+        return ProposalPlannerError(
+            "Provider returned invalid proposal JSON",
+            diagnostics={
+                "finish_reason": finish_reason or None,
+                "raw_model_response_text": raw_text[:12000] or None,
+                "json_candidate": json_candidate[:12000] if json_candidate else None,
+                "parse_error": str(cause) if cause else None,
+            },
+        )
 
     def _coerce_operation(self, payload: dict[str, Any], *, index: int) -> GraphOperation:
         if isinstance(payload, GraphOperation):
@@ -402,7 +480,6 @@ class ProposalPlanner:
                 f"that Gemini referenced but did not propose: {', '.join(sorted(orphans))}"
             )
 
-
     def _proposal_response_schema(self) -> dict[str, Any]:
         return planner_response_json_schema()
 
@@ -441,12 +518,14 @@ class ProposalPlanner:
                 grounding_used=bool(request.use_grounding),
             ),
         )
+        repairer = getattr(self, "_repairer", None) or ProposalRepairer()
+        repairer.materialize_missing_zones(proposal_envelope, graph)
         self._repair_zone_topic_refs(proposal_envelope, graph)
         apply_plan = self._normalizer.normalize(proposal_envelope, graph=graph)
         proposal_envelope.warnings = list(apply_plan.validation.warnings)
         apply_plan.normalized_proposal.warnings = list(apply_plan.validation.warnings)
         if not apply_plan.validation.ok:
-            raise GeminiPlannerError("; ".join(apply_plan.validation.errors))
+            raise ProposalPlannerError("; ".join(apply_plan.validation.errors))
         display = self._build_display(apply_plan)
         return ProposalGenerateResponse(
             proposal_envelope=proposal_envelope,
@@ -467,11 +546,21 @@ class ProposalPlanner:
         graph: StudyGraph,
         proposal: GraphProposalEnvelope,
     ) -> None:
+        repairer = getattr(self, "_repairer", None) or ProposalRepairer()
+        repairer.materialize_missing_zones(proposal, graph)
         normalizer = getattr(self, "_normalizer", None) or ProposalNormalizer()
         apply_plan = normalizer.normalize(proposal, graph=graph)
         proposal.warnings = list(apply_plan.validation.warnings)
         if not apply_plan.validation.ok:
-            raise GeminiPlannerError("; ".join(apply_plan.validation.errors))
+            diagnostics: dict[str, Any] = {
+                "validation_errors": list(apply_plan.validation.errors),
+                "validation_warnings": list(apply_plan.validation.warnings),
+                "proposal_operation_count": len(proposal.operations),
+                "proposal_payload": proposal.model_dump(mode="json"),
+            }
+            if any("disconnected graph islands" in error for error in apply_plan.validation.errors):
+                diagnostics["connectivity"] = ProposalValidator().connectivity_diagnostics(graph, proposal)
+            raise ProposalPlannerError("; ".join(apply_plan.validation.errors), diagnostics=diagnostics)
 
     def _build_display(self, apply_plan) -> ProposalDisplay:
         preview = apply_plan.preview

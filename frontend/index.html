@@ -4,28 +4,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="MapMind is a local graph-first learning workspace with explicit AI proposals, snapshots, quizzes, and rollbackable state." />
+  <meta name="description" content="Clew is an AI-native workspace for structured learning with explicit proposals, snapshots, quizzes, and rollbackable state." />
   <meta name="keywords" content="graph learning, knowledge graph, study graph, AI study workspace, proposal review, snapshots, local-first learning" />
   <meta name="robots" content="index,follow" />
   <meta name="theme-color" content="#050505" />
   <meta name="color-scheme" content="dark" />
-  <meta name="application-name" content="MapMind" />
-  <meta name="apple-mobile-web-app-title" content="MapMind" />
+  <meta name="application-name" content="Clew" />
+  <meta name="apple-mobile-web-app-title" content="Clew" />
   <meta name="format-detection" content="telephone=no" />
   <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="MapMind" />
-  <meta property="og:title" content="MapMind | Graph-first learning" />
-  <meta property="og:description" content="Local graph-first learning workspace with proposals, snapshots, quizzes, and rollbackable state." />
-  <meta property="og:image" content="/mmlogo.png" />
+  <meta property="og:site_name" content="Clew" />
+  <meta property="og:title" content="Clew | AI-native workspace for structured learning" />
+  <meta property="og:description" content="AI-native workspace for structured learning with explicit proposals, snapshots, quizzes, and rollbackable state." />
+  <meta property="og:image" content="/clew-favicon-light-accent.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="MapMind | Graph-first learning" />
-  <meta name="twitter:description" content="Local graph-first learning workspace with proposals, snapshots, quizzes, and rollbackable state." />
-  <meta name="twitter:image" content="/mmlogo.png" />
+  <meta name="twitter:title" content="Clew | AI-native workspace for structured learning" />
+  <meta name="twitter:description" content="AI-native workspace for structured learning with explicit proposals, snapshots, quizzes, and rollbackable state." />
+  <meta name="twitter:image" content="/clew-favicon-light-accent.png" />
   <link rel="canonical" href="/" />
-  <link rel="icon" type="image/png" href="/smalllogo.png" />
-  <link rel="apple-touch-icon" href="/smalllogo.png" />
+  <link rel="icon" type="image/png" href="/clew-favicon-dark.png" />
+  <link rel="apple-touch-icon" href="/clew-favicon-dark.png" />
   <link rel="manifest" href="/site.webmanifest" />
-  <title>MapMind | Graph-first learning</title>
+  <title>Clew | AI-native workspace for structured learning</title>
   <style>
     html, body, #root {
       margin: 0;
@@ -64,6 +64,11 @@
         if (metaTheme) metaTheme.setAttribute("content", theme === "light" ? "#ffffff" : "#050505");
         const metaScheme = document.querySelector('meta[name="color-scheme"]');
         if (metaScheme) metaScheme.setAttribute("content", theme === "light" ? "light" : "dark");
+        const faviconHref = theme === "light" ? "/clew-favicon-light-accent.png" : "/clew-favicon-dark.png";
+        const iconLink = document.querySelector('link[rel="icon"]');
+        const appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]');
+        if (iconLink) iconLink.setAttribute("href", faviconHref);
+        if (appleTouchIcon) appleTouchIcon.setAttribute("href", faviconHref);
       } catch {}
     })();
   </script>

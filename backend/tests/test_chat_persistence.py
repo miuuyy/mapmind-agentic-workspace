@@ -8,10 +8,12 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from app.api import routes
+from app.core.config import Settings
 from app.main import app
 from app.llm.schemas import OrchestratorDecision
 from app.models.domain import ApplyPlanEnvelope, ApplyPreview, ApplyValidation, ChatMessage, CreateGraphRequest, GraphChatResponse, GraphOperation, GraphProposal, GraphProposalEnvelope, PatchOperation, ProposalDisplay, ProposalGenerateResponse, ProposalIntent, ProposalSourceBundle, ProposalTopic, ProposalTrace
 from app.services.chat_orchestrator import ChatOrchestratorError
+from app.services.debug_log_service import get_debug_log_service
 from app.services.repository import GraphRepository
 
 
@@ -37,7 +39,10 @@ class ChatPersistenceTests(unittest.TestCase):
     def setUp(self) -> None:
         tempdir = tempfile.TemporaryDirectory()
         self.addCleanup(tempdir.cleanup)
-        self.repository = GraphRepository(Path(tempdir.name) / "state.sqlite3")
+        self.temp_root = Path(tempdir.name)
+        self.repository = GraphRepository(self.temp_root / "state.sqlite3")
+        self.settings = Settings()
+        self.settings.root_dir = self.temp_root
 
     def test_repository_keeps_one_stable_thread_per_graph(self) -> None:
         initial = self.repository.chat_thread(self.GRAPH_ID)
@@ -288,6 +293,7 @@ class ChatPersistenceTests(unittest.TestCase):
 
         client = TestClient(app)
         app.dependency_overrides[routes.get_repository] = lambda: self.repository
+        app.dependency_overrides[routes.get_settings] = lambda: self.settings
         app.dependency_overrides[routes.get_chat_orchestrator] = lambda: StreamingOrchestrator()
         self.addCleanup(app.dependency_overrides.clear)
 
@@ -306,6 +312,82 @@ class ChatPersistenceTests(unittest.TestCase):
         self.assertIn("message", proposal_ready)
         self.assertIn("messages", proposal_ready)
         self.assertEqual(proposal_ready["message"]["proposal"]["display"]["summary"], "1 topic")
+
+    def test_chat_stream_logs_server_diagnostics_when_proposal_generation_fails(self) -> None:
+        class FailingStreamingOrchestrator:
+            @staticmethod
+            def has_live_provider() -> bool:
+                return True
+
+            @staticmethod
+            def decide(graph, request, *, persona_rules: str = "", workspace_config=None):  # noqa: ANN001, ANN003, ANN201
+                return OrchestratorDecision(
+                    action="propose_expand",
+                    reply_message="Preparing proposal.",
+                    proposal_target_goal="neurobiology",
+                    proposal_instructions="Make it more detailed.",
+                )
+
+            @staticmethod
+            def reply_for_decision(decision):  # noqa: ANN001, ANN201
+                return decision.reply_message
+
+            @staticmethod
+            def proposal_request_for_decision(decision, request, *, model_name: str):  # noqa: ANN001, ANN003, ANN201
+                from app.models.domain import ProposalGenerateRequest
+
+                return ProposalGenerateRequest(
+                    mode="expand_goal",
+                    raw_text=request.prompt,
+                    target_goal=decision.proposal_target_goal,
+                    instructions=decision.proposal_instructions,
+                    selected_topic_id=request.selected_topic_id,
+                    use_grounding=request.use_grounding,
+                    model=model_name,
+                )
+
+            @staticmethod
+            def stream_proposal_result(graph, request):  # noqa: ANN001, ANN201
+                raise ChatOrchestratorError(
+                    "proposal generation failed: proposal would create disconnected graph islands; link new topics through meaningful prerequisites",
+                    diagnostics={
+                        "planner_system_instruction": "full planner role and hard rules",
+                        "planner_prompt": "{\"task\":{\"target_goal\":\"neurobiology\"}}",
+                        "raw_model_response_text": '{"summary":"x","operations":[]}',
+                        "proposal_payload": {"operations": []},
+                        "connectivity": {
+                            "connected": False,
+                            "component_count": 2,
+                            "island_components": [{"topic_ids": ["topic-a", "topic-b"]}],
+                        },
+                    },
+                )
+
+        client = TestClient(app)
+        app.dependency_overrides[routes.get_repository] = lambda: self.repository
+        app.dependency_overrides[routes.get_settings] = lambda: self.settings
+        app.dependency_overrides[routes.get_chat_orchestrator] = lambda: FailingStreamingOrchestrator()
+        self.addCleanup(app.dependency_overrides.clear)
+
+        response = client.post(
+            f"/api/v1/graphs/{self.GRAPH_ID}/chat/stream",
+            json={
+                "prompt": "Expand graph toward neurobiology",
+                "messages": [],
+                "use_grounding": True,
+                "model": "gemini-3-flash-preview",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        logs = get_debug_log_service(self.settings.root_dir).snapshot()
+        server_entry = logs.server[0]
+        self.assertEqual(server_entry.message, "Proposal generation failed")
+        self.assertIn("raw_model_response_text", server_entry.request_excerpt or "")
+        self.assertIn("connectivity", server_entry.request_excerpt or "")
+        self.assertIn("proposal_request", server_entry.request_excerpt or "")
+        self.assertIn("full planner role and hard rules", server_entry.request_excerpt or "")
+        self.assertIn("\"target_goal\":\"neurobiology\"", server_entry.request_excerpt or "")
 
     def test_delete_session_is_scoped_to_its_graph(self) -> None:
         self.repository.create_graph(CreateGraphRequest(title="Physics", subject="science"))

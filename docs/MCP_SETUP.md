@@ -1,6 +1,6 @@
-# Connecting MapMind to Claude Desktop, Claude Code, and Cursor
+# Connecting Clew to Claude Desktop, Claude Code, and Cursor
 
-MapMind ships a built-in [Model Context Protocol](https://modelcontextprotocol.io)
+Clew ships a built-in [Model Context Protocol](https://modelcontextprotocol.io)
 server so any MCP-capable AI client can see your learning graphs directly.
 Once connected, your assistant knows which topics you are studying, what is
 blocked by open prerequisites, and what each note contains — without you
@@ -12,18 +12,18 @@ Four read-only tools, exposed over stdio:
 
 | Tool | What it returns |
 | --- | --- |
-| `list_graphs` | every graph you have in MapMind with progress stats |
+| `list_graphs` | every graph you have in Clew with progress stats |
 | `get_current_learning_context` | per-graph summary across the active graph plus every other graph with learning activity (or one graph when `graph_id` is passed) |
 | `get_node` | full content of one topic: description, resources, artifacts, neighbors, and which prerequisites are still blocking closure |
 | `search_notes` | keyword search across titles, slugs, and descriptions, scoped to one graph or across all of them |
 
-The server is strictly read-only. Graph edits still go through the MapMind
+The server is strictly read-only. Graph edits still go through the Clew
 UI and its propose / apply review flow — MCP will never silently mutate
 your workspace.
 
 ## Quick start
 
-1. **Install MapMind locally** (if you haven't already). The standard dev
+1. **Install Clew locally** (if you haven't already). The standard dev
    script installs the MCP binary at the same time:
 
    ```bash
@@ -87,12 +87,12 @@ Open Cursor Settings → MCP → Add Server and paste:
 
 ## Making your assistant actually call the tools
 
-Modern models will usually pick up the MapMind tools on their own when
+Modern models will usually pick up the Clew tools on their own when
 you ask about your learning — the tool descriptions are tuned for it.
 If you want to be sure the assistant never guesses about your progress,
 paste one line into the client's custom instructions / profile:
 
-> I study inside MapMind. Before answering questions about what I am
+> I study inside Clew. Before answering questions about what I am
 > learning, call `get_current_learning_context`, and use `search_notes`
 > then `get_node` when I mention a specific concept by name.
 
@@ -102,7 +102,7 @@ before replying.
 ## Custom database location
 
 By default the server reads from `backend/data/knowledge_graph.sqlite3`
-inside your MapMind clone. If you want to point it at a different
+inside your Clew clone. If you want to point it at a different
 database (for example a second workspace, or a shared path), set
 `MAPMIND_DB_PATH` on the server entry:
 
@@ -122,15 +122,15 @@ database (for example a second workspace, or a shared path), set
 The server resolves the database path in this order:
 
 1. `MAPMIND_DB_PATH` environment variable
-2. `KG_DB_PATH` environment variable (shared with the MapMind backend)
+2. `KG_DB_PATH` environment variable (shared with the Clew backend)
 3. The default `backend/data/knowledge_graph.sqlite3` inside your clone
 
 ## Updating
 
-Every time you pull a newer MapMind and run `./scripts/dev.sh`, the MCP
+Every time you pull a newer Clew and run `./scripts/dev.sh`, the MCP
 binary is rebuilt alongside the rest of the backend — no separate reinstall
 step. If your assistant client keeps the server running in the background
-(Claude Desktop does this), restart it once after a MapMind upgrade so the
+(Claude Desktop does this), restart it once after a Clew upgrade so the
 new binary is picked up.
 
 ## Troubleshooting
@@ -140,7 +140,7 @@ new binary is picked up.
   between entries is the usual culprit). Restart the client fully after
   editing the config.
 - **Tools load but return nothing interesting.** Confirm the database
-  actually has your graphs: the server reads the same file MapMind's
+  actually has your graphs: the server reads the same file Clew's
   frontend does, so if `./scripts/dev.sh` shows an empty workspace in the
   UI, MCP will see the same.
 - **Assistant refuses to call the tools.** Add the custom-instructions

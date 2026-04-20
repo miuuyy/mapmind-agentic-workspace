@@ -1,12 +1,12 @@
 # Showcase
 
-The fastest way to understand MapMind is to look at the kinds of moments it creates.
+The fastest way to understand Clew is to look at the kinds of moments it creates.
 
 ## 1. Start from messy input
 
 Most study systems assume you already know the structure.
 
-MapMind does not.
+Clew does not.
 
 You can start from:
 
@@ -22,7 +22,7 @@ The system turns that into a proposal you can review, not into a fake final trut
 
 A graph is not just a prettier checklist.
 
-MapMind shows:
+Clew shows:
 
 - what unlocks what
 - where the foundations actually are
@@ -50,7 +50,7 @@ Even after you finish a section, the graph stays useful as a record of the path 
 
 ## 4. Keep AI inside a controlled boundary
 
-MapMind does not ask you to trust silent model behavior.
+Clew does not ask you to trust silent model behavior.
 
 The assistant can:
 
@@ -66,7 +66,7 @@ But the graph only changes when you review and apply a proposal.
 
 Learning state should not just be vibes.
 
-MapMind supports closure tests so topics can be verified instead of merely clicked complete. If a workspace needs a lighter mode, closure tests can be disabled and topics can be marked finished manually.
+Clew supports closure tests so topics can be verified instead of merely clicked complete. If a workspace needs a lighter mode, closure tests can be disabled and topics can be marked finished manually.
 
 That lets the product support both:
 
@@ -75,7 +75,7 @@ That lets the product support both:
 
 ## 6. Move fast without losing structure
 
-MapMind is fast enough to feel generative, but structured enough not to collapse into “just another AI sandbox”.
+Clew is fast enough to feel generative, but structured enough not to collapse into “just another AI sandbox”.
 
 You can:
 

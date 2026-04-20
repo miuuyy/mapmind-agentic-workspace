@@ -6,7 +6,10 @@ export const ASSISTANT_WIDTH_STORAGE_KEY = "knowledge_graph_assistant_width_v1";
 export const ASSISTANT_MAX_WIDTH = 620;
 export const ASSISTANT_MIN_WIDTH = 280;
 export const ASSISTANT_COLLAPSE_THRESHOLD = 210;
-export const APP_LOGO_SRC = "/mmlogo.png";
+export const APP_NAME = "Clew";
+export const APP_TAGLINE = "AI-native workspace for structured learning";
+export const APP_FAVICON_LIGHT_SRC = "/clew-favicon-light-accent.png";
+export const APP_FAVICON_DARK_SRC = "/clew-favicon-dark.png";
 
 export type ThinkingMode = "low" | "default" | "custom";
 export type MemoryMode = "balanced" | "max" | "custom";

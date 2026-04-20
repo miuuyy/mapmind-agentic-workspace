@@ -1,6 +1,6 @@
 # Frontend
 
-This package contains the React workspace for the public local edition of MapMind.
+This package contains the React workspace for the public local edition of Clew.
 
 Its job is not to look like a generic dashboard. It is the graph workspace itself: canvas, dialogs, shell, settings, and local debug surfaces.
 

@@ -16,11 +16,9 @@
 }
 
 :root[data-theme="dark"] .lightDockGrip {
-  background:
-    radial-gradient(circle at 25% 50%, rgba(255, 255, 255, 0.32) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.3) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 75% 50%, rgba(255, 255, 255, 0.28) 0 1.2px, transparent 1.8px) !important;
-  opacity: 0.72 !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.96) !important;
+  opacity: 1 !important;
 }
 
 :root[data-theme="dark"] .lightDockButton,
@@ -1367,4 +1365,26 @@
   background: #050505 !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
   box-shadow: none !important;
+}
+
+/* Final dark workspace CTA parity with light theme */
+:root[data-theme="dark"] .lightWindowCreateWorkspaceButton,
+:root[data-theme="dark"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  border-radius: 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+
+:root[data-theme="dark"] .lightWindowCreateWorkspaceGlyph {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
 }

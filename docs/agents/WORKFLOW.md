@@ -1,6 +1,6 @@
 # Agent Workflow
 
-This file describes how coding agents should work inside MapMind.
+This file describes how coding agents should work inside Clew.
 
 ## Primary rule
 

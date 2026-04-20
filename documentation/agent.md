@@ -1,10 +1,10 @@
 # Agent
 
-MapMind uses a **narrow learning agent**, not a pseudo-general assistant that claims to automate everything.
+Clew uses a **narrow learning agent**, not a pseudo-general assistant that claims to automate everything.
 
 ## The shortest definition
 
-MapMind is a graph-first learning workspace with an AI agent layer operating inside a persistent study state.
+Clew is a graph-first learning workspace with an AI agent layer operating inside a persistent study state.
 
 The agent does not act on an empty prompt. It acts on a workspace that already contains:
 
@@ -29,7 +29,7 @@ The system has:
 - human review before graph mutation
 - rollback after accepted changes
 
-That is enough to describe MapMind honestly as an **agentic learning loop** without pretending it is a broad autonomous agent platform.
+That is enough to describe Clew honestly as an **agentic learning loop** without pretending it is a broad autonomous agent platform.
 
 ## What the agent can do
 
@@ -46,7 +46,7 @@ When the action affects the graph, the system returns a typed proposal instead o
 
 A lot of “agents” in 2026 are broad in ambition and weak in truth.
 
-MapMind takes the opposite stance:
+Clew takes the opposite stance:
 
 - one domain
 - one strong surface
@@ -58,7 +58,7 @@ That narrower scope is exactly why the product can be useful. It is built to hel
 
 The assistant does not have one fixed memory mode.
 
-MapMind lets the workspace shape the agent through:
+Clew lets the workspace shape the agent through:
 
 - chat history depth
 - graph-context inclusion

@@ -155,8 +155,8 @@
   background: rgba(17, 24, 39, 0.08);
 }
 
-:root[data-theme="light"] .sidebarBrandLogo {
-  filter: invert(1) brightness(0.14);
+:root[data-theme="light"] .sidebarBrand {
+  color: var(--mm-accent-green);
 }
 
 :root[data-theme="light"] .sidebarAvatar {

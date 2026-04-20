@@ -1,6 +1,6 @@
 # Agentic Loop
 
-MapMind is not a generic autonomous agent. It is a **stateful learning workspace with an explicit decision-and-review loop**.
+Clew is not a generic autonomous agent. It is a **stateful learning workspace with an explicit decision-and-review loop**.
 
 The point of this file is to show where the agentic behavior actually lives:
 
@@ -69,7 +69,7 @@ It has:
 - review before graph mutation
 - rollback after accepted changes
 
-That is enough to describe MapMind honestly as an **agentic learning loop** without pretending it is a broad autonomous agent platform.
+That is enough to describe Clew honestly as an **agentic learning loop** without pretending it is a broad autonomous agent platform.
 
 ## The five most important invariants
 
@@ -95,7 +95,7 @@ That narrow action space is intentional. It keeps the model inside a legible pro
 | Area | Responsibility |
 | --- | --- |
 | `backend/app/services/chat_orchestrator.py` | builds context and chooses action shape |
-| `backend/app/services/gemini_planner.py` | generates proposal drafts and applies validation bridges |
+| `backend/app/services/proposal_planner.py` | generates proposal drafts and applies validation bridges |
 | `backend/app/services/repository.py` | persists workspace, graph, snapshots, and config |
 | `backend/app/llm/contracts.py` | action-level contract layer |
 | `backend/app/llm/schemas.py` | structured generation schemas and planner draft shapes |

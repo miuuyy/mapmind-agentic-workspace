@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from app.models.domain import SnapshotRecord, WorkspaceDocument, WorkspaceEnvelope
 from app.services.bootstrap import build_seed_workspace
+from app.services.zone_style_service import normalize_workspace_zone_styles
 
 
 def init_repository_storage(conn: sqlite3.Connection) -> None:
@@ -81,6 +82,7 @@ def init_repository_storage(conn: sqlite3.Connection) -> None:
     )
     _migrate_chat_sessions_schema(conn)
     migrate_workspace_secrets(conn)
+    migrate_zone_styles(conn)
 
 
 def ensure_seed_snapshot(conn: sqlite3.Connection) -> None:
@@ -279,6 +281,32 @@ def normalized_secret_value(value: object) -> str | None:
         return None
     normalized = str(value).strip()
     return normalized or None
+
+
+def migrate_zone_styles(conn: sqlite3.Connection) -> None:
+    rows = conn.execute(
+        """
+        SELECT id, payload_json
+        FROM graph_snapshots
+        ORDER BY id ASC
+        """
+    ).fetchall()
+    snapshot_updates: list[tuple[str, int]] = []
+
+    for row in rows:
+        try:
+            workspace = WorkspaceDocument.model_validate_json(row["payload_json"])
+        except Exception:
+            continue
+        if not normalize_workspace_zone_styles(workspace):
+            continue
+        snapshot_updates.append((snapshot_workspace_document(workspace).model_dump_json(), int(row["id"])))
+
+    if snapshot_updates:
+        conn.executemany(
+            "UPDATE graph_snapshots SET payload_json = ? WHERE id = ?",
+            snapshot_updates,
+        )
 
 
 def _migrate_chat_sessions_schema(conn: sqlite3.Connection) -> None:

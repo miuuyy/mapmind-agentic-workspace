@@ -1,4 +1,4 @@
-# MapMind
+# Clew
 
 <p>
   <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-111111?style=flat-square"></a>
@@ -12,14 +12,14 @@
   <img alt="AI powered" src="https://img.shields.io/badge/AI-powered-111111?style=flat-square">
 </p>
 
-**MapMind turns messy topics into a structured learning graph you can actually follow**.
+**Clew turns messy topics into a structured learning graph you can actually follow**.
 A graph-first agentic workspace for learning subjects with real dependency structure (ideologically similar to Obsidian)
 
-![MapMind walkthrough](.github/readme-assets/walkthrough.gif)
+![Clew walkthrough](.github/readme-assets/walkthrough.gif)
 
-Most AI learning tools collapse into chat. MapMind keeps the dependency graph as the working surface: AI can expand, audit, and restructure the graph, but nothing mutates silently.
+Most AI learning tools collapse into chat. Clew keeps the dependency graph as the working surface: AI can expand, audit, and restructure the graph, but nothing mutates silently.
 
-This repository is the local, hackable, agent-native edition of MapMind. If you want the fastest first look, try [mapmind.space](https://mapmind.space). If you want full control over providers, state, and graph packs, run this repo locally.
+This repository is the local, hackable, agent-native edition of Clew. If you want the fastest first look, try [mapmind.space](https://mapmind.space). If you want full control over providers, state, and graph packs, run this repo locally.
 
 ## Quick look
 
@@ -62,15 +62,15 @@ Then open:
 
 ## Visuals
 
-![MapMind workspace overview](.github/readme-assets/asset2.jpeg)
+![Clew workspace overview](.github/readme-assets/asset2.jpeg)
 
 <table>
   <tr>
     <td width="50%">
-      <img alt="MapMind topic view" src=".github/readme-assets/asset3.png">
+      <img alt="Clew topic view" src=".github/readme-assets/asset3.png">
     </td>
     <td width="50%">
-      <img alt="MapMind proposal flow" src=".github/readme-assets/asset4.png">
+      <img alt="Clew proposal flow" src=".github/readme-assets/asset4.png">
     </td>
   </tr>
 </table>

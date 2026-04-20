@@ -502,13 +502,14 @@ function GraphCanvasComponent({
 
     function drawZoneBackgrounds(width: number, height: number, anchors: Map<string, NodeAnchor>): void {
       const positions = nodesRef.current;
+      const idleMotionActive = !staticLayout && !idleFrozenRef.current;
       const structureAnimatingZones =
-        !staticLayout &&
-        !idleFrozenRef.current &&
+        idleMotionActive &&
         frameCount - structureActivityFrameRef.current <= ZONE_GEOMETRY_REFRESH_FRAMES;
       const shouldRefreshZoneGeometry =
         layoutEditModeRef.current ||
         draggedNodeRef.current !== null ||
+        idleMotionActive ||
         structureAnimatingZones ||
         zoneGeometryRef.current.size === 0;
       for (const [zoneIndex, zone] of zonesDataRef.current.entries()) {

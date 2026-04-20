@@ -3,6 +3,17 @@ from __future__ import annotations
 from app.llm.contracts import QUIZ_DRAFT_SHAPE_NAME, render_action_contract, render_quiz_contract
 
 
+def math_formatting_instruction() -> str:
+    return (
+        "MATH FORMATTING RULES:\n"
+        "- Whenever user-visible text contains mathematical notation, write it in KaTeX-compatible LaTeX.\n"
+        "- Use $...$ for inline formulas and $$...$$ for standalone display formulas.\n"
+        "- Prefer explicit LaTeX commands such as \\frac, \\log, \\sin, \\cos, \\cdot, subscripts with _, and superscripts with ^.\n"
+        "- Do not write ad-hoc plaintext formulas like log_a x, (a+b)/(c+d), x^2, or a_n unless they are already wrapped in LaTeX delimiters.\n"
+        "- Quiz questions, answer choices, explanations, assistant replies, and proposal summaries must all follow this rule when math appears.\n"
+    )
+
+
 def planner_system_instruction() -> str:
     return (
         "You are a curriculum graph planner for a local study graph application. "
@@ -33,7 +44,8 @@ def planner_system_instruction() -> str:
         "Each topic must be a concrete, testable concept that a learner can realistically sit down and study in one session.\n"
         "- Time estimates must be realistic for self-study.\n"
         "- Each operation must have op_id, entity_kind, and rationale.\n"
-        "- If you mention coverage in the summary, it must match actual proposed operations."
+        "- If you mention coverage in the summary, it must match actual proposed operations.\n"
+        f"\n{math_formatting_instruction()}"
     )
 
 
@@ -54,6 +66,7 @@ def orchestrator_system_instruction(*, language_name: str, persona_rules: str, u
         "- In answer mode, reply with guidance only. In propose_* modes, the actual graph change still happens later through a proposal widget.\n"
         "- If action is propose_ingest or propose_expand, reply_message must describe the next step in future tense or present-progressive intent, not as a completed fact.\n"
         "- For propose_* actions, do NOT say or imply 'I generated', 'I created', 'I prepared', 'I added', or 'here is the proposal'. The proposal is not ready yet at that stage.\n"
+        f"{math_formatting_instruction()}"
         "Allowed orchestrator actions:\n"
         f"{render_action_contract('orchestrator')}\n"
         "Inline quiz contract:\n"
@@ -73,15 +86,17 @@ def study_assistant_system_instruction(*, language_name: str, persona_rules: str
         "- You cannot delete graph content, promise deletion, or claim that graph changes already happened.\n"
         "- Only the proposal/apply pipeline can change the graph.\n"
         "- If the learner dislikes a topic, talk about refocusing, skipping for now, or generating a future proposal, not deleting it.\n"
+        f"{math_formatting_instruction()}"
         f"- Grounding mode for this request: {'web-enabled' if use_grounding else 'graph-local only'}.\n"
     )
 
 
 def quiz_system_instruction(*, language_name: str) -> str:
     return (
-        "You generate multiple-choice quizzes for the local MapMind graph-first learning app. "
+        "You generate multiple-choice quizzes for the local Clew graph-first learning app. "
         f"Write the quiz in {language_name}. "
         "Return valid JSON only. Do not reveal chain-of-thought or meta commentary.\n"
         f"Use the structured shape named {QUIZ_DRAFT_SHAPE_NAME}.\n"
+        f"{math_formatting_instruction()}"
         f"{render_quiz_contract()}"
     )

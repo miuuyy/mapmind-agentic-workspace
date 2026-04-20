@@ -1,7 +1,7 @@
 import React from "react";
 import { BookBookmark, BugBeetle, CaretDown, CaretLeft, CaretRight, ChatCircleDots, Check, CrosshairSimple, DownloadSimple, GearSix, PencilSimple, SquaresFour } from "@phosphor-icons/react";
 
-import { APP_LOGO_SRC, ASSISTANT_MIN_WIDTH, type AuthSessionPayload, type GraphChatState, type ThemeMode, type WorkspaceSurfacePayload } from "../lib/appContracts";
+import { APP_NAME, ASSISTANT_MIN_WIDTH, type AuthSessionPayload, type GraphChatState, type ThemeMode, type WorkspaceSurfacePayload } from "../lib/appContracts";
 import { API_BASE } from "../lib/api";
 import {
   LIGHT_DESKTOP_LAYOUT_STORAGE_KEY,
@@ -524,6 +524,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     const dockRect = dockRef.current?.getBoundingClientRect();
     const workspaceRect = workspaceWindowRef.current?.getBoundingClientRect();
     const chatRect = chatWindowRef.current?.getBoundingClientRect();
+    const floatingStatsRect = floatingStatsRef.current?.getBoundingClientRect();
+    const topicPopoverRect = topicPopoverRef.current?.getBoundingClientRect();
 
     const dockSize = dockRect ? { width: dockRect.width, height: dockRect.height } : { width: 72, height: 320 };
     const workspaceSize = workspaceRect ? { width: workspaceRect.width, height: workspaceRect.height } : { width: 400, height: 520 };
@@ -534,13 +536,27 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     let nextChatPosition = chatWindowPosition;
 
     const dockBlockedRect = makeFloatingRect(nextDockPosition, dockSize);
+    const auxiliaryBlockedRects: FloatingRect[] = [];
+
+    if (floatingStatsRect) {
+      auxiliaryBlockedRects.push(toFloatingRect(shellRect, floatingStatsRect));
+    }
+    if (selectedTopic && popoverPosition && topicPopoverRect) {
+      auxiliaryBlockedRects.push(toFloatingRect(shellRect, topicPopoverRect));
+    }
 
     if (lightWorkspacePanelOpen) {
-      nextWorkspacePosition = resolveFloatingCollision("workspace", workspaceWindowPosition, workspaceSize, shellRect, [dockBlockedRect]);
+      nextWorkspacePosition = resolveFloatingCollision(
+        "workspace",
+        workspaceWindowPosition,
+        workspaceSize,
+        shellRect,
+        [dockBlockedRect, ...auxiliaryBlockedRects],
+      );
     }
 
     if (lightChatPanelOpen) {
-      const blockedRects = [dockBlockedRect];
+      const blockedRects = [dockBlockedRect, ...auxiliaryBlockedRects];
       if (lightWorkspacePanelOpen) {
         blockedRects.push(makeFloatingRect(nextWorkspacePosition, workspaceSize));
       }
@@ -561,8 +577,14 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     chatWindowPosition,
     dockPosition,
     experimentalLightDesktop,
+    floatingStatsRef,
     lightChatPanelOpen,
     lightWorkspacePanelOpen,
+    overlayLeftOffset,
+    overlayRightOffset,
+    popoverPosition,
+    selectedTopic,
+    topicPopoverRef,
     workspaceWindowPosition,
   ]);
 
@@ -761,8 +783,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       {!experimentalLightDesktop ? (
       <aside className={`leftSidebar ${sidebarVisible ? "leftSidebarVisible" : "leftSidebarCollapsed"} ${leftSidebarClosing ? "leftSidebarClosing" : ""}`}>
         <div className="sidebarHeader">
-          <div className="sidebarBrand" aria-label="MapMind brand">
-            <img className="sidebarBrandLogo" src={APP_LOGO_SRC} alt="MapMind logo" />
+          <div className="sidebarBrand" aria-label={`${APP_NAME} brand`}>
+            <span className="sidebarBrandMark" aria-hidden="true" />
           </div>
           <button className="sidebarToggleBtn" onClick={closeSidebar} title={copy.sidebar.closeSidebar}>
             <CaretLeft size={16} weight="bold" />

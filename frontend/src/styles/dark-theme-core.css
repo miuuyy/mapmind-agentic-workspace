@@ -1256,12 +1256,23 @@
 }
 
 :root[data-theme="dark"] .lightFloatingWindowHeader {
-  padding: 22px 24px 12px !important;
+  padding: 16px 18px 12px !important;
 }
 
 :root[data-theme="dark"] .lightWorkspaceWindow .lightFloatingWindowHeader {
   background: #050505 !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+:root[data-theme="dark"] .lightWorkspaceWindow .lightFloatingWindowTitle {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+}
+
+:root[data-theme="dark"] .lightWorkspaceWindow .lightFloatingWindowSubtle {
+  margin-top: 2px !important;
+  font-size: 11px !important;
 }
 
 :root[data-theme="dark"] .lightWorkspaceWindowBody,
@@ -1275,10 +1286,12 @@
 :root[data-theme="dark"] .lightWindowActionButton,
 :root[data-theme="dark"] .lightWindowCreateWorkspaceButton,
 :root[data-theme="dark"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton {
-  min-height: 40px !important;
-  border-radius: 16px !important;
-  padding: 0 14px !important;
+  min-height: 30px !important;
+  border-radius: 999px !important;
+  padding: 0 10px !important;
   font-weight: 650 !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
 }
 
 :root[data-theme="dark"] .lightWorkspaceFolder {
@@ -1286,18 +1299,18 @@
 }
 
 :root[data-theme="dark"] .lightWorkspaceFolderRow {
-  min-height: 56px !important;
-  padding: 6px 7px !important;
+  min-height: 52px !important;
+  padding: 5px 6px !important;
 }
 
 :root[data-theme="dark"] .lightWorkspaceFolderMain {
-  border-radius: 14px !important;
-  padding: 9px 11px !important;
+  border-radius: 11px !important;
+  padding: 7px 9px !important;
 }
 
 :root[data-theme="dark"] .lightWorkspaceFolderAction {
-  width: 28px !important;
-  height: 28px !important;
+  width: 26px !important;
+  height: 26px !important;
   border-radius: 999px !important;
 }
 

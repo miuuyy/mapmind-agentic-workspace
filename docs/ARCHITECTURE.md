@@ -2,7 +2,7 @@
 
 This file explains how the public `main` branch is shaped as a codebase and as a product boundary.
 
-MapMind is not a generic note system and not a broad autonomous agent platform. It is a graph-first learning workspace with a deliberately narrow AI loop.
+Clew is not a generic note system and not a broad autonomous agent platform. It is a graph-first learning workspace with a deliberately narrow AI loop.
 
 ## Product boundary
 
@@ -52,13 +52,13 @@ The frontend is intentionally graph-first. It should read like a workspace, not 
 | `backend/app/models/api.py` | API payload models |
 | `backend/app/services/repository.py` | SQLite persistence, snapshots, workspace config, graph state |
 | `backend/app/services/chat_orchestrator.py` | action choice for answer, quiz, or proposal |
-| `backend/app/services/gemini_planner.py` | proposal generation, coercion, validation bridge |
+| `backend/app/services/proposal_planner.py` | proposal generation, coercion, validation bridge |
 | `backend/app/services/quiz_service.py` | quiz generation and closure attempts |
 | `backend/app/llm/` | provider seam, model catalog, prompts, contracts, schemas |
 
 ## Separation of concerns
 
-MapMind uses a few simple but important separations:
+Clew uses a few simple but important separations:
 
 ### Domain state
 

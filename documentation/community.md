@@ -1,6 +1,6 @@
 # Community
 
-MapMind is still a small personal product. If the workspace feels useful, unusual, or worth pushing further, the best thing you can do is stay close to it.
+Clew is still a small personal product. If the workspace feels useful, unusual, or worth pushing further, the best thing you can do is stay close to it.
 
 ## Follow the project
 

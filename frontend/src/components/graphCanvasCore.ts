@@ -228,26 +228,19 @@ export function clamp(value: number, min: number, max: number): number {
 
 export function buildZoneContour(points: NodePosition[], intensity: number): Array<{ x: number; y: number }> {
   if (points.length === 0) return [];
+  const contourPoints =
+    points.length === 1
+      ? expandSinglePointContourSeed(points[0], intensity)
+      : points;
 
-  const center = points.reduce(
-    (acc, point) => ({ x: acc.x + point.x / points.length, y: acc.y + point.y / points.length }),
+  const center = contourPoints.reduce(
+    (acc, point) => ({ x: acc.x + point.x / contourPoints.length, y: acc.y + point.y / contourPoints.length }),
     { x: 0, y: 0 },
   );
   const basePadding = 42 + intensity * 10;
 
-  if (points.length === 1) {
-    const radius = 58 + intensity * 10;
-    return Array.from({ length: 10 }, (_, index) => {
-      const angle = (Math.PI * 2 * index) / 10 - Math.PI / 2;
-      return {
-        x: points[0].x + Math.cos(angle) * radius,
-        y: points[0].y + Math.sin(angle) * radius,
-      };
-    });
-  }
-
-  if (points.length === 2) {
-    const [first, second] = points;
+  if (contourPoints.length === 2) {
+    const [first, second] = contourPoints;
     const dx = second.x - first.x;
     const dy = second.y - first.y;
     const distance = Math.max(1, Math.hypot(dx, dy));
@@ -265,7 +258,7 @@ export function buildZoneContour(points: NodePosition[], intensity: number): Arr
     ];
   }
 
-  const expanded = points
+  const expanded = contourPoints
     .map((point) => {
       const dx = point.x - center.x;
       const dy = point.y - center.y;
@@ -279,9 +272,60 @@ export function buildZoneContour(points: NodePosition[], intensity: number): Arr
         angle: Math.atan2(dy, dx),
       };
     })
-    .sort((a, b) => a.angle - b.angle);
+    .sort((a, b) => a.angle - b.angle)
+    .map(({ x, y }) => ({ x, y }));
 
-  return expanded.map(({ x, y }) => ({ x, y }));
+  return convexHull(expanded);
+}
+
+function expandSinglePointContourSeed(point: NodePosition, intensity: number): NodePosition[] {
+  const radiusX = 34 + intensity * 6;
+  const radiusY = 28 + intensity * 5;
+  return Array.from({ length: 6 }, (_, index) => {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / 6;
+    return {
+      ...point,
+      x: point.x + Math.cos(angle) * radiusX,
+      y: point.y + Math.sin(angle) * radiusY,
+    };
+  });
+}
+
+function convexHull(points: Array<{ x: number; y: number }>): Array<{ x: number; y: number }> {
+  if (points.length <= 3) return points;
+  const sorted = [...points].sort((left, right) => {
+    if (left.x !== right.x) return left.x - right.x;
+    return left.y - right.y;
+  });
+
+  const cross = (
+    origin: { x: number; y: number },
+    a: { x: number; y: number },
+    b: { x: number; y: number },
+  ): number => {
+    return (a.x - origin.x) * (b.y - origin.y) - (a.y - origin.y) * (b.x - origin.x);
+  };
+
+  const lower: Array<{ x: number; y: number }> = [];
+  for (const point of sorted) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) {
+      lower.pop();
+    }
+    lower.push(point);
+  }
+
+  const upper: Array<{ x: number; y: number }> = [];
+  for (let index = sorted.length - 1; index >= 0; index -= 1) {
+    const point = sorted[index];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) {
+      upper.pop();
+    }
+    upper.push(point);
+  }
+
+  lower.pop();
+  upper.pop();
+  return [...lower, ...upper];
 }
 
 export function primaryZoneIdForTopic(zones: Zone[], topicId: string | null): string | null {

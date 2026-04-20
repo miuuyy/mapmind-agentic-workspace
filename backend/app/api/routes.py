@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timezone
 from hashlib import sha1
+import traceback
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
@@ -18,7 +19,7 @@ from app.services.repository import ChatSessionDeletionError, ChatSessionNotFoun
 
 if TYPE_CHECKING:
     from app.services.chat_orchestrator import ChatOrchestratorService
-    from app.services.gemini_planner import ProposalPlanner
+    from app.services.proposal_planner import ProposalPlanner
     from app.services.quiz_service import QuizService
     from app.services.study_assistant import StudyAssistantService
 
@@ -39,11 +40,11 @@ def get_effective_settings(
 
 
 def get_planner(settings: Settings = Depends(get_effective_settings)) -> "ProposalPlanner":
-    from app.services.gemini_planner import ProposalPlanner, GeminiPlannerError
+    from app.services.proposal_planner import ProposalPlanner, ProposalPlannerError
 
     try:
         return ProposalPlanner(settings)
-    except GeminiPlannerError as exc:
+    except ProposalPlannerError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
@@ -118,6 +119,51 @@ def _local_user(settings: Settings) -> dict:
         "created_at": now,
         "last_login_at": now,
         "active_workspace_id": "default",
+    }
+
+
+def _proposal_failure_diagnostics_payload(
+    *,
+    graph_id: str,
+    model_name: str,
+    request: GraphChatRequest,
+    proposal_request: ProposalGenerateRequest | None,
+    exc: Exception,
+) -> dict:
+    compact_messages = [
+        {
+            "id": message.id,
+            "role": message.role,
+            "content": message.content,
+            "hidden": message.hidden,
+            "created_at": message.created_at.isoformat() if message.created_at else None,
+            "model": message.model,
+            "action": message.action,
+            "planning_status": message.planning_status,
+            "planning_error": message.planning_error,
+            "proposal_applied": message.proposal_applied,
+            "has_proposal": message.proposal is not None,
+            "has_inline_quiz": message.inline_quiz is not None,
+        }
+        for message in request.messages
+    ]
+    return {
+        "graph_id": graph_id,
+        "model": model_name,
+        "chat_request": {
+            "prompt": request.prompt,
+            "hidden_user_message": request.hidden_user_message,
+            "selected_topic_id": request.selected_topic_id,
+            "session_id": request.session_id,
+            "model": request.model,
+            "use_grounding": request.use_grounding,
+            "message_count": len(request.messages),
+            "messages": compact_messages,
+        },
+        "proposal_request": proposal_request.model_dump(mode="json") if proposal_request is not None else None,
+        "error_type": exc.__class__.__name__,
+        "error_message": str(exc),
+        "diagnostics": getattr(exc, "diagnostics", None),
     }
 
 
@@ -473,14 +519,14 @@ def propose_graph_changes(
     repository: GraphRepository = Depends(get_repository),
     planner: "ProposalPlanner" = Depends(get_planner),
 ) -> dict:
-    from app.services.gemini_planner import GeminiPlannerError
+    from app.services.proposal_planner import ProposalPlannerError
 
     try:
         graph = repository.graph(graph_id)
         result = planner.generate_proposal(graph, request)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"graph {graph_id} not found") from exc
-    except GeminiPlannerError as exc:
+    except ProposalPlannerError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     repository.append_event(
         "graph.proposal.generated",
@@ -502,7 +548,7 @@ def propose_graph_changes_stream(
     repository: GraphRepository = Depends(get_repository),
     planner: "ProposalPlanner" = Depends(get_planner),
 ) -> StreamingResponse:
-    from app.services.gemini_planner import GeminiPlannerError
+    from app.services.proposal_planner import ProposalPlannerError
 
     try:
         graph = repository.graph(graph_id)
@@ -527,7 +573,7 @@ def propose_graph_changes_stream(
                         "model": (((result_payload.get("trace") or {}).get("model")) or ""),
                     },
                 )
-        except GeminiPlannerError as exc:
+        except ProposalPlannerError as exc:
             yield json.dumps({"type": "error", "detail": str(exc)}, ensure_ascii=False) + "\n"
         except Exception as exc:
             yield json.dumps({"type": "error", "detail": str(exc)}, ensure_ascii=False) + "\n"
@@ -779,6 +825,7 @@ def graph_chat(
     request: GraphChatRequest,
     repository: GraphRepository = Depends(get_repository),
     orchestrator: "ChatOrchestratorService" = Depends(get_chat_orchestrator),
+    settings: Settings = Depends(get_settings),
 ) -> dict:
     from app.services.chat_orchestrator import ChatOrchestratorError
 
@@ -809,9 +856,28 @@ def graph_chat(
     persona_rules = _assistant_persona_rules(workspace_config)
     if not orchestrator.has_live_provider():
         raise HTTPException(status_code=503, detail="The selected AI provider is unavailable: missing API key")
+    proposal_request = None
     try:
         response = orchestrator.respond(graph, effective_request, persona_rules=persona_rules, workspace_config=workspace_config)
     except ChatOrchestratorError as exc:
+        if "proposal generation failed" in str(exc):
+            get_debug_log_service(settings.root_dir).log_server_error(
+                title=f"POST /api/v1/graphs/{graph_id}/chat",
+                message="Proposal generation failed",
+                method="POST",
+                path=f"/api/v1/graphs/{graph_id}/chat",
+                status_code=502,
+                request_payload=_proposal_failure_diagnostics_payload(
+                    graph_id=graph_id,
+                    model_name=request.model or workspace_config.default_model,
+                    request=effective_request,
+                    proposal_request=proposal_request,
+                    exc=exc,
+                ),
+                response_payload={"detail": str(exc)},
+                stack=traceback.format_exc(),
+                preserve_private_payload=True,
+            )
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     repository.append_chat_message(graph_id, user_message, session_id=request.session_id)
     assistant_thread = repository.append_chat_message(
@@ -838,6 +904,7 @@ def graph_chat_stream(
     request: GraphChatRequest,
     repository: GraphRepository = Depends(get_repository),
     orchestrator: "ChatOrchestratorService" = Depends(get_chat_orchestrator),
+    settings: Settings = Depends(get_settings),
 ) -> StreamingResponse:
     from app.services.chat_orchestrator import ChatOrchestratorError
 
@@ -938,6 +1005,23 @@ def graph_chat_stream(
             try:
                 result_payload = orchestrator.stream_proposal_result(graph, proposal_request)
             except Exception as exc:
+                get_debug_log_service(settings.root_dir).log_server_error(
+                    title=f"POST /api/v1/graphs/{graph_id}/chat/stream",
+                    message="Proposal generation failed",
+                    method="POST",
+                    path=f"/api/v1/graphs/{graph_id}/chat/stream",
+                    status_code=200,
+                    request_payload=_proposal_failure_diagnostics_payload(
+                        graph_id=graph_id,
+                        model_name=model_name,
+                        request=effective_request,
+                        proposal_request=proposal_request,
+                        exc=exc,
+                    ),
+                    response_payload={"detail": f"proposal generation failed: {exc}"},
+                    stack=traceback.format_exc(),
+                    preserve_private_payload=True,
+                )
                 updated_thread = repository.update_chat_message(
                     graph_id,
                     ChatMessage.model_validate(

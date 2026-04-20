@@ -21,7 +21,7 @@ These docs are for people who want to run, inspect, modify, or extend the local 
 - [Agentic Loop](AGENTIC_LOOP.md): the decision and apply loop behind chat, proposals, quizzes, and rollback
 - [Provider Guide](PROVIDER_GUIDE.md): built-in providers, model config, and how to add another provider cleanly
 - [Usage Guide](USAGE_GUIDE.md): source-material guidance for generating high-quality ingest input
-- [MCP Setup](MCP_SETUP.md): connect MapMind to Claude Desktop, Claude Code, or Cursor via the built-in MCP server
+- [MCP Setup](MCP_SETUP.md): connect Clew to Claude Desktop, Claude Code, or Cursor via the built-in MCP server
 - [ADR index](adr/README.md): long-lived decisions that protect the product from drifting into weaker shapes
 
 ## What is intentionally not here

@@ -1,8 +1,8 @@
 # Agent Workflow Layer
 
-This directory contains the shared workflow layer for coding agents working in MapMind.
+This directory contains the shared workflow layer for coding agents working in Clew.
 
-MapMind uses two main agent surfaces:
+Clew uses two main agent surfaces:
 
 - `Codex`, which reads [AGENTS.md](../../AGENTS.md)
 - `Claude Code`, which reads [CLAUDE.md](../../CLAUDE.md) and repo-local `.claude/` assets
@@ -27,7 +27,7 @@ Repo-local Claude assets live here:
 
 - `../../.claude/skills/`
 
-They exist to reduce repetitive prompt setup for common MapMind work, especially:
+They exist to reduce repetitive prompt setup for common Clew work, especially:
 
 - graph/product reviews
 - docs work
@@ -48,4 +48,4 @@ It is not:
 - a fallback system that bypasses model decisions
 - a pile of magic prompts with no relation to repository truth
 
-It is a **repository working layer**: context, instructions, and reusable workflows for the people and agents building MapMind.
+It is a **repository working layer**: context, instructions, and reusable workflows for the people and agents building Clew.

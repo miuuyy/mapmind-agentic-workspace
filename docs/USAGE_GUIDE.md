@@ -2,7 +2,7 @@
 
 This guide is for the part of the workflow where you or another model prepare raw source material for graph ingest.
 
-MapMind does **not** want a polished final curriculum here. It wants clean, structured source material that can later be turned into a connected proposal.
+Clew does **not** want a polished final curriculum here. It wants clean, structured source material that can later be turned into a connected proposal.
 
 ## What this guide is for
 
@@ -12,7 +12,7 @@ Use this when you want to:
 - ask another LLM to generate ingest-ready markdown
 - keep large subject dumps from collapsing into one useless blob
 
-## What MapMind wants from raw source
+## What Clew wants from raw source
 
 Good ingest material is:
 
@@ -65,7 +65,7 @@ Example:
 You are generating source material for a local AI-assisted study graph application.
 
 This application is not asking you for a final roadmap, not for strict JSON, and not for a polished article.
-It wants a clean Markdown topic dump that MapMind will reason over directly to build a connected knowledge graph.
+It wants a clean Markdown topic dump that Clew will reason over directly to build a connected knowledge graph.
 
 What the application is for:
 - building a graph of study topics
@@ -163,7 +163,7 @@ Now generate the topic dump for this request:
 
 ## Anti-patterns
 
-Do not give MapMind source material like this:
+Do not give Clew source material like this:
 
 ```text
 networking, linux, python, crypto, web security, malware, reverse engineering, labs, operating systems...

@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-This directory contains Architecture Decision Records for MapMind.
+This directory contains Architecture Decision Records for Clew.
 
 The goal is simple: when a decision is important enough to shape the product or codebase for a long time, it should not live only in somebody's head.
 

@@ -1,6 +1,6 @@
 # Backend
 
-This package contains the FastAPI backend for the public local edition of MapMind.
+This package contains the FastAPI backend for the public local edition of Clew.
 
 The backend is responsible for storing the workspace, validating graph mutations, running the agent loop, and keeping accepted graph changes reversible.
 
@@ -21,7 +21,7 @@ The backend is responsible for storing the workspace, validating graph mutations
 | `app/models/` | domain and API models |
 | `app/services/repository.py` | persistence, workspace config, snapshots |
 | `app/services/chat_orchestrator.py` | action choice for answer, quiz, or proposal |
-| `app/services/gemini_planner.py` | proposal draft generation and validation bridge |
+| `app/services/proposal_planner.py` | proposal draft generation and validation bridge |
 | `app/services/quiz_service.py` | closure and quiz flows |
 | `app/llm/` | providers, model catalog, contracts, prompt templates, schemas |
 | `tests/` | regression coverage |

@@ -4,13 +4,15 @@ import unittest
 
 from app.models.domain import GraphOperation, GraphProposalEnvelope, ProposalEdge, ProposalIntent, ProposalSourceBundle, ProposalZone
 from app.services.bootstrap import build_seed_workspace
-from app.services.gemini_planner import ProposalPlanner, GeminiPlannerError
+from app.services.proposal_planner import ProposalPlanner, ProposalPlannerError
+from app.services.proposal_validator import ProposalValidator
 
 
-class GeminiPlannerValidationTests(unittest.TestCase):
+class ProposalPlannerValidationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.graph = next(graph for graph in build_seed_workspace().graphs if graph.graph_id == "mathematics-demo")
         self.planner = ProposalPlanner.__new__(ProposalPlanner)
+        self.validator = ProposalValidator()
 
     def _proposal(self, *operations: GraphOperation) -> GraphProposalEnvelope:
         return GraphProposalEnvelope(
@@ -69,7 +71,7 @@ class GeminiPlannerValidationTests(unittest.TestCase):
             )
         )
 
-        with self.assertRaisesRegex(GeminiPlannerError, "disconnected graph islands"):
+        with self.assertRaisesRegex(ProposalPlannerError, "disconnected graph islands"):
             self.planner._validate_proposal_envelope(self.graph, proposal)
 
     def test_singleton_new_zone_becomes_warning(self) -> None:
@@ -109,10 +111,10 @@ class GeminiPlannerValidationTests(unittest.TestCase):
             )
         )
 
-        with self.assertRaisesRegex(GeminiPlannerError, "unknown topics"):
+        with self.assertRaisesRegex(ProposalPlannerError, "unknown topics"):
             self.planner._validate_proposal_envelope(self.graph, proposal)
 
-    def test_topic_with_unknown_zone_is_rejected(self) -> None:
+    def test_topic_with_unknown_zone_is_materialized_as_zone_with_warning(self) -> None:
         proposal = self._proposal(
             GraphOperation(
                 op_id="topic_2",
@@ -125,11 +127,48 @@ class GeminiPlannerValidationTests(unittest.TestCase):
                     "slug": "limits",
                     "zones": ["missing-zone"],
                 },
+            ),
+            GraphOperation(
+                op_id="edge_2",
+                op="upsert_edge",
+                entity_kind="edge",
+                rationale="connect limits into the existing graph",
+                edge=ProposalEdge(
+                    id="edge-limits-functions",
+                    source_topic_id="functions",
+                    target_topic_id="limits",
+                    relation="requires",
+                ),
             )
         )
 
-        with self.assertRaisesRegex(GeminiPlannerError, "unknown zones"):
-            self.planner._validate_proposal_envelope(self.graph, proposal)
+        self.planner._validate_proposal_envelope(self.graph, proposal)
+        self.assertTrue(any("mentioned a new zone" in warning or "mentioned new zones" in warning for warning in proposal.warnings))
+        created_zone = next(
+            operation.zone for operation in proposal.operations if operation.zone is not None and operation.zone.id == "missing-zone"
+        )
+        self.assertEqual(created_zone.title, "Missing Zone")
+        self.assertEqual(created_zone.topic_ids, ["limits"])
+
+    def test_raw_validator_still_rejects_unknown_zone_without_repair(self) -> None:
+        proposal = self._proposal(
+            GraphOperation(
+                op_id="topic_3",
+                op="upsert_topic",
+                entity_kind="topic",
+                rationale="bad zone reference",
+                topic={
+                    "id": "integrals",
+                    "title": "Integrals",
+                    "slug": "integrals",
+                    "zones": ["missing-zone"],
+                },
+            )
+        )
+
+        validation = self.validator.validate(proposal, self.graph)
+        self.assertFalse(validation.ok)
+        self.assertTrue(any("unknown zones" in error for error in validation.errors))
 
     def test_remove_operation_is_rejected(self) -> None:
         proposal = self._proposal(
@@ -142,7 +181,7 @@ class GeminiPlannerValidationTests(unittest.TestCase):
             )
         )
 
-        with self.assertRaisesRegex(GeminiPlannerError, "not allowed in proposal envelopes"):
+        with self.assertRaisesRegex(ProposalPlannerError, "not allowed in proposal envelopes"):
             self.planner._validate_proposal_envelope(self.graph, proposal)
 
 

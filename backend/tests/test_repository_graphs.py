@@ -329,6 +329,54 @@ class RepositoryGraphTests(unittest.TestCase):
         self.assertIn("embeddings", review_zone.topic_ids)
         self.assertIn("embeddings", ml_zone.topic_ids)
 
+    def test_apply_proposal_assigns_zone_style_deterministically_in_repository(self) -> None:
+        applied = self.repository.apply_proposal(
+            GraphProposal(
+                graph_id="mathematics-demo",
+                user_prompt="add cell processes zone",
+                summary="style zone on apply",
+                assistant_message="style zone on apply",
+                operations=[
+                    PatchOperation(
+                        op="upsert_topic",
+                        topic=ProposalTopic(
+                            id="cell-membrane-transport",
+                            slug="cell-membrane-transport",
+                            title="Cell membrane transport",
+                            zones=["cell-processes"],
+                        ),
+                    ),
+                    PatchOperation(
+                        op="upsert_edge",
+                        edge={
+                            "id": "edge-functions-cell-transport",
+                            "source_topic_id": "functions",
+                            "target_topic_id": "cell-membrane-transport",
+                            "relation": "requires",
+                        },
+                    ),
+                    PatchOperation(
+                        op="upsert_zone",
+                        zone=ProposalZone(
+                            id="cell-processes",
+                            title="Cell Processes",
+                            kind="concept",
+                            color="purple",
+                            intensity=4.0,
+                            topic_ids=["cell-membrane-transport"],
+                        ),
+                    ),
+                ],
+            )
+        )
+
+        graph = next(graph for graph in applied.workspace.graphs if graph.graph_id == "mathematics-demo")
+        zone = next(zone for zone in graph.zones if zone.id == "cell-processes")
+
+        self.assertRegex(zone.color, r"^#[0-9a-fA-F]{6}$")
+        self.assertNotEqual(zone.color, "purple")
+        self.assertLessEqual(zone.intensity, 1.0)
+
     def test_apply_proposal_is_reversible_via_snapshot_rollback(self) -> None:
         before = self.repository.current()
 

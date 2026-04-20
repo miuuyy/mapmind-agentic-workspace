@@ -1,6 +1,6 @@
 # How to use
 
-MapMind works best when you treat it like a learning workspace, not like a passive viewer.
+Clew works best when you treat it like a learning workspace, not like a passive viewer.
 
 ## 1. Start with a graph
 
@@ -15,7 +15,7 @@ The point is not to get the perfect graph in one shot. The point is to create a 
 
 ## 2. Pick a direction
 
-MapMind gets stronger once you use it around a concrete target.
+Clew gets stronger once you use it around a concrete target.
 
 That target can be:
 
@@ -85,7 +85,7 @@ That turns the graph into more than a dependency diagram. It becomes a record of
 
 ## 8. Keep shaping the workspace
 
-MapMind is designed to be adjusted.
+Clew is designed to be adjusted.
 
 You can:
 

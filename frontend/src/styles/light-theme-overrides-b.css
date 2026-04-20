@@ -2082,3 +2082,22 @@
 :root[data-theme="light"] .lightChatWindow .sessionItemLabel {
   line-height: 1 !important;
 }
+
+/* Final light-chat separator lock: force the lower divider to reach both edges */
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
+  border-top: 0 !important;
+  position: relative !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -24px !important;
+  right: -24px !important;
+  height: 1px !important;
+  background: rgba(232, 228, 222, 0.96) !important;
+  pointer-events: none !important;
+  z-index: 3 !important;
+}

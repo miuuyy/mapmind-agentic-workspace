@@ -34,6 +34,30 @@ class DebugLogServiceTests(unittest.TestCase):
         self.assertNotIn("private note", entry.request_excerpt or "")
         self.assertIn("[redacted]", entry.request_excerpt or "")
 
+    def test_server_entries_can_preserve_private_payload_while_redacting_secrets(self) -> None:
+        tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tempdir.cleanup)
+        service = DebugLogService(Path(tempdir.name) / "logs.log")
+
+        entry = service.log_server_error(
+            title="POST /api/v1/graphs/demo/chat/stream",
+            message="Proposal generation failed",
+            request_payload={
+                "prompt": "full prompt text",
+                "planner_system_instruction": "full role text",
+                "gemini_api_key": "secret-value",
+                "messages": [{"content": "full message body"}],
+            },
+            response_payload={"raw_model_response_text": "{\"summary\":\"ok\"}"},
+            preserve_private_payload=True,
+        )
+
+        self.assertIn("full prompt text", entry.request_excerpt or "")
+        self.assertIn("full role text", entry.request_excerpt or "")
+        self.assertIn("full message body", entry.request_excerpt or "")
+        self.assertNotIn("secret-value", entry.request_excerpt or "")
+        self.assertIn("[redacted]", entry.request_excerpt or "")
+
 
 class DebugLogRouteTests(unittest.TestCase):
     def setUp(self) -> None:

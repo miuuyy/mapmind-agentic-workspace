@@ -1,19 +1,19 @@
 {
-  "name": "MM AI",
-  "short_name": "MM AI",
-  "description": "Graph-first learning workspace with proposals, snapshots, library import, and grounded requests.",
+  "name": "Clew",
+  "short_name": "Clew",
+  "description": "AI-native workspace for structured learning.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050505",
   "theme_color": "#050505",
   "icons": [
     {
-      "src": "/smalllogo.png",
+      "src": "/clew-favicon-light-accent.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/smalllogo.png",
+      "src": "/clew-favicon-light-accent.png",
       "sizes": "512x512",
       "type": "image/png"
     }

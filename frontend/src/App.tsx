@@ -11,6 +11,8 @@ import { setDebugModeEnabled } from "./lib/debugLogs";
 import {
   ASSISTANT_WIDTH_STORAGE_KEY,
   ASSISTANT_COLLAPSE_THRESHOLD,
+  APP_FAVICON_DARK_SRC,
+  APP_FAVICON_LIGHT_SRC,
   ASSISTANT_MAX_WIDTH,
   ASSISTANT_MIN_WIDTH,
   MEMORY_MODE_OPTIONS,
@@ -468,6 +470,15 @@ export default function App(): React.JSX.Element {
   usePersistedString(THEME_MODE_STORAGE_KEY, themeModeDraft);
   useEffect(() => {
     document.documentElement.dataset.theme = themeModeDraft;
+    const faviconHref = themeModeDraft === "light" ? APP_FAVICON_LIGHT_SRC : APP_FAVICON_DARK_SRC;
+    const iconLink = document.querySelector('link[rel="icon"]');
+    const appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]');
+    if (iconLink instanceof HTMLLinkElement) {
+      iconLink.href = faviconHref;
+    }
+    if (appleTouchIcon instanceof HTMLLinkElement) {
+      appleTouchIcon.href = faviconHref;
+    }
   }, [themeModeDraft]);
 
   const availableGraphs = useMemo(() => data?.workspace.graphs ?? [], [data]);
@@ -557,7 +568,24 @@ export default function App(): React.JSX.Element {
     setQuizPassCountDraft(requiredCorrectAnswers(c.pass_threshold, c.quiz_question_count));
   }, [data?.workspace.config]);
 
-  const { chatModelOptions, selectedChatModel, setSelectedChatModel } = useChatModelSelection(data?.workspace.config);
+  const { chatModelOptions, selectedChatModel, setSelectedChatModel } = useChatModelSelection(
+    data?.workspace.config,
+    activeGraph?.graph_id ?? null,
+  );
+
+  const formatPlanningError = useCallback((detail: string): string => {
+    const normalized = detail.trim();
+    if (!normalized) return normalized;
+    const isProposalFailure = normalized.toLowerCase().includes("proposal generation failed");
+    if (!isProposalFailure) {
+      return normalized;
+    }
+    const hint = copy.sessions.largeGraphModelHint;
+    if (normalized.includes(hint)) {
+      return normalized;
+    }
+    return `${normalized}\n${hint}`;
+  }, [copy.sessions]);
 
   useEffect(() => {
     if (!isSettingsOpen) return;
@@ -1502,7 +1530,7 @@ export default function App(): React.JSX.Element {
               ...current,
               messages: current.messages.map((message) =>
                 message.id === event.message_id
-                  ? { ...message, planning_status: null, planning_error: event.detail }
+                  ? { ...message, planning_status: null, planning_error: formatPlanningError(event.detail) }
                   : message,
               ),
             }));

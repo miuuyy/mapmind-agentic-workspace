@@ -29,6 +29,7 @@ from app.services.repository_storage import (
     snapshot_workspace_document,
     workspace_document_from_snapshot_row,
 )
+from app.services.zone_style_service import resolve_zone_style
 
 
 class ChatSessionNotFoundError(KeyError):
@@ -353,7 +354,7 @@ class GraphRepository:
         zone_map = {zone.id: zone for zone in graph.zones}
 
         for operation in proposal.operations:
-            self._apply_operation(operation, topic_map, edge_map, zone_map)
+            self._apply_operation(operation, topic_map, edge_map, zone_map, graph.graph_id)
 
         self._synchronize_zone_memberships(topic_map, zone_map)
         graph.topics = list(topic_map.values())
@@ -802,6 +803,7 @@ class GraphRepository:
         topic_map,
         edge_map,
         zone_map,
+        graph_id: str,
     ) -> None:
         if operation.op == "upsert_topic":
             if operation.topic is None:
@@ -873,7 +875,11 @@ class GraphRepository:
         if operation.op == "upsert_zone":
             if operation.zone is None:
                 raise ValueError("upsert_zone requires zone")
-            zone_map[operation.zone.id] = Zone.model_validate(operation.zone.model_dump())
+            zone_payload = operation.zone.model_dump()
+            color, intensity = resolve_zone_style(operation.zone.id, zone_map, graph_id=graph_id)
+            zone_payload["color"] = color
+            zone_payload["intensity"] = intensity
+            zone_map[operation.zone.id] = Zone.model_validate(zone_payload)
             return
 
         if operation.op == "set_mastery":

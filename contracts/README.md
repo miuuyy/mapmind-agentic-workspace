@@ -10,7 +10,7 @@ These files are not the whole domain model. They are the explicit exchange surfa
 
 ## Why this exists
 
-MapMind is built around reviewable graph mutation. A visible contract makes it easier to:
+Clew is built around reviewable graph mutation. A visible contract makes it easier to:
 
 - inspect proposal shape outside the app
 - validate tooling around graph patch transport

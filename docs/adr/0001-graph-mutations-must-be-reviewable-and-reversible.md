@@ -5,7 +5,7 @@
 
 ## Context
 
-MapMind is built around a graph that represents an actual learning path.
+Clew is built around a graph that represents an actual learning path.
 
 If AI is allowed to mutate that graph silently, two bad things happen quickly:
 
@@ -16,7 +16,7 @@ This risk is even higher in a study product, because prerequisite structure and 
 
 ## Decision
 
-Graph mutation in MapMind must be proposal-based.
+Graph mutation in Clew must be proposal-based.
 
 That means:
 
@@ -64,4 +64,4 @@ Negative:
 
 ## Notes
 
-This is one of the core decisions that makes MapMind feel like a controlled workspace instead of a generic AI wrapper.
+This is one of the core decisions that makes Clew feel like a controlled workspace instead of a generic AI wrapper.

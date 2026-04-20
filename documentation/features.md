@@ -1,6 +1,6 @@
 # Features
 
-MapMind is compact as a codebase, but broad enough as a product to cover a real study loop.
+Clew is compact as a codebase, but broad enough as a product to cover a real study loop.
 
 ## Product surface
 

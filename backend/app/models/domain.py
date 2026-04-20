@@ -333,7 +333,7 @@ class WorkspaceConfig(BaseModel):
 
 class WorkspaceDocument(BaseModel):
     workspace_id: str = "default"
-    title: str = "MapMind Workspace"
+    title: str = "Clew Workspace"
     active_graph_id: str | None = None
     config: WorkspaceConfig = Field(default_factory=WorkspaceConfig)
     graphs: list[StudyGraph] = Field(default_factory=list)
@@ -535,7 +535,7 @@ class ProposalZone(BaseModel):
     id: str
     title: str
     kind: str
-    color: str
+    color: str = ""
     intensity: float = 0.5
     topic_ids: list[str] = Field(default_factory=list)
 

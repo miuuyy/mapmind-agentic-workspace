@@ -9,12 +9,14 @@ from app.llm import LLMProviderError, build_llm_provider
 from app.llm.prompt_templates import orchestrator_system_instruction
 from app.llm.schemas import OrchestratorDecision
 from app.models.domain import GraphChatRequest, GraphChatResponse, ProposalGenerateRequest, StudyGraph, WorkspaceConfig
-from app.services.gemini_planner import ProposalPlanner, GeminiPlannerError
+from app.services.proposal_planner import ProposalPlanner, ProposalPlannerError
 from app.services.quiz_service import is_prerequisite_relation
 
 
 class ChatOrchestratorError(RuntimeError):
-    pass
+    def __init__(self, message: str, *, diagnostics: dict[str, Any] | None = None):
+        super().__init__(message)
+        self.diagnostics = diagnostics or {}
 
 
 class ChatOrchestratorService:
@@ -50,7 +52,10 @@ class ChatOrchestratorService:
         try:
             proposal = self._planner.generate_proposal(graph, proposal_request)
         except Exception as exc:
-            raise ChatOrchestratorError(f"proposal generation failed: {exc}") from exc
+            raise ChatOrchestratorError(
+                f"proposal generation failed: {exc}",
+                diagnostics=getattr(exc, "diagnostics", None),
+            ) from exc
         return GraphChatResponse(
             session_id="",
             graph_id=graph.graph_id,
@@ -102,10 +107,16 @@ class ChatOrchestratorService:
                 if isinstance(candidate, dict):
                     result_payload = candidate
                     break
-        except GeminiPlannerError as exc:
-            raise ChatOrchestratorError(f"proposal generation failed: {exc}") from exc
+        except ProposalPlannerError as exc:
+            raise ChatOrchestratorError(
+                f"proposal generation failed: {exc}",
+                diagnostics=getattr(exc, "diagnostics", None),
+            ) from exc
         except Exception as exc:
-            raise ChatOrchestratorError(f"proposal generation failed: {exc}") from exc
+            raise ChatOrchestratorError(
+                f"proposal generation failed: {exc}",
+                diagnostics=getattr(exc, "diagnostics", None),
+            ) from exc
         if result_payload is None:
             raise ChatOrchestratorError("proposal generation failed: empty result")
         return result_payload

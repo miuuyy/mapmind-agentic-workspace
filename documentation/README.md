@@ -1,8 +1,8 @@
 # Documentation Source
 
-This directory contains the product-facing markdown pages for MapMind.
+This directory contains the product-facing markdown pages for Clew.
 
-These files are not engineering setup docs. They are the source material for the hosted documentation experience and for product-facing explanations of what MapMind is, why it exists, and how to use it.
+These files are not engineering setup docs. They are the source material for the hosted documentation experience and for product-facing explanations of what Clew is, why it exists, and how to use it.
 
 ## Pages
 

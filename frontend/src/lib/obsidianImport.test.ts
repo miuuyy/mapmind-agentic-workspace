@@ -18,7 +18,7 @@ describe("buildObsidianImportPreview", () => {
   it("imports markdown notes with wikilinks and folder zones", () => {
     const preview = buildObsidianImportPreview(
       [
-        { path: "projects/mapmind.md", content: "MapMind note\n\n[[projects/importer]]" },
+        { path: "projects/mapmind.md", content: "Clew note\n\n[[projects/importer]]" },
         { path: "projects/importer.md", content: "Importer note" },
       ],
       baseOptions,

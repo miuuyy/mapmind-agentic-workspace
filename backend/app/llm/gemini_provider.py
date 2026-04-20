@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING, Any, Iterable, TypeVar
 
 from pydantic import BaseModel
@@ -89,14 +90,32 @@ class GeminiProvider:
             config=self._types.GenerateContentConfig(**config_kwargs),
         )
         parsed = getattr(response, "parsed", None)
-        if isinstance(parsed, schema):
-            model_instance = parsed
-        elif parsed is not None:
-            model_instance = schema.model_validate(parsed)
-        else:
-            text = (getattr(response, "text", "") or "").strip()
-            model_instance = parse_structured_text(text, schema)
-        text = (getattr(response, "text", "") or "").strip() or model_instance.model_dump_json()
+        text = (getattr(response, "text", "") or "").strip()
+        try:
+            if isinstance(parsed, schema):
+                model_instance = parsed
+            elif parsed is not None:
+                model_instance = schema.model_validate(parsed)
+            else:
+                model_instance = parse_structured_text(text, schema)
+        except Exception as exc:
+            parsed_excerpt: str | None = None
+            if parsed is not None:
+                try:
+                    parsed_excerpt = json.dumps(parsed, ensure_ascii=False)[:8000]
+                except Exception:
+                    parsed_excerpt = str(parsed)[:8000]
+            raise LLMProviderError(
+                f"Gemini returned structured payload that failed schema validation: {exc}",
+                diagnostics={
+                    "provider": "gemini",
+                    "model": model,
+                    "raw_model_response_text": text[:12000] or None,
+                    "parsed_response_excerpt": parsed_excerpt,
+                    "schema_name": schema_name or schema.__name__,
+                },
+            ) from exc
+        text = text or model_instance.model_dump_json()
         usage = None
         usage_metadata = getattr(response, "usage_metadata", None)
         if usage_metadata is not None:

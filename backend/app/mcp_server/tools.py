@@ -1,4 +1,4 @@
-"""Pure read-only tool implementations for the MapMind MCP server.
+"""Pure read-only tool implementations for the Clew MCP server.
 
 These functions take a WorkspaceDocument (loaded by server.py from the
 repository) and return plain dicts. They do not touch the LLM layer and do

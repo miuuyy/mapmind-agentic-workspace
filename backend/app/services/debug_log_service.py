@@ -60,44 +60,58 @@ def _redact_secret_patterns(text: str) -> str:
     return redacted
 
 
-def _sanitize_debug_value(value: object, field_name: str | None = None) -> object:
+def _sanitize_debug_value(
+    value: object,
+    field_name: str | None = None,
+    *,
+    preserve_private_text: bool = False,
+) -> object:
     if field_name and SENSITIVE_FIELD_PATTERN.search(field_name):
         return "[redacted]"
     if isinstance(value, dict):
-        return {key: _sanitize_debug_value(item, key) for key, item in value.items()}
+        return {
+            key: _sanitize_debug_value(item, key, preserve_private_text=preserve_private_text)
+            for key, item in value.items()
+        }
     if isinstance(value, list):
-        if field_name == "messages":
+        if field_name == "messages" and not preserve_private_text:
             return f"[{len(value)} messages redacted]"
-        return [_sanitize_debug_value(item) for item in value[:5]]
+        items = value if preserve_private_text else value[:5]
+        return [_sanitize_debug_value(item, preserve_private_text=preserve_private_text) for item in items]
     if isinstance(value, str):
-        if field_name in PRIVATE_TEXT_FIELDS:
-            return _summarize_private_text(value)
-        return _redact_secret_patterns(value)
+        redacted = _redact_secret_patterns(value)
+        if field_name in PRIVATE_TEXT_FIELDS and not preserve_private_text:
+            return _summarize_private_text(redacted)
+        return redacted
     return value
 
 
-def _sanitize_debug_text(value: object) -> str | None:
+def _sanitize_debug_text(value: object, *, preserve_private_text: bool = False, limit: int = 4000) -> str | None:
     if value is None:
         return None
     if isinstance(value, (dict, list)):
-        return _clip_json(value)
+        return _clip_json(value, limit=limit, preserve_private_text=preserve_private_text)
     text = str(value).strip()
     if not text:
         return None
     try:
         parsed = json.loads(text)
     except Exception:
-        return _clip_text(_redact_secret_patterns(text))
-    return _clip_json(parsed)
+        return _clip_text(_redact_secret_patterns(text), limit=limit)
+    return _clip_json(parsed, limit=limit, preserve_private_text=preserve_private_text)
 
 
-def _clip_json(value: object, limit: int = 4000) -> str | None:
+def _clip_json(value: object, limit: int = 4000, *, preserve_private_text: bool = False) -> str | None:
     if value is None:
         return None
     try:
-        encoded = json.dumps(_sanitize_debug_value(value), ensure_ascii=False, separators=(",", ":"))
+        encoded = json.dumps(
+            _sanitize_debug_value(value, preserve_private_text=preserve_private_text),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
     except Exception:
-        encoded = str(_sanitize_debug_value(value))
+        encoded = str(_sanitize_debug_value(value, preserve_private_text=preserve_private_text))
     return _clip_text(encoded, limit=limit)
 
 
@@ -187,7 +201,9 @@ class DebugLogService:
         request_payload: object | None = None,
         response_payload: object | None = None,
         stack: str | None = None,
+        preserve_private_payload: bool = False,
     ) -> DebugLogEntry:
+        payload_limit = 120000 if preserve_private_payload else 4000
         entry = DebugLogEntry(
             kind="server",
             level="error",
@@ -197,8 +213,16 @@ class DebugLogService:
             path=path,
             status_code=status_code,
             duration_ms=duration_ms,
-            request_excerpt=_clip_json(request_payload),
-            response_excerpt=_clip_json(response_payload),
+            request_excerpt=_clip_json(
+                request_payload,
+                limit=payload_limit,
+                preserve_private_text=preserve_private_payload,
+            ),
+            response_excerpt=_clip_json(
+                response_payload,
+                limit=payload_limit,
+                preserve_private_text=preserve_private_payload,
+            ),
             stack=_clip_text(stack, limit=8000),
         )
         self._append(entry)

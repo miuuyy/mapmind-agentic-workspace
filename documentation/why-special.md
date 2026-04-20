@@ -1,14 +1,14 @@
 # Why special
 
-MapMind is special because it is opinionated in the right place.
+Clew is special because it is opinionated in the right place.
 
 ## The Obsidian comparison
 
 Obsidian is powerful, but for many people it is still a broad note system that asks you to invent your own operating model.
 
-MapMind is narrower and more operational.
+Clew is narrower and more operational.
 
-If Obsidian is a vault for notes, **MapMind is a workspace for structured learning graphs**.
+If Obsidian is a vault for notes, **Clew is a workspace for structured learning graphs**.
 
 That narrower scope lets the product optimize around:
 
@@ -25,7 +25,7 @@ A lot of AI study tools are still basically:
 - some cards
 - a little memory
 
-MapMind is different because the graph is the center of truth. The assistant works inside that state instead of replacing it.
+Clew is different because the graph is the center of truth. The assistant works inside that state instead of replacing it.
 
 That means:
 
@@ -38,7 +38,7 @@ That means:
 
 Roadmaps are useful, but they are usually public, static, and generic.
 
-MapMind is personal and operational.
+Clew is personal and operational.
 
 You are not just looking at a map. You are:
 

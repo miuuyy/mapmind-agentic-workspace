@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides repository-specific guidance to Claude Code when working in MapMind.
+This file provides repository-specific guidance to Claude Code when working in Clew.
 
 ## Read first
 
@@ -13,9 +13,9 @@ Before making changes, read:
 
 ## Product overview
 
-MapMind is a graph-first learning workspace with an AI agent layer.
+Clew is a graph-first learning workspace with an AI agent layer.
 
-If Obsidian is where you collect notes, MapMind is where you operate on a learning graph.
+If Obsidian is where you collect notes, Clew is where you operate on a learning graph.
 
 The public `main` branch is the **local developer edition**. It keeps:
 
@@ -59,7 +59,7 @@ Never weaken these:
 - `backend/app/api/routes.py`: HTTP transport
 - `backend/app/services/repository.py`: SQLite persistence, snapshots, config
 - `backend/app/services/chat_orchestrator.py`: answer/quiz/proposal action choice
-- `backend/app/services/gemini_planner.py`: proposal generation and validation bridge
+- `backend/app/services/proposal_planner.py`: proposal generation and validation bridge
 - `backend/app/llm/`: providers, catalog, prompts, contracts, schemas
 
 ## Local commands

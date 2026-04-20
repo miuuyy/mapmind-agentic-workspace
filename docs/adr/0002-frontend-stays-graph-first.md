@@ -12,7 +12,7 @@ Many productivity and AI products eventually drift into dashboard behavior:
 - side panels competing for attention
 - the core object reduced to a widget inside a management shell
 
-For MapMind, that would be the wrong direction.
+For Clew, that would be the wrong direction.
 
 The graph is not an illustration layer. It is the main working surface. The UI has to preserve that feeling even as more features are added.
 
