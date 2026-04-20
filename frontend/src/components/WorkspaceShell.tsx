@@ -89,6 +89,7 @@ type WorkspaceShellProps = {
   setCreateGraphError: StateSetter<string | null>;
   openConfigurationSettings: () => void;
   openDebugLogs: () => void;
+  closeOverlaySurfaces: () => void;
   isLogsOpen: boolean;
   modalSurfaceLocked: boolean;
   isMobileViewport: boolean;
@@ -213,6 +214,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     setCreateGraphError,
     openConfigurationSettings,
     openDebugLogs,
+    closeOverlaySurfaces,
     isLogsOpen,
     modalSurfaceLocked,
     isMobileViewport,
@@ -647,7 +649,9 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   }
 
   const toggleExperimentalWorkspaceWindow = (): void => {
-    if (modalSurfaceLocked) return;
+    if (modalSurfaceLocked) {
+      closeOverlaySurfaces();
+    }
     if (leftSidebarOpen) {
       closeSidebar();
       return;
@@ -656,7 +660,9 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   };
 
   const toggleExperimentalChatWindow = (): void => {
-    if (modalSurfaceLocked) return;
+    if (modalSurfaceLocked) {
+      closeOverlaySurfaces();
+    }
     if (assistantOpen) {
       setAssistantWidth(0);
       return;
@@ -1758,7 +1764,6 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   className={`lightDockButton ${lightWorkspacePanelOpen ? "lightDockButtonActive" : ""}`}
                   onClick={toggleExperimentalWorkspaceWindow}
                   title={copy.shell.workspace}
-                  disabled={modalSurfaceLocked}
                   type="button"
                 >
                   <SquaresFour size={28} weight={dockIconWeight} />
@@ -1767,7 +1772,6 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   className={`lightDockButton ${lightChatPanelOpen ? "lightDockButtonActive" : ""}`}
                   onClick={toggleExperimentalChatWindow}
                   title={copy.shell.chat}
-                  disabled={modalSurfaceLocked}
                   type="button"
                 >
                   <ChatCircleDots size={28} weight={dockIconWeight} />
@@ -1805,9 +1809,10 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
               <button
                 className={`mobileDockItem mobileDockItemChat ${assistantOpen ? "mobileDockItemActive" : ""}`}
                 type="button"
-                disabled={modalSurfaceLocked}
                 onClick={() => {
-                  if (modalSurfaceLocked) return;
+                  if (modalSurfaceLocked) {
+                    closeOverlaySurfaces();
+                  }
                   setMobileMenuOpen(false);
                   setAssistantWidth((current) => {
                     const opening = current < ASSISTANT_MIN_WIDTH;
@@ -1824,9 +1829,10 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
             <button
               className={`mobileDockItem ${mobileMenuOpen ? "mobileDockItemActive" : ""}`}
               type="button"
-              disabled={modalSurfaceLocked}
               onClick={() => {
-                if (modalSurfaceLocked) return;
+                if (modalSurfaceLocked) {
+                  closeOverlaySurfaces();
+                }
                 setMobileMenuOpen((current) => !current);
               }}
             >

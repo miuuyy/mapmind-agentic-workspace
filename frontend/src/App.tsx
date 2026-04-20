@@ -1770,6 +1770,13 @@ export default function App(): React.JSX.Element {
     setMobileMenuOpen(false);
   }, []);
 
+  const closeOverlaySurfaces = useCallback(() => {
+    suspendedSurfaceStateRef.current = null;
+    setSettingsOpen(false);
+    setLogsOpen(false);
+    setMobileMenuOpen(false);
+  }, []);
+
   useEffect(() => {
     const overlayOpen = isSettingsOpen || isLogsOpen;
     if (overlayOpen && !overlayWasOpenRef.current) {
@@ -1854,6 +1861,7 @@ export default function App(): React.JSX.Element {
         setCreateGraphError={setCreateGraphError}
         openConfigurationSettings={openConfigurationSettings}
         openDebugLogs={toggleDebugLogs}
+        closeOverlaySurfaces={closeOverlaySurfaces}
         isLogsOpen={isLogsOpen}
         modalSurfaceLocked={isSettingsOpen || isLogsOpen}
         isMobileViewport={isMobileViewport}

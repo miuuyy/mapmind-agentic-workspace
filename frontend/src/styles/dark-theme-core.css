@@ -1259,6 +1259,11 @@
   padding: 22px 24px 12px !important;
 }
 
+:root[data-theme="dark"] .lightWorkspaceWindow .lightFloatingWindowHeader {
+  background: #050505 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
 :root[data-theme="dark"] .lightWorkspaceWindowBody,
 :root[data-theme="dark"] .lightWorkspaceExplorerBody,
 :root[data-theme="dark"] .lightChatWindow .assistantThread,
@@ -1729,4 +1734,5 @@
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   opacity: 1 !important;
+  background-image: none !important;
 }

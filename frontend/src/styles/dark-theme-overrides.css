@@ -1361,3 +1361,10 @@
   color: rgba(255, 255, 255, 0.5) !important;
   font-weight: 500 !important;
 }
+
+/* Final dark workspace header separator */
+:root[data-theme="dark"] .lightWorkspaceWindow .lightFloatingWindowHeader {
+  background: #050505 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none !important;
+}

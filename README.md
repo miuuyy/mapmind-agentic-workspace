@@ -52,6 +52,7 @@ Then open:
 - `AI proposals instead of silent edits`: ingest rough topic lists, expand toward a target, review changes before apply, and keep snapshots reversible.
 - `Study loop that stays attached to structure`: topic sessions, assistant help, closure quizzes, and manual completion when quiz gating is disabled.
 - `Local control`: SQLite workspace, provider ownership, persona/model/memory settings, and easier experimentation than a hosted-only tool.
+- `Works with Claude Desktop, Claude Code, and Cursor`: a built-in [MCP server](docs/MCP_SETUP.md) lets any MCP-capable assistant read your graphs, current progress, and note contents directly — no copy-paste.
 
 ## Example use cases
 
@@ -80,6 +81,7 @@ Then open:
 - [Quick start](documentation/quick-start.md)
 - [Features](documentation/features.md)
 - [How to use](documentation/how-to-use.md)
+- [Connect to Claude Desktop / Claude Code / Cursor (MCP)](docs/MCP_SETUP.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Engineering docs index](docs/README.md)
 

@@ -2036,20 +2036,12 @@
 
 :root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
   position: relative !important;
-  border-top: none !important;
+  border-top: 1px solid rgba(232, 228, 222, 0.96) !important;
   border-radius: 0 0 24px 24px !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .assistantComposerWrap::after {
-  content: "" !important;
-  position: absolute !important;
-  left: 0 !important;
-  right: 0 !important;
-  top: 0 !important;
-  height: 1px !important;
-  background: rgba(232, 228, 222, 0.96) !important;
-  pointer-events: none !important;
-  z-index: 2 !important;
+  display: none !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .assistantComposerWrap::before {
@@ -2074,16 +2066,16 @@
 }
 
 :root[data-theme="light"] .lightChatWindow .sessionList {
-  padding: 0 18px 8px 18px !important;
+  padding: 0 18px 6px 18px !important;
   gap: 8px !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .sessionItem,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroup,
 :root[data-theme="light"] .lightChatWindow .lightChatSessionChip {
-  min-height: 28px !important;
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
+  min-height: 26px !important;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .sessionItemInline,

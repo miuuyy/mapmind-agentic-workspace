@@ -13,8 +13,12 @@ dependencies = [
   "pydantic>=2.10.0,<3.0.0",
   "pydantic-settings>=2.6.0,<3.0.0",
   "google-genai>=1.67.0,<2.0.0",
-  "httpx>=0.28.0,<1.0.0"
+  "httpx>=0.28.0,<1.0.0",
+  "mcp>=1.2.0,<2.0.0"
 ]
+
+[project.scripts]
+mapmind-mcp = "app.mcp_server.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
