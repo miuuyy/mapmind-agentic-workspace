@@ -23,7 +23,7 @@ import { useModalAccessibility } from "../lib/useModalAccessibility";
 import { GraphCanvas } from "./GraphCanvas";
 import type { TopicAnchorPoint } from "./GraphCanvas";
 import { AssistantModelMenuTrigger, LightChatWindow, LightWorkspaceWindow, TopicAssetModal } from "./WorkspaceShellAuxWindows";
-import { GraphStatItems, OverlayControls } from "./WorkspaceShellOverlayControls";
+import { TopStatsOverlay } from "./TopStatsOverlay";
 import type {
   Artifact,
   ChatMessage,
@@ -987,164 +987,98 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
           </div>
         ) : null}
 
-        {showMobileOverlay ? (
-          <div
-            className="topOverlayStack topOverlayStackMobile"
-            style={{
-              left: "12px",
-              right: "12px",
-              top: "calc(75px + env(safe-area-inset-top, 0px))",
-            }}
-          >
-            <div
-              ref={floatingStatsRef}
-              className="floatingStatsContainer floatingStatsContainerStacked"
-              onWheel={(event) => {
-                const strip = floatingStatsRef.current;
-                if (!strip) return;
-                if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-                strip.scrollLeft += event.deltaY;
-                event.preventDefault();
-              }}
-            >
-              <GraphStatItems
-                activeGraph={activeGraph}
-                graphSummary={graphSummary}
-                copy={copy}
-                activeAssessmentCards={activeAssessmentCards}
-                data={data}
-                assessmentError={assessmentError}
-                configSaving={configSaving}
-                error={error}
-                graphLayoutEditing={graphLayoutEditing}
-                topOverlayCompact={topOverlayCompact}
-                isMobileViewport={isMobileViewport}
-              />
-            </div>
-            <div className="floatingStatusContainer floatingStatusContainerCompact">
-              <OverlayControls
-                activeGraph={activeGraph}
-                themeMode={themeMode}
-                setThemeMode={setThemeMode}
-                viewportCenteredZoom={viewportCenteredZoom}
-                setViewportCenteredZoom={setViewportCenteredZoom}
-                graphLayoutEditing={graphLayoutEditing}
-                saveGraphLayout={saveGraphLayout}
-                startGraphLayoutEdit={startGraphLayoutEdit}
-                graphLayoutSaving={graphLayoutSaving}
-                copy={copy}
-                setGraphLayoutEditing={setGraphLayoutEditing}
-                setGraphLayoutDraft={setGraphLayoutDraft}
-              />
-            </div>
-          </div>
-        ) : null}
+        <TopStatsOverlay
+          visible={showMobileOverlay}
+          wrapperClassName="topOverlayStack topOverlayStackMobile"
+          wrapperStyle={{
+            left: "12px",
+            right: "12px",
+            top: "calc(75px + env(safe-area-inset-top, 0px))",
+          }}
+          floatingStatsRef={floatingStatsRef}
+          activeGraph={activeGraph}
+          graphSummary={graphSummary}
+          copy={copy}
+          activeAssessmentCards={activeAssessmentCards}
+          data={data}
+          assessmentError={assessmentError}
+          configSaving={configSaving}
+          error={error}
+          graphLayoutEditing={graphLayoutEditing}
+          graphLayoutSaving={graphLayoutSaving}
+          topOverlayCompact={topOverlayCompact}
+          isMobileViewport={isMobileViewport}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+          viewportCenteredZoom={viewportCenteredZoom}
+          setViewportCenteredZoom={setViewportCenteredZoom}
+          saveGraphLayout={saveGraphLayout}
+          startGraphLayoutEdit={startGraphLayoutEdit}
+          setGraphLayoutEditing={setGraphLayoutEditing}
+          setGraphLayoutDraft={setGraphLayoutDraft}
+        />
 
-        {showCompactDesktopOverlay ? (
-          <div
-            className="topOverlayStack"
-            style={{
-              left: `${overlayLeftInset}px`,
-              right: `${overlayRightInset}px`,
-              top: "20px",
-            }}
-          >
-            <div
-              ref={floatingStatsRef}
-              className="floatingStatsContainer floatingStatsContainerStacked"
-              onWheel={(event) => {
-                const strip = floatingStatsRef.current;
-                if (!strip) return;
-                if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-                strip.scrollLeft += event.deltaY;
-                event.preventDefault();
-              }}
-            >
-              <GraphStatItems
-                activeGraph={activeGraph}
-                graphSummary={graphSummary}
-                copy={copy}
-                activeAssessmentCards={activeAssessmentCards}
-                data={data}
-                assessmentError={assessmentError}
-                configSaving={configSaving}
-                error={error}
-                graphLayoutEditing={graphLayoutEditing}
-                topOverlayCompact={topOverlayCompact}
-                isMobileViewport={isMobileViewport}
-              />
-            </div>
-            <div className="floatingStatusContainer floatingStatusContainerCompact">
-              <OverlayControls
-                activeGraph={activeGraph}
-                themeMode={themeMode}
-                setThemeMode={setThemeMode}
-                viewportCenteredZoom={viewportCenteredZoom}
-                setViewportCenteredZoom={setViewportCenteredZoom}
-                graphLayoutEditing={graphLayoutEditing}
-                saveGraphLayout={saveGraphLayout}
-                startGraphLayoutEdit={startGraphLayoutEdit}
-                graphLayoutSaving={graphLayoutSaving}
-                copy={copy}
-                setGraphLayoutEditing={setGraphLayoutEditing}
-                setGraphLayoutDraft={setGraphLayoutDraft}
-              />
-            </div>
-          </div>
-        ) : null}
+        <TopStatsOverlay
+          visible={showCompactDesktopOverlay}
+          wrapperClassName="topOverlayStack"
+          wrapperStyle={{
+            left: `${overlayLeftInset}px`,
+            right: `${overlayRightInset}px`,
+            top: "20px",
+          }}
+          floatingStatsRef={floatingStatsRef}
+          activeGraph={activeGraph}
+          graphSummary={graphSummary}
+          copy={copy}
+          activeAssessmentCards={activeAssessmentCards}
+          data={data}
+          assessmentError={assessmentError}
+          configSaving={configSaving}
+          error={error}
+          graphLayoutEditing={graphLayoutEditing}
+          graphLayoutSaving={graphLayoutSaving}
+          topOverlayCompact={topOverlayCompact}
+          isMobileViewport={isMobileViewport}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+          viewportCenteredZoom={viewportCenteredZoom}
+          setViewportCenteredZoom={setViewportCenteredZoom}
+          saveGraphLayout={saveGraphLayout}
+          startGraphLayoutEdit={startGraphLayoutEdit}
+          setGraphLayoutEditing={setGraphLayoutEditing}
+          setGraphLayoutDraft={setGraphLayoutDraft}
+        />
 
-        {showInlineDesktopOverlay ? (
-          <div
-            className="topOverlayInline"
-            style={{
-              left: `${overlayLeftInset}px`,
-              right: `${overlayRightInset}px`,
-              top: "20px",
-            }}
-          >
-            <div
-              ref={floatingStatsRef}
-              className="floatingStatsContainer floatingStatsContainerStacked"
-              onWheel={(event) => {
-                const strip = floatingStatsRef.current;
-                if (!strip) return;
-                if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-                strip.scrollLeft += event.deltaY;
-                event.preventDefault();
-              }}
-            >
-              <GraphStatItems
-                activeGraph={activeGraph}
-                graphSummary={graphSummary}
-                copy={copy}
-                activeAssessmentCards={activeAssessmentCards}
-                data={data}
-                assessmentError={assessmentError}
-                configSaving={configSaving}
-                error={error}
-                graphLayoutEditing={graphLayoutEditing}
-                topOverlayCompact={topOverlayCompact}
-                isMobileViewport={isMobileViewport}
-              />
-            </div>
-            <div className="floatingStatusContainer floatingStatusContainerCompact">
-              <OverlayControls
-                activeGraph={activeGraph}
-                themeMode={themeMode}
-                setThemeMode={setThemeMode}
-                viewportCenteredZoom={viewportCenteredZoom}
-                setViewportCenteredZoom={setViewportCenteredZoom}
-                graphLayoutEditing={graphLayoutEditing}
-                saveGraphLayout={saveGraphLayout}
-                startGraphLayoutEdit={startGraphLayoutEdit}
-                graphLayoutSaving={graphLayoutSaving}
-                copy={copy}
-                setGraphLayoutEditing={setGraphLayoutEditing}
-                setGraphLayoutDraft={setGraphLayoutDraft}
-              />
-            </div>
-          </div>
-        ) : null}
+        <TopStatsOverlay
+          visible={showInlineDesktopOverlay}
+          wrapperClassName="topOverlayInline"
+          wrapperStyle={{
+            left: `${overlayLeftInset}px`,
+            right: `${overlayRightInset}px`,
+            top: "20px",
+          }}
+          floatingStatsRef={floatingStatsRef}
+          activeGraph={activeGraph}
+          graphSummary={graphSummary}
+          copy={copy}
+          activeAssessmentCards={activeAssessmentCards}
+          data={data}
+          assessmentError={assessmentError}
+          configSaving={configSaving}
+          error={error}
+          graphLayoutEditing={graphLayoutEditing}
+          graphLayoutSaving={graphLayoutSaving}
+          topOverlayCompact={topOverlayCompact}
+          isMobileViewport={isMobileViewport}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+          viewportCenteredZoom={viewportCenteredZoom}
+          setViewportCenteredZoom={setViewportCenteredZoom}
+          saveGraphLayout={saveGraphLayout}
+          startGraphLayoutEdit={startGraphLayoutEdit}
+          setGraphLayoutEditing={setGraphLayoutEditing}
+          setGraphLayoutDraft={setGraphLayoutDraft}
+        />
 
         <div ref={shellSurfaceRef} className={`workspaceShell ${experimentalLightDesktop ? "workspaceShellLightDockMode" : ""}`}>
           <div className="workspaceMain">
