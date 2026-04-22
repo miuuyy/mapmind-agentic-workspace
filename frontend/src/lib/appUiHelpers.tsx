@@ -1,7 +1,6 @@
 import React from "react";
 
 import type { TopicAnchorPoint } from "../components/GraphCanvas";
-import { API_BASE } from "./api";
 import { recordApiDebugLog } from "./debugLogs";
 import type { GraphEnvelope } from "./types";
 
@@ -122,8 +121,6 @@ const GREEK_SYMBOLS: Record<string, string> = {
 };
 
 const GREEK_WORD_RE = /\b(?:alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|phi|omega)\b/gi;
-const SCRIPTED_TOKEN_RE = /[A-Za-z]+(?:_\{[^}]+\}|_[A-Za-z0-9+\-*/=()]+|\^\{[^}]+\}|\^[A-Za-z0-9+\-*/=()]+)+/g;
-const FRACTION_TOKEN_RE = /(?<!\w)([A-Za-z0-9.]+)\s*\/\s*([A-Za-z0-9.]+)(?!\w)/g;
 const MATHISH_TOKEN_RE = /([A-Za-z]+(?:_\{[^}]+\}|_[A-Za-z0-9+\-*/=()]+|\^\{[^}]+\}|\^[A-Za-z0-9+\-*/=()]+)+)|((?<!\w)[A-Za-z0-9.]+\s*\/\s*[A-Za-z0-9.]+(?!\w))|(\b(?:alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|phi|omega)\b)/gi;
 
 function replaceGreekWords(value: string): string {

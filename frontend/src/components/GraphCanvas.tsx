@@ -1218,7 +1218,6 @@ function GraphCanvasComponent({
         ctx2.fill();
 
         ctx2.globalAlpha = themeModeRef.current === "light" ? Math.max(0.34, brightness) : brightness;
-        const isBlocker = node.state === "needs_review" || node.state === "shaky";
         ctx2.shadowBlur = selected ? 14 : onPath ? 8 : contextual ? 4 : 0;
         ctx2.shadowColor = selected
           ? paletteRef.current.shadowSelected

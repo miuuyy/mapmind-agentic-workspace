@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Card } from "./Card";
-import { MEMORY_MODE_OPTIONS, THINKING_MODE_OPTIONS, type MemoryMode, type SettingsDraftSetters, type SettingsDrafts, type ThemeMode, type ThinkingMode } from "../lib/appContracts";
+import { MEMORY_MODE_OPTIONS, THINKING_MODE_OPTIONS, type MemoryMode, type SettingsDraftSetters, type SettingsDrafts, type ThinkingMode } from "../lib/appContracts";
 import type { AppCopy } from "../lib/appCopy";
 import type { GraphEnvelope, SnapshotRecord, WorkspaceConfig, WorkspaceEnvelope } from "../lib/types";
 
@@ -132,7 +132,6 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
     enableClosureTests: setEnableClosureTestsDraft,
     debugModeEnabled: setDebugModeEnabledDraft,
     straightEdgeLines: setStraightEdgeLinesDraft,
-    themeMode: setThemeModeDraft,
     quizQuestionCount: setQuizQuestionCountDraft,
     quizPassCount: setQuizPassCountDraft,
   } = setDrafts;

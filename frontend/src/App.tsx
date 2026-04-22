@@ -49,7 +49,6 @@ import {
   type ManualLayoutPositions,
   readErrorMessage,
   readManualLayoutPositions,
-  renderDisplayText,
   requiredCorrectAnswers,
   samePopoverPosition,
   shouldCommitAnchorUpdate,
@@ -78,7 +77,6 @@ import {
 import { useChatModelSelection } from "./hooks/useChatModelSelection";
 import { useModalAccessibility } from "./lib/useModalAccessibility";
 import type {
-  Artifact,
   ChatMessage,
   ChatSessionSummary,
   CreateGraphRequest,
