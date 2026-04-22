@@ -1,7 +1,4 @@
 /* TRUE EOF dark topic asset geometry parity */
-:root[data-theme="dark"] .topicAssetModal {
-  border-radius: 20px !important;
-}
 
 :root[data-theme="dark"] .topicAssetModal .quizModalHeader {
   margin: 0 -18px 14px !important;
@@ -11,11 +8,6 @@
 :root[data-theme="dark"] .topicAssetModal .quizModalBody {
   padding-left: 0 !important;
   padding-right: 0 !important;
-}
-
-:root[data-theme="dark"] .topicAssetModal .quizActions {
-  width: auto !important;
-  margin-top: 0 !important;
 }
 
 /* TRUE EOF dark cleanup: remove non-color drift from chat/settings/logs */
@@ -46,10 +38,6 @@
 :root[data-theme="dark"] .settingsContentHeader,
 :root[data-theme="dark"] .settingsPanelHeader {
   border-bottom: 0 !important;
-}
-
-:root[data-theme="dark"] .settingsPanelHeader {
-  padding-bottom: 18px !important;
 }
 
 :root[data-theme="dark"] .settingsPanelTitle,
@@ -141,6 +129,7 @@
 }
 
 :root[data-theme="dark"] .topicAssetModal {
+  border-radius: 20px !important;
   background: rgba(11, 11, 12, 0.982) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28) !important;
@@ -230,8 +219,8 @@
 
 :root[data-theme="dark"] .topicAssetModal .quizActions {
   width: 100% !important;
-  justify-content: flex-end !important;
   margin-top: 0 !important;
+  justify-content: flex-end !important;
 }
 
 :root[data-theme="dark"] .quizModal .btn.btnImport,
@@ -383,14 +372,6 @@
   min-height: auto !important;
 }
 
-:root[data-theme="dark"] .proposalAddButton {
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px !important;
-  flex-basis: 32px !important;
-  border-radius: 999px !important;
-}
-
 :root[data-theme="dark"] .settingsContentHeader::after,
 :root[data-theme="dark"] .debugLogsModal .settingsContentHeader::after {
   display: block !important;
@@ -418,34 +399,12 @@
   ) !important;
 }
 
-:root[data-theme="dark"] .debugLogsList {
-  min-height: 0 !important;
-  max-height: min(72vh, 780px) !important;
-  overflow: auto !important;
-  padding: 4px 18px 18px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 14px !important;
-}
-
 :root[data-theme="dark"] .debugLogsFlatList {
   list-style: none !important;
   margin: 0 !important;
   padding: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-}
-
-:root[data-theme="dark"] .debugLogRow {
-  padding: 10px 0 12px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-:root[data-theme="dark"] .debugLogRowSource {
-  border-radius: 999px !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: rgba(255, 255, 255, 0.74) !important;
 }
 
 
@@ -469,28 +428,8 @@
   box-shadow: none !important;
 }
 
-:root[data-theme="dark"] .proposalInlineCard,
-:root[data-theme="dark"] .proposalInlinePending {
-  gap: 12px !important;
-  padding: 12px 14px !important;
-  border-radius: 18px !important;
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: none !important;
-}
-
 :root[data-theme="dark"] .proposalInlineHead {
   gap: 14px !important;
-}
-
-:root[data-theme="dark"] .proposalInlineTitle {
-  font-size: 13px !important;
-  line-height: 1.45 !important;
-  color: rgba(255, 255, 255, 0.96) !important;
-}
-
-:root[data-theme="dark"] .proposalAddButton {
-  border-radius: 999px !important;
 }
 
 
@@ -508,12 +447,6 @@
 :root[data-theme="dark"] .badge {
   min-height: 24px !important;
   padding: 4px 10px !important;
-}
-
-:root[data-theme="dark"] .pageStat,
-:root[data-theme="dark"] .floatingStatusButton,
-:root[data-theme="dark"] .pageStatControl {
-  border-radius: 999px !important;
 }
 
 :root[data-theme="dark"] .proposalAddButton[title="Applied"],
@@ -565,13 +498,17 @@
 
 :root[data-theme="dark"] .proposalInlineCard,
 :root[data-theme="dark"] .proposalInlinePending {
+  gap: 12px !important;
+  padding: 12px 14px !important;
+  border-radius: 18px !important;
   background: rgba(255, 255, 255, 0.04) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 18px !important;
   box-shadow: none !important;
 }
 
 :root[data-theme="dark"] .proposalInlineTitle {
+  font-size: 13px !important;
+  line-height: 1.45 !important;
   color: rgba(255, 255, 255, 0.96) !important;
 }
 
@@ -584,6 +521,10 @@
 }
 
 :root[data-theme="dark"] .proposalAddButton {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  flex-basis: 32px !important;
   border-radius: 999px !important;
   background: rgba(255, 255, 255, 0.06) !important;
   border-color: rgba(255, 255, 255, 0.09) !important;
@@ -655,22 +596,13 @@
   border-radius: 22px !important;
 }
 
-:root[data-theme="dark"] .lightChatWindow .assistantComposer {
-  position: relative !important;
-}
-
 /* Absolute EOF dark-theme pass: settings, logs, and chat composer geometry */
-
-:root[data-theme="dark"] .settingsToggleRow,
-:root[data-theme="dark"] .settingsInlineNotice,
-:root[data-theme="dark"] .inlineNotice,
-:root[data-theme="dark"] .listItem,
-:root[data-theme="dark"] .thinkingModeChip {
-  border-radius: 16px !important;
-}
 
 :root[data-theme="dark"] .debugLogRowSource {
   border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: rgba(255, 255, 255, 0.74) !important;
 }
 
 :root[data-theme="dark"] .lightChatWindow .assistantComposerWrap {
@@ -798,40 +730,11 @@
   border-radius: 28px !important;
 }
 
-:root[data-theme="dark"] .settingsSidebar {
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-:root[data-theme="dark"] .settingsPanel,
-:root[data-theme="dark"] .settingsPanelHeader,
-:root[data-theme="dark"] .settingsPanelBody,
-:root[data-theme="dark"] .snapshotsCard,
-:root[data-theme="dark"] .settingsSnapshotsCard {
-  border-radius: 22px !important;
-}
-
 :root[data-theme="dark"] .settingsToggleRow,
 :root[data-theme="dark"] .settingsInlineNotice,
 :root[data-theme="dark"] .inlineNotice,
 :root[data-theme="dark"] .listItem {
   border-radius: 16px !important;
-}
-
-:root[data-theme="dark"] .debugLogsList {
-  padding-top: 14px !important;
-  padding-bottom: 18px !important;
-}
-
-:root[data-theme="dark"] .lightWorkspaceFolderMain {
-  border-radius: 14px !important;
-}
-
-:root[data-theme="dark"] .lightWorkspaceFolderAction {
-  border-radius: 10px !important;
-}
-
-:root[data-theme="dark"] .lightWorkspaceTopicItem {
-  border-radius: 12px !important;
 }
 
 /* Absolute EOF dark-theme template unification */
@@ -921,20 +824,9 @@
 }
 
 :root[data-theme="dark"] .lightWorkspaceFolderAction {
+  border-radius: 999px !important;
   width: 26px !important;
   height: 26px !important;
-  border-radius: 999px !important;
-}
-
-:root[data-theme="dark"] .assistantHello {
-  min-height: 204px !important;
-  gap: 11px !important;
-  padding: 18px 12px 8px !important;
-}
-
-:root[data-theme="dark"] .assistantHelloCopy {
-  line-height: 1.5 !important;
-  max-width: 30ch !important;
 }
 
 :root[data-theme="dark"] .lightChatWindow .lightFloatingWindowHeader {
@@ -951,15 +843,6 @@
 :root[data-theme="dark"] .lightChatWindow .sessionListWrap {
   position: relative !important;
   z-index: 2 !important;
-}
-
-:root[data-theme="dark"] .lightChatWindow .assistantModelMenu {
-  left: 0 !important;
-  right: auto !important;
-  top: calc(100% + 8px) !important;
-  min-width: 180px !important;
-  max-width: min(240px, calc(100vw - 48px)) !important;
-  z-index: 30 !important;
 }
 
 :root[data-theme="dark"] .quizModal.confirmModal {
@@ -1003,8 +886,8 @@
 }
 
 :root[data-theme="dark"] .settingsSidebar {
-  background: rgba(9, 9, 10, 0.94) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: rgba(9, 9, 10, 0.94) !important;
 }
 
 :root[data-theme="dark"] .settingsContentHeader,
@@ -1030,11 +913,13 @@
 :root[data-theme="dark"] .settingsPanelBody,
 :root[data-theme="dark"] .snapshotsCard,
 :root[data-theme="dark"] .settingsSnapshotsCard {
+  border-radius: 22px !important;
   background: rgba(12, 12, 13, 0.94) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 :root[data-theme="dark"] .settingsPanelHeader {
+  padding-bottom: 18px !important;
   padding: 18px 20px 14px !important;
 }
 
@@ -1047,6 +932,7 @@
 :root[data-theme="dark"] .inlineNotice,
 :root[data-theme="dark"] .listItem,
 :root[data-theme="dark"] .thinkingModeChip {
+  border-radius: 16px !important;
   background: rgba(255, 255, 255, 0.03) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
   box-shadow: none !important;
@@ -1081,14 +967,20 @@
 }
 
 :root[data-theme="dark"] .debugLogsList {
-  min-height: 0;
-  max-height: min(72vh, 780px);
-  overflow: auto;
+  min-height: 0 !important;
+  max-height: min(72vh, 780px) !important;
+  overflow: auto !important;
+  padding: 4px 18px 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
   padding-top: 14px !important;
   padding-bottom: 18px !important;
 }
 
 :root[data-theme="dark"] .debugLogRow {
+  padding: 10px 0 12px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
   border-bottom-color: rgba(255, 255, 255, 0.06) !important;
 }
 
@@ -1115,24 +1007,9 @@
   background: #0a0a0b !important;
 }
 
-:root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalHeader {
-  padding-bottom: 12px !important;
-}
-
 :root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalHeader::after {
   display: none !important;
   background: transparent !important;
-}
-
-:root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalBody {
-  padding-top: 2px !important;
-}
-
-:root[data-theme="dark"] .quizModal.workspaceCreateModal .input,
-:root[data-theme="dark"] .quizModal.workspaceCreateModal select.input,
-:root[data-theme="dark"] .quizModal.workspaceCreateModal .textarea {
-  padding-left: 12px !important;
-  padding-right: 14px !important;
 }
 
 :root[data-theme="dark"] .quizModal.obsidianImportModal {
@@ -1291,10 +1168,12 @@
 
 /* Absolute EOF lock: dark create-graph field content must align like light theme */
 :root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalHeader {
+  padding-bottom: 12px !important;
   padding: 22px 18px 12px !important;
 }
 
 :root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalBody {
+  padding-top: 2px !important;
   padding: 0 0 18px !important;
 }
 
@@ -1347,12 +1226,18 @@
 }
 
 :root[data-theme="dark"] .assistantHelloCopy {
-  font-size: 15px !important;
   line-height: 1.5 !important;
   max-width: 30ch !important;
+  font-size: 15px !important;
 }
 
 :root[data-theme="dark"] .lightChatWindow .assistantModelMenu {
+  left: 0 !important;
+  right: auto !important;
+  top: calc(100% + 8px) !important;
+  min-width: 180px !important;
+  max-width: min(240px, calc(100vw - 48px)) !important;
+  z-index: 30 !important;
   background: #0a0a0b !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34) !important;
