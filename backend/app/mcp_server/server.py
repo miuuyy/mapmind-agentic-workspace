@@ -29,7 +29,6 @@ from . import tools as tool_impls
 
 logger = logging.getLogger("clew.study_assist")
 SERVER_NAME = "Clew Study Assist"
-SERVER_NAME = "Clew Study Assist"
 
 
 SERVER_INSTRUCTIONS = """\
