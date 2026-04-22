@@ -42,6 +42,33 @@ type StateSetter<T> = React.Dispatch<React.SetStateAction<T>>;
   const noop = () => {};
   const LIGHT_WORKSPACE_EXPANDED_GRAPH_STORAGE_KEY = "knowledge_graph_light_workspace_expanded_graph_v1";
 
+// Small mount/close animation helper. When `isOpen` flips to false we keep the
+// element mounted for `delayMs` so CSS can run a fade-out keyframe before the
+// node is removed. Previously closing a floating window just disappeared —
+// which user feedback described as "ебанутое закрытие". This lets the caller
+// append a `lightFloatingWindowExit` class while `closing` is true.
+const WINDOW_CLOSE_MS = 110;
+
+function useDelayedUnmount(isOpen: boolean, delayMs: number): { rendered: boolean; closing: boolean } {
+  const [rendered, setRendered] = React.useState<boolean>(isOpen);
+  const [closing, setClosing] = React.useState<boolean>(false);
+  React.useEffect(() => {
+    if (isOpen) {
+      setRendered(true);
+      setClosing(false);
+      return;
+    }
+    if (!rendered) return;
+    setClosing(true);
+    const timer = window.setTimeout(() => {
+      setRendered(false);
+      setClosing(false);
+    }, delayMs);
+    return () => window.clearTimeout(timer);
+  }, [isOpen, delayMs, rendered]);
+  return { rendered, closing };
+}
+
 type GraphSummary = {
   topicCount: number;
   completedPercent: number;
@@ -372,6 +399,9 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const [topicArtifactBodyDraft, setTopicArtifactBodyDraft] = React.useState("");
   const topicAssetModalRef = React.useRef<HTMLDivElement | null>(null);
   const topicAssetPrimaryInputRef = React.useRef<HTMLElement | null>(null);
+  // Guard against double-submit when creating a topic chat session
+  // (double-click or duplicate pointer event would POST twice → duplicate sessions).
+  const createTopicSessionPendingRef = React.useRef(false);
   const closeTopicAssetModal = React.useCallback(() => {
     setTopicAssetDialog(null);
     setTopicAssetSaving(false);
@@ -508,15 +538,15 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
 
   React.useLayoutEffect(() => {
     if (!experimentalLightDesktop) return;
-    const restoredFromOverlay = overlayRestoreEpoch !== lastOverlayRestoreEpochRef.current;
-    if (restoredFromOverlay) {
-      applyCanonicalLightDesktopLayout();
-    }
+    // Intentionally no longer snaps the dock / workspace / chat back to the
+    // canonical layout when settings or logs close. Slamming everything to
+    // default each time the user toggles an overlay feels broken — if they
+    // dragged the dock, it should stay where they left it. Kept the refs in
+    // sync so downstream logic (panel-open transitions) still tracks state.
     lastOverlayRestoreEpochRef.current = overlayRestoreEpoch;
     prevLightWorkspacePanelOpenRef.current = lightWorkspacePanelOpen;
     prevLightChatPanelOpenRef.current = lightChatPanelOpen;
   }, [
-    applyCanonicalLightDesktopLayout,
     experimentalLightDesktop,
     lightChatPanelOpen,
     lightWorkspacePanelOpen,
@@ -695,7 +725,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     setAssistantWidth((current) => (current < ASSISTANT_MIN_WIDTH ? 390 : current));
   };
 
-  const lightWorkspaceWindow = lightWorkspacePanelOpen ? (
+  const workspaceWindowAnim = useDelayedUnmount(lightWorkspacePanelOpen, WINDOW_CLOSE_MS);
+  const lightWorkspaceWindow = workspaceWindowAnim.rendered ? (
     <LightWorkspaceWindow
       workspaceWindowRef={workspaceWindowRef}
       workspaceWindowPosition={workspaceWindowPosition}
@@ -721,22 +752,30 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       setDeleteConfirm={setDeleteConfirm}
       selectedTopicId={selectedTopicId}
       handleSelectTopic={handleSelectTopic}
+      closing={workspaceWindowAnim.closing}
     />
   ) : null;
   async function createTopicSession(): Promise<void> {
     if (!activeGraph || !selectedTopicId || !selectedTopic) return;
-    const response = await apiFetch(`${API_BASE}/api/v1/graphs/${activeGraph.graph_id}/chat/sessions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic_id: selectedTopicId, title: selectedTopic.title }),
-    });
-    if (!response.ok) return;
-    const session = await response.json();
-    setActiveSessionId(session.session_id);
-    void loadSessions();
+    if (createTopicSessionPendingRef.current) return;
+    createTopicSessionPendingRef.current = true;
+    try {
+      const response = await apiFetch(`${API_BASE}/api/v1/graphs/${activeGraph.graph_id}/chat/sessions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic_id: selectedTopicId, title: selectedTopic.title }),
+      });
+      if (!response.ok) return;
+      const session = await response.json();
+      setActiveSessionId(session.session_id);
+      void loadSessions();
+    } finally {
+      createTopicSessionPendingRef.current = false;
+    }
   }
 
-  const lightChatWindow = lightChatPanelOpen ? (
+  const chatWindowAnim = useDelayedUnmount(lightChatPanelOpen, WINDOW_CLOSE_MS);
+  const lightChatWindow = chatWindowAnim.rendered ? (
     <LightChatWindow
       chatWindowRef={chatWindowRef}
       chatWindowPosition={chatWindowPosition}
@@ -778,6 +817,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       selectedChatModel={selectedChatModel}
       setSelectedChatModel={setSelectedChatModel}
       sendChat={sendChat}
+      closing={chatWindowAnim.closing}
     />
   ) : null;
 
@@ -1315,6 +1355,9 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                               {quizSuccess}
                             </span>
                           ) : null}
+                          {closureTestsEnabled && !selectedClosureStatus.can_award_completion ? (
+                            <div className="topicClosureBlockedHint">{copy.closure.closePrerequisitesFirst}</div>
+                          ) : null}
                           {!(selectedTopicClosed && !closureTestsEnabled) ? (
                             <button
                               className={`assistantSendButton ${closureTestsEnabled ? "startQuizButton" : "markFinishedButton"}`}
@@ -1326,9 +1369,6 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                                 ? (closureTestsEnabled ? copy.closure.generatingQuiz : copy.closure.markingAsFinished)
                                 : (closureTestsEnabled ? copy.closure.startClosureQuiz : copy.closure.markAsFinished)}
                             </button>
-                          ) : null}
-                          {closureTestsEnabled && !selectedClosureStatus.can_award_completion ? (
-                            <div className="topicClosureBlockedHint">{copy.closure.closePrerequisitesFirst}</div>
                           ) : null}
                         </div>
                       </div>
@@ -1451,18 +1491,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   <button
                     className="sessionItem sessionItemNew"
                     type="button"
-                    onClick={async () => {
-                      if (!activeGraph || !selectedTopicId) return;
-                      const response = await apiFetch(`${API_BASE}/api/v1/graphs/${activeGraph.graph_id}/chat/sessions`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ topic_id: selectedTopicId, title: selectedTopic.title }),
-                      });
-                      if (!response.ok) return;
-                      const session = await response.json();
-                      setActiveSessionId(session.session_id);
-                      void loadSessions();
-                    }}
+                    onClick={() => { void createTopicSession(); }}
                   >
                     {copy.sessions.learnTopic(selectedTopic.title)}
                   </button>

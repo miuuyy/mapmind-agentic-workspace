@@ -1324,12 +1324,19 @@ function GraphCanvasComponent({
           : null;
         const highlightedZoneRgb = highlightedZone ? hexToRgb(highlightedZone.color) : null;
         if (themeModeRef.current === "light" && highlightedZoneRgb && (selected || onPath)) {
-          const labelBg = mixRgb(highlightedZoneRgb, { r: 255, g: 255, b: 255 }, 0.08);
-          ctx2.fillStyle = rgbaString(labelBg, Math.min(0.96, 0.72 + alpha * 0.3));
+          // Solid pale-tinted fill (no transparency) + solid zone-coloured
+          // border. Pre-mix the orange with 90% white so the final colour is
+          // a visible cream chip, without the underlying grid / edges
+          // bleeding through. Border carries the emphasis.
+          const labelBg = mixRgb(highlightedZoneRgb, { r: 255, g: 255, b: 255 }, 0.9);
           ctx2.beginPath();
-          ctx2.roundRect(chosenBox.left - 4, chosenBox.top - 3, chosenBox.right - chosenBox.left + 8, chosenBox.bottom - chosenBox.top + 6, 8);
+          ctx2.roundRect(chosenBox.left - 4, chosenBox.top - 3, chosenBox.right - chosenBox.left + 8, chosenBox.bottom - chosenBox.top + 6, 10);
+          ctx2.fillStyle = rgbaString(labelBg, 1);
           ctx2.fill();
-          ctx2.fillStyle = `rgba(255,255,255,${Math.min(0.98, 0.78 + alpha * 0.24)})`;
+          ctx2.lineWidth = 1;
+          ctx2.strokeStyle = rgbaString(highlightedZoneRgb, Math.min(0.88, 0.6 + alpha * 0.28));
+          ctx2.stroke();
+          ctx2.fillStyle = rgbaString(highlightedZoneRgb, Math.min(0.96, 0.74 + alpha * 0.22));
         } else {
           ctx2.fillStyle = `rgba(${paletteRef.current.labelRgb},${alpha})`;
         }

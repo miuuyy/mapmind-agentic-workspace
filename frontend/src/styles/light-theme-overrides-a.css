@@ -84,13 +84,13 @@
   max-width: min(100%, 420px);
   padding: 15px 17px;
   background: rgba(255, 255, 255, 0.98);
-  border: 1px solid #e8e4de;
+  border: 1px solid #e9e1d7;
   box-shadow: 0 10px 24px rgba(45, 43, 40, 0.06);
   border-radius: 22px;
 }
 
 :root[data-theme="light"] .chatMessage-user .chatBubble {
-  background: linear-gradient(180deg, rgba(247, 243, 237, 0.98), rgba(240, 237, 231, 0.98));
+  background: linear-gradient(180deg, rgba(250, 247, 243, 0.98), rgba(240, 233, 223, 0.98));
   color: rgba(45, 43, 40, 0.94);
   border-color: rgba(224, 213, 203, 0.96);
   box-shadow: 0 8px 18px rgba(45, 43, 40, 0.04);
@@ -278,7 +278,7 @@
 :root[data-theme="light"] .settingsTabActive {
   background: rgba(195, 90, 44, 0.1) !important;
   border-color: rgba(195, 90, 44, 0.22) !important;
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
   box-shadow: none !important;
 }
 
@@ -292,13 +292,13 @@
 :root[data-theme="light"] .workspaceUtilityButtonActive,
 :root[data-theme="light"] .sessionItemGroupActive .sessionItemLabel,
 :root[data-theme="light"] .sessionItemActive .sessionItemLabel {
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
 }
 
 :root[data-theme="light"] .chatMessage-user .chatBubble,
 :root[data-theme="light"] .workspaceShellLightDockMode .chatMessage-user .chatBubble {
-  background: rgba(244, 239, 232, 0.98) !important;
-  border-color: rgba(226, 215, 204, 0.98) !important;
+  background: rgba(250, 247, 243, 0.98) !important;
+  border-color: rgba(233, 225, 215, 0.98) !important;
   color: rgba(45, 43, 40, 0.94) !important;
 }
 
@@ -316,8 +316,8 @@
 :root[data-theme="light"] .badge-yellow,
 :root[data-theme="light"] .badge-blue,
 :root[data-theme="light"] .badge-green {
-  background: rgba(244, 239, 232, 0.9) !important;
-  border: 1px solid rgba(226, 215, 204, 0.98) !important;
+  background: rgba(250, 247, 243, 0.9) !important;
+  border: 1px solid rgba(233, 225, 215, 0.98) !important;
   color: rgba(107, 96, 86, 0.95) !important;
   border-radius: 999px !important;
 }
@@ -392,7 +392,7 @@
 :root[data-theme="light"] .workspaceUtilityButtonActive {
   background: rgba(195, 90, 44, 0.1) !important;
   border-color: rgba(195, 90, 44, 0.22) !important;
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
 }
 
 :root[data-theme="light"] .pageStatControl,
@@ -436,7 +436,7 @@
   border-radius: 999px !important;
   background: rgba(195, 90, 44, 0.1) !important;
   border: 1px solid rgba(195, 90, 44, 0.18) !important;
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
 }
 
 :root[data-theme="light"] .proposalAddButton:hover {
@@ -501,7 +501,7 @@
 :root[data-theme="light"] .badge-blue {
   background: rgba(195, 90, 44, 0.1) !important;
   border: 1px solid rgba(195, 90, 44, 0.22) !important;
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
   border-color: rgba(195, 90, 44, 0.22) !important;
 }
 
@@ -563,7 +563,7 @@
 :root[data-theme="light"] .badge-blue {
   background: rgba(195, 90, 44, 0.1) !important;
   border: 1px solid rgba(195, 90, 44, 0.22) !important;
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
   box-shadow: none !important;
 }
 
@@ -576,7 +576,7 @@
 :root[data-theme="light"] .sidebarGraphRowActive > .sidebarTreeItem,
 :root[data-theme="light"] .sidebarGraphRowActive > .sidebarTreeItem span,
 :root[data-theme="light"] .sidebarTreeItemActive {
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
 }
 
 :root[data-theme="light"] .sidebarNewAction {
@@ -643,7 +643,7 @@
 
 :root[data-theme="light"] .lightWorkspaceListItemActive .lightWorkspaceListTitle,
 :root[data-theme="light"] .lightWorkspaceListItemActive .lightWorkspaceListMeta {
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
 }
 
 :root[data-theme="light"] .proposalInlineCard,
@@ -705,7 +705,7 @@
 
 :root[data-theme="light"] .quizModalHeader,
 :root[data-theme="light"] .settingsContentHeader {
-  border-bottom: 1px solid rgba(232, 228, 222, 0.72) !important;
+  border-bottom: 1px solid rgba(233, 225, 215, 0.72) !important;
   background: rgba(255, 255, 255, 0.98) !important;
 }
 
@@ -811,7 +811,7 @@
 :root[data-theme="light"] .lightWorkspaceListCount {
   background: rgba(195, 90, 44, 0.1) !important;
   border: 1px solid rgba(195, 90, 44, 0.18) !important;
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
   grid-column: 2 !important;
   grid-row: 1 / span 2 !important;
   align-self: center !important;
@@ -933,7 +933,7 @@
   border-radius: 999px !important;
   border: 1px solid rgba(210, 127, 86, 0.18) !important;
   background: rgba(255, 250, 244, 0.8) !important;
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
   font-size: 11px !important;
   font-weight: 700 !important;
   box-shadow: none !important;
@@ -943,7 +943,7 @@
 :root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:hover {
   background: rgba(255, 248, 241, 0.9) !important;
   border-color: rgba(195, 90, 44, 0.22) !important;
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
 }
 
 :root[data-theme="light"] .lightWindowCreateWorkspaceGlyph {
@@ -1082,7 +1082,7 @@
 :root[data-theme="light"] .lightWorkspaceFolderAction:hover,
 :root[data-theme="light"] .lightWorkspaceFolderActionActive {
   background: rgba(195, 90, 44, 0.07);
-  color: rgba(131, 55, 24, 0.96);
+  color: rgba(217, 119, 87, 0.96);
 }
 
 :root[data-theme="light"] .lightWorkspaceFolderActionDanger:hover {
@@ -1252,7 +1252,7 @@
 :root[data-theme="light"] .topicClosureActions .assistantSendButton.markFinishedButton,
 :root[data-theme="light"] .topicClosureActions .assistantSendButton.markFinishedButton:hover,
 :root[data-theme="light"] .topicClosureActions .assistantSendButton.markFinishedButton:focus-visible {
-  background: #cf7b48 !important;
+  background: #d97757 !important;
   border-color: transparent !important;
   color: #fffaf6 !important;
   box-shadow: none !important;
@@ -1265,7 +1265,7 @@
 :root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):hover,
 :root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):focus-visible,
 :root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):active:not(:disabled) {
-  background: #cf7b48 !important;
+  background: #d97757 !important;
   border-color: transparent !important;
   color: #fffaf6 !important;
   box-shadow: none !important;
@@ -1301,7 +1301,7 @@
 :root[data-theme="light"] .startQuizButton:focus-visible {
   border-radius: 999px !important;
   box-shadow: none !important;
-  background: #cf7b48 !important;
+  background: #d97757 !important;
   border-color: transparent !important;
   color: #fffaf6 !important;
   filter: none !important;
@@ -1313,8 +1313,8 @@
 :root[data-theme="light"] {
   --dt-light-bg: #faf9f6;
   --dt-light-card: #ffffff;
-  --dt-light-secondary: #f0ede7;
-  --dt-light-border: #e8e4de;
+  --dt-light-secondary: #f0e9df;
+  --dt-light-border: #e9e1d7;
   --dt-light-muted: #8b8580;
   --dt-light-text: #2d2b28;
   --dt-light-primary: #c35a2c;
@@ -1332,7 +1332,7 @@
 :root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader,
 :root[data-theme="light"] .lightWorkspaceWindow .lightFloatingWindowHeader {
   background: transparent !important;
-  border-bottom: 1px solid rgba(232, 228, 222, 0.72) !important;
+  border-bottom: 1px solid rgba(233, 225, 215, 0.72) !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .lightFloatingWindowTitle,
@@ -1392,7 +1392,7 @@
 :root[data-theme="light"] .sessionItem:hover,
 :root[data-theme="light"] .sessionItemGroup:hover {
   background: rgba(250, 249, 246, 0.92) !important;
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   color: var(--dt-light-text) !important;
 }
 
@@ -1481,7 +1481,7 @@
 
 :root[data-theme="light"] .lightChatWindow .sessionListWrap {
   background: transparent !important;
-  border-bottom: 1px solid rgba(232, 228, 222, 0.9) !important;
+  border-bottom: 1px solid rgba(233, 225, 215, 0.9) !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
@@ -1498,7 +1498,7 @@
 
 :root[data-theme="light"] .lightChatWindow .sessionItem,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroup {
-  background: rgba(240, 237, 231, 0.88) !important;
+  background: rgba(240, 233, 223, 0.88) !important;
   border: 1px solid transparent !important;
   border-radius: 999px !important;
   color: var(--dt-light-muted) !important;
@@ -1508,7 +1508,7 @@
 :root[data-theme="light"] .lightChatWindow .sessionItem:hover,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroup:hover {
   background: rgba(245, 241, 235, 0.96) !important;
-  border-color: rgba(232, 228, 222, 0.92) !important;
+  border-color: rgba(233, 225, 215, 0.92) !important;
   border-width: 1px !important;
   border-style: solid !important;
   color: var(--dt-light-text) !important;
@@ -1516,8 +1516,8 @@
 
 :root[data-theme="light"] .lightChatWindow .sessionItemActive,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroupActive {
-  background: rgba(240, 237, 231, 0.98) !important;
-  border-color: rgba(232, 228, 222, 0.98) !important;
+  background: rgba(240, 233, 223, 0.98) !important;
+  border-color: rgba(233, 225, 215, 0.98) !important;
   border-width: 1px !important;
   border-style: solid !important;
   border-radius: 999px !important;
@@ -1528,7 +1528,7 @@
 /* Final light chat/dock harmony override */
 :root[data-theme="light"] .lightDock {
   background: rgba(246, 242, 236, 0.97) !important;
-  border-color: rgba(232, 228, 222, 0.98) !important;
+  border-color: rgba(233, 225, 215, 0.98) !important;
 }
 
 :root[data-theme="light"] .lightDockButton,

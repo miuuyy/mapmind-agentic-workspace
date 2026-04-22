@@ -120,22 +120,26 @@ export type GraphCanvasPalette = {
 
 export function graphCanvasPalette(themeMode: GraphCanvasThemeMode): GraphCanvasPalette {
   if (themeMode === "light") {
+    // Warm earthy palette for node fills — blue-grey was reading as cold
+    // and visually "loud" against the cream background + orange accent.
+    // New tones sit on a brown / bronze axis so dots feel like part of
+    // the same paper-and-ink palette as everything else in light mode.
     return {
-      gridStroke: "rgba(17,24,39,0.06)",
-      edgeRgb: "17,24,39",
+      gridStroke: "rgba(45,43,40,0.05)",
+      edgeRgb: "45,43,40",
       nodeBaseFill: "rgba(250,249,246,0.98)",
-      nodeSelectedFill: "rgba(56,67,84,0.88)",
-      nodePathFill: "rgba(84,96,115,0.84)",
-      nodeStableFill: "rgba(96,108,126,0.78)",
-      nodeLearningFill: "rgba(123,134,149,0.7)",
-      nodeReviewFill: "rgba(178,80,58,0.86)",
-      nodeDefaultFill: "rgba(132,126,119,0.68)",
+      nodeSelectedFill: "rgba(101,82,62,0.88)",
+      nodePathFill: "rgba(128,104,78,0.82)",
+      nodeStableFill: "rgba(158,138,112,0.74)",
+      nodeLearningFill: "rgba(195,178,156,0.66)",
+      nodeReviewFill: "rgba(217,119,87,0.86)",
+      nodeDefaultFill: "rgba(178,162,140,0.56)",
       frontierRgb: "176,134,24",
-      reviewRingRgb: "214,82,60",
-      labelRgb: "17,24,39",
-      shadowSelected: "rgba(15,23,42,0.2)",
-      shadowPath: "rgba(15,23,42,0.12)",
-      shadowContext: "rgba(15,23,42,0.06)",
+      reviewRingRgb: "217,119,87",
+      labelRgb: "45,43,40",
+      shadowSelected: "rgba(45,43,40,0.18)",
+      shadowPath: "rgba(45,43,40,0.1)",
+      shadowContext: "rgba(45,43,40,0.05)",
       zoneOpacityMultiplier: 0.02,
       zoneOutlineAlpha: 0.2,
       zoneOutlineWidth: 1.5,

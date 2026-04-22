@@ -936,10 +936,20 @@ export default function App(): React.JSX.Element {
     };
   }, [activeGraph?.graph_id, data?.snapshot.id]);
 
+  // Auto-scroll to bottom only when a NEW message is appended or while the
+  // assistant is loading, not on every mutation of the messages array (e.g.
+  // answering an inline quiz updates the existing message and used to jerk
+  // the scroll to the bottom).
+  const lastMessagesLengthRef = useRef(0);
   useEffect(() => {
     const viewport = chatViewportRef.current;
     if (!viewport) return;
-    viewport.scrollTop = viewport.scrollHeight;
+    const nextLength = currentChatState.messages.length;
+    const grew = nextLength > lastMessagesLengthRef.current;
+    lastMessagesLengthRef.current = nextLength;
+    if (grew || chatLoading) {
+      viewport.scrollTop = viewport.scrollHeight;
+    }
   }, [currentChatState.messages, chatLoading]);
 
   function handleAssistantResize(startX: number): void {

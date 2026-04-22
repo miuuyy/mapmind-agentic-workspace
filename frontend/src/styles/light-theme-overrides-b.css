@@ -25,7 +25,7 @@
 
 :root[data-theme="light"] .chatMessage-user .chatBubble,
 :root[data-theme="light"] .workspaceShellLightDockMode .chatMessage-user .chatBubble {
-  background: linear-gradient(180deg, rgba(247, 243, 237, 0.98), rgba(240, 237, 231, 0.98)) !important;
+  background: linear-gradient(180deg, rgba(250, 247, 243, 0.98), rgba(240, 233, 223, 0.98)) !important;
   border-color: rgba(224, 213, 203, 0.96) !important;
   box-shadow: 0 1px 6px rgba(45, 43, 40, 0.03) !important;
 }
@@ -33,7 +33,7 @@
 :root[data-theme="light"] .lightWorkspaceFolderActive,
 :root[data-theme="light"] .lightWorkspaceFolderOpen {
   background: rgba(250, 249, 246, 0.82) !important;
-  border-color: rgba(232, 228, 222, 0.94) !important;
+  border-color: rgba(233, 225, 215, 0.94) !important;
 }
 
 :root[data-theme="light"] .lightWorkspaceFolderTitle {
@@ -138,7 +138,7 @@
 :root[data-theme="light"] .webGroundingToggle:hover,
 :root[data-theme="light"] .groundingToggle:hover {
   background: rgba(250, 249, 246, 0.92) !important;
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   color: var(--dt-light-text) !important;
 }
 
@@ -204,7 +204,7 @@
 }
 :root[data-theme="light"] .lightChatWindow .sessionItem,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroup {
-  background: rgba(240, 237, 231, 0.88) !important;
+  background: rgba(240, 233, 223, 0.88) !important;
   border: 1px solid transparent !important;
   border-radius: 999px !important;
   color: var(--dt-light-muted) !important;
@@ -215,17 +215,156 @@
   background: rgba(245, 241, 235, 0.96) !important;
   color: var(--dt-light-text) !important;
   border: 0 !important;
-  border-color: rgba(232, 228, 222, 0.92) !important;
+  border-color: rgba(233, 225, 215, 0.92) !important;
 }
 :root[data-theme="light"] .lightChatWindow .sessionItemActive,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroupActive {
-  background: rgba(240, 237, 231, 0.98) !important;
-  color: var(--dt-light-text) !important;
+  background: rgba(240, 233, 223, 0.98) !important;
+  /* Darker brand-orange shade so the thin chat-name type stays readable
+     against the cream pill. Same hue as #d97757 just ~12% darker. */
+  color: #b55a38 !important;
   border: 0 !important;
   border-radius: 999px !important;
   box-shadow: none !important;
-  border-color: rgba(232, 228, 222, 0.98) !important;
+  border-color: rgba(233, 225, 215, 0.98) !important;
 }
+
+/* Inner label node has its own explicit `color` rule in light-theme-overrides-a.css
+   which would otherwise win over the wrapper rule above. Re-assert the darker
+   shade specifically on the label so the thin chat-name type actually picks
+   up the darker reading colour. */
+:root[data-theme="light"] .lightChatWindow .sessionItemActive .sessionItemLabel,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive .sessionItemLabel {
+  color: #b55a38 !important;
+}
+
+/* The top-of-thread fade (`.sessionShadow::after`, 48px linear-gradient) used
+   to paint over the 1px border-bottom of `.sessionListWrap`, hiding the
+   divider that separates the session chip row from the chat thread. Push
+   the fade 1px down so the border stays visible, and promote the sessions
+   row above it so its border wins the stacking order regardless. */
+:root[data-theme="light"] .lightChatWindow .sessionShadow::after,
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionShadow::after {
+  top: 1px !important;
+  height: 44px !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap,
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionListWrap {
+  position: relative !important;
+  z-index: 4 !important;
+}
+
+/* Absolute EOF lock: light-theme quiz palette (user-specified).
+   Card body #faf7f3, choice body #faf8f3 (a shade brighter), matching
+   #e9e1d7 border on both. Hover is a tiny neutral step darker — no brand
+   orange. Dark theme quiz untouched. */
+:root[data-theme="light"] .inlineQuizCard,
+:root[data-theme="light"] .lightChatWindow .inlineQuizCard,
+:root[data-theme="light"] .workspaceShellLightDockMode .inlineQuizCard {
+  background: #faf7f3 !important;
+  border: 1px solid #e9e1d7 !important;
+  border-radius: 14px !important;
+  padding: 14px 14px 12px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="light"] .inlineQuizQuestion {
+  color: rgba(45, 43, 40, 0.95) !important;
+  font-weight: 600 !important;
+  margin-bottom: 12px !important;
+}
+
+:root[data-theme="light"] .inlineQuizChoice,
+:root[data-theme="light"] .lightChatWindow .inlineQuizChoice,
+:root[data-theme="light"] .workspaceShellLightDockMode .inlineQuizChoice {
+  background: #faf8f3 !important;
+  border: 1px solid #e9e1d7 !important;
+  color: rgba(45, 43, 40, 0.92) !important;
+  border-radius: 12px !important;
+  padding: 10px 12px !important;
+  font-size: 13px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease !important;
+}
+
+:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled),
+:root[data-theme="light"] .lightChatWindow .inlineQuizChoice:hover:not(:disabled),
+:root[data-theme="light"] .workspaceShellLightDockMode .inlineQuizChoice:hover:not(:disabled) {
+  background: #f5ecde !important;
+  border-color: rgba(217, 119, 87, 0.28) !important;
+  color: rgba(45, 43, 40, 0.98) !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+:root[data-theme="light"] .inlineQuizChoice:focus-visible {
+  outline: 2px solid rgba(217, 119, 87, 0.4) !important;
+  outline-offset: 2px !important;
+}
+
+:root[data-theme="light"] .inlineQuizCorrect {
+  background: #faf8f3 !important;
+  border-color: rgba(45, 102, 72, 0.45) !important;
+  color: rgba(45, 102, 72, 0.96) !important;
+}
+
+:root[data-theme="light"] .inlineQuizWrong {
+  background: #faf8f3 !important;
+  border-color: rgba(220, 38, 38, 0.45) !important;
+  color: rgba(185, 28, 28, 0.96) !important;
+}
+
+/* User message bubble in light theme — palette matched to the quiz card:
+   #f0e9df body, #e9e1d7 border (same as quiz + choice border). Flat, no
+   gradient, no shadow. Dark theme unchanged. */
+:root[data-theme="light"] .chatMessage-user .chatBubble,
+:root[data-theme="light"] .lightChatWindow .chatMessage-user .chatBubble,
+:root[data-theme="light"] .workspaceShellLightDockMode .chatMessage-user .chatBubble {
+  background: #f0e9df !important;
+  border: 1px solid #e9e1d7 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Session chips in the chat header: user feedback — "при наводке на
+   сессию не нужно менять фон у названия". We keep hover identical to rest
+   (no background shift, no text darken) — only the cursor changes.
+   Active chip keeps its dark-orange label through hover. */
+:root[data-theme="light"] .lightChatWindow .sessionItem:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup:hover,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChip:hover {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--dt-light-muted) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItem:hover .sessionItemLabel,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup:hover .sessionItemLabel,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChip:hover .sessionItemLabel {
+  color: var(--dt-light-muted) !important;
+}
+
+/* Active chip must keep its dark-orange label even while the chip is hovered. */
+:root[data-theme="light"] .lightChatWindow .sessionItemActive:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive:hover,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive:hover {
+  background: rgba(240, 233, 223, 0.98) !important;
+  border-color: rgba(233, 225, 215, 0.98) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItemActive:hover .sessionItemLabel,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive:hover .sessionItemLabel,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive:hover .sessionItemLabel {
+  color: #b55a38 !important;
+}
+
 :root[data-theme="light"] .lightChatWindow .assistantComposer {
   padding: 0 0 2px !important;
   position: relative !important;
@@ -239,7 +378,7 @@
   align-self: auto !important;
   margin-right: 6px !important;
   margin-bottom: 2px !important;
-  box-shadow: 0 4px 12px rgba(207, 123, 72, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.15) !important;
   position: absolute !important;
   right: 12px !important;
   bottom: 12px !important;
@@ -249,18 +388,18 @@
   padding: 7px !important;
   margin: 0 !important;
   border: 0 !important;
-  background: #cf7b48 !important;
+  background: #d97757 !important;
   color: #fffaf6 !important;
 }
 :root[data-theme="light"] .lightChatWindow .assistantSendButtonIcon:hover:not(:disabled) {
-  background: #cf7b48 !important;
+  background: #d97757 !important;
   border: 0 !important;
-  box-shadow: 0 6px 16px rgba(207, 123, 72, 0.22) !important;
+  box-shadow: 0 6px 16px rgba(217, 119, 87, 0.22) !important;
 }
 :root[data-theme="light"] .lightChatWindow .assistantComposer .assistantSendButton.assistantSendButtonIcon {
-  background: #cf7b48 !important;
+  background: #d97757 !important;
   border: 0 !important;
-  box-shadow: 0 4px 12px rgba(207, 123, 72, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.15) !important;
 }
 :root[data-theme="light"] .lightChatWindow .assistantComposer .assistantSendButton.assistantSendButtonIcon svg {
   width: 15px !important;
@@ -268,7 +407,7 @@
 }
 
 :root[data-theme="light"] .lightChatWindow .lightChatSessionChip {
-  background: rgba(240, 237, 231, 0.88) !important;
+  background: rgba(240, 233, 223, 0.88) !important;
   border: 1px solid transparent !important;
   border-radius: 999px !important;
   color: var(--dt-light-muted) !important;
@@ -277,7 +416,7 @@
 
 :root[data-theme="light"] .lightChatWindow .lightChatSessionChip:hover {
   background: rgba(245, 241, 235, 0.96) !important;
-  border: 1px solid rgba(232, 228, 222, 0.92) !important;
+  border: 1px solid rgba(233, 225, 215, 0.92) !important;
   border-radius: 999px !important;
   color: var(--dt-light-text) !important;
   box-shadow: none !important;
@@ -285,8 +424,8 @@
 
 :root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive,
 :root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive:hover {
-  background: rgba(240, 237, 231, 0.98) !important;
-  border: 1px solid rgba(232, 228, 222, 0.98) !important;
+  background: rgba(240, 233, 223, 0.98) !important;
+  border: 1px solid rgba(233, 225, 215, 0.98) !important;
   border-radius: 999px !important;
   color: var(--dt-light-text) !important;
   box-shadow: none !important;
@@ -330,8 +469,8 @@
 :root[data-theme="light"] .lightChatWindow .assistantTemplate,
 :root[data-theme="light"] .lightChatWindow .webGroundingToggle,
 :root[data-theme="light"] .lightChatWindow .groundingToggle {
-  background: rgba(240, 237, 231, 0.88) !important;
-  border: 1px solid rgba(232, 228, 222, 0.92) !important;
+  background: rgba(240, 233, 223, 0.88) !important;
+  border: 1px solid rgba(233, 225, 215, 0.92) !important;
   color: rgba(139, 133, 128, 0.92) !important;
   box-shadow: none !important;
   transition: color 140ms ease, border-color 140ms ease, background-color 140ms ease !important;
@@ -340,8 +479,8 @@
 :root[data-theme="light"] .lightChatWindow .assistantTemplate:hover,
 :root[data-theme="light"] .lightChatWindow .webGroundingToggle:hover,
 :root[data-theme="light"] .lightChatWindow .groundingToggle:hover {
-  background: rgba(240, 237, 231, 0.88) !important;
-  border-color: rgba(232, 228, 222, 0.92) !important;
+  background: rgba(240, 233, 223, 0.88) !important;
+  border-color: rgba(233, 225, 215, 0.92) !important;
   color: rgba(45, 43, 40, 0.96) !important;
   box-shadow: none !important;
 }
@@ -357,7 +496,7 @@
 
 :root[data-theme="light"] .assistantModelMenu {
   background: rgba(250, 249, 246, 0.985) !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  border: 1px solid rgba(233, 225, 215, 0.96) !important;
   box-shadow: 0 18px 34px rgba(45, 43, 40, 0.08) !important;
 }
 
@@ -367,15 +506,15 @@
 
 :root[data-theme="light"] .assistantModelMenuItem:hover,
 :root[data-theme="light"] .assistantModelMenuItemActive {
-  background: rgba(240, 237, 231, 0.92) !important;
+  background: rgba(240, 233, 223, 0.92) !important;
   color: rgba(45, 43, 40, 0.96) !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .assistantTemplateActive,
 :root[data-theme="light"] .lightChatWindow .webGroundingToggle.active,
 :root[data-theme="light"] .lightChatWindow .groundingToggleActive {
-  background: rgba(240, 237, 231, 0.98) !important;
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  background: rgba(240, 233, 223, 0.98) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   color: rgba(45, 43, 40, 0.96) !important;
   box-shadow: none !important;
 }
@@ -383,19 +522,19 @@
 :root[data-theme="light"] .lightChatWindow .webGroundingToggle {
   background: rgba(195, 90, 44, 0.08) !important;
   border: 1px solid rgba(195, 90, 44, 0.16) !important;
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .webGroundingToggle:hover {
   background: rgba(195, 90, 44, 0.12) !important;
   border-color: rgba(195, 90, 44, 0.2) !important;
-  color: rgba(111, 44, 17, 0.96) !important;
+  color: rgba(217, 119, 87, 0.96) !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .webGroundingToggle.active {
   background: rgba(195, 90, 44, 0.14) !important;
   border-color: rgba(195, 90, 44, 0.2) !important;
-  color: rgba(111, 44, 17, 0.98) !important;
+  color: rgba(217, 119, 87, 0.98) !important;
 }
 
 :root[data-theme="light"] .proposalAddButton,
@@ -443,48 +582,48 @@
 }
 
 :root[data-theme="light"] .lightWindowCreateWorkspaceButton {
-  background: rgba(240, 237, 231, 0.78) !important;
+  background: rgba(240, 233, 223, 0.78) !important;
   border: 0 !important;
   color: rgba(62, 49, 39, 0.96) !important;
   box-shadow: none !important;
 }
 
 :root[data-theme="light"] .lightWindowCreateWorkspaceButton:hover {
-  background: rgba(240, 237, 231, 0.92) !important;
+  background: rgba(240, 233, 223, 0.92) !important;
   color: rgba(45, 43, 40, 0.96) !important;
   border: 0 !important;
 }
 
 :root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton {
-  background: rgba(240, 237, 231, 0.78) !important;
+  background: rgba(240, 233, 223, 0.78) !important;
   border: 0 !important;
   color: rgba(62, 49, 39, 0.96) !important;
   box-shadow: none !important;
 }
 
 :root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:hover {
-  background: rgba(240, 237, 231, 0.92) !important;
+  background: rgba(240, 233, 223, 0.92) !important;
   border: 0 !important;
   color: rgba(45, 43, 40, 0.96) !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .assistantTemplate:not(.webGroundingToggle) {
-  background: rgba(240, 237, 231, 0.88) !important;
-  border: 1px solid rgba(232, 228, 222, 0.92) !important;
+  background: rgba(240, 233, 223, 0.88) !important;
+  border: 1px solid rgba(233, 225, 215, 0.92) !important;
   color: rgba(139, 133, 128, 0.92) !important;
   box-shadow: none !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .assistantTemplate:not(.webGroundingToggle):hover {
-  background: rgba(240, 237, 231, 0.88) !important;
-  border-color: rgba(232, 228, 222, 0.92) !important;
+  background: rgba(240, 233, 223, 0.88) !important;
+  border-color: rgba(233, 225, 215, 0.92) !important;
   color: rgba(45, 43, 40, 0.96) !important;
   box-shadow: none !important;
 }
 
 :root[data-theme="light"] .floatingStatusButton,
 :root[data-theme="light"] .floatingStatusButtonActive {
-  background: rgba(240, 237, 231, 0.9) !important;
+  background: rgba(240, 233, 223, 0.9) !important;
   border: 0 !important;
   box-shadow: none !important;
   color: rgba(139, 133, 128, 0.96) !important;
@@ -492,7 +631,7 @@
 
 :root[data-theme="light"] .floatingStatusButton:hover,
 :root[data-theme="light"] .floatingStatusButtonActive:hover {
-  background: rgba(240, 237, 231, 0.96) !important;
+  background: rgba(240, 233, 223, 0.96) !important;
   border: 0 !important;
   box-shadow: none !important;
   color: rgba(45, 43, 40, 0.96) !important;
@@ -513,7 +652,7 @@
 :root[data-theme="light"] .quizModal,
 :root[data-theme="light"] .topicAssetModal {
   background: rgba(250, 249, 246, 0.982) !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  border: 1px solid rgba(233, 225, 215, 0.96) !important;
   box-shadow: 0 18px 40px rgba(45, 43, 40, 0.08) !important;
 }
 
@@ -540,7 +679,7 @@
 :root[data-theme="light"] .topicAssetTextInput,
 :root[data-theme="light"] .topicAssetResourceInput {
   background: rgba(250, 249, 246, 0.982) !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  border: 1px solid rgba(233, 225, 215, 0.96) !important;
   box-shadow: none !important;
   font-family: var(--sans) !important;
 }
@@ -569,8 +708,8 @@
 :root[data-theme="light"] .quizModal .btn.btnImport,
 :root[data-theme="light"] .quizModal .btn.btnImportWide,
 :root[data-theme="light"] .topicAssetSaveButton {
-  background: rgba(240, 237, 231, 0.96) !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  background: rgba(240, 233, 223, 0.96) !important;
+  border: 1px solid rgba(233, 225, 215, 0.96) !important;
   color: rgba(62, 49, 39, 0.96) !important;
   box-shadow: none !important;
   font-family: var(--sans) !important;
@@ -580,7 +719,7 @@
 :root[data-theme="light"] .quizModal .btn.btnImportWide:hover,
 :root[data-theme="light"] .topicAssetSaveButton:hover {
   background: rgba(245, 241, 235, 0.98) !important;
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   color: rgba(45, 43, 40, 0.96) !important;
   box-shadow: none !important;
 }
@@ -588,8 +727,8 @@
 :root[data-theme="light"] .topicAssetModal .topicAssetSaveButton,
 :root[data-theme="light"] .topicAssetModal .topicAssetSaveButton:hover,
 :root[data-theme="light"] .topicAssetModal .topicAssetSaveButton:disabled {
-  background: rgba(240, 237, 231, 0.96) !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  background: rgba(240, 233, 223, 0.96) !important;
+  border: 1px solid rgba(233, 225, 215, 0.96) !important;
   color: rgba(62, 49, 39, 0.96) !important;
   box-shadow: none !important;
 }
@@ -614,7 +753,7 @@
 :root[data-theme="light"] .settingsPanel,
 :root[data-theme="light"] .settingsSnapshotsCard,
 :root[data-theme="light"] .snapshotsCard {
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   box-shadow: 0 18px 40px rgba(45, 43, 40, 0.08) !important;
 }
 
@@ -632,8 +771,8 @@
 :root[data-theme="light"] .settingsToggleRow,
 :root[data-theme="light"] .settingsInlineNotice,
 :root[data-theme="light"] .inlineNotice {
-  background: rgba(240, 237, 231, 0.88) !important;
-  border-color: rgba(232, 228, 222, 0.92) !important;
+  background: rgba(240, 233, 223, 0.88) !important;
+  border-color: rgba(233, 225, 215, 0.92) !important;
   box-shadow: none !important;
 }
 
@@ -662,7 +801,7 @@
 :root[data-theme="light"] .snapshotsCard .cardBody,
 :root[data-theme="light"] .snapshotsScrollContainer {
   background: rgba(250, 249, 246, 0.982) !important;
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   box-shadow: none !important;
 }
 
@@ -673,8 +812,8 @@
 :root[data-theme="light"] .settingsInlineNotice,
 :root[data-theme="light"] .inlineNotice,
 :root[data-theme="light"] .thinkingModeChip {
-  background: rgba(240, 237, 231, 0.88) !important;
-  border-color: rgba(232, 228, 222, 0.92) !important;
+  background: rgba(240, 233, 223, 0.88) !important;
+  border-color: rgba(233, 225, 215, 0.92) !important;
   box-shadow: none !important;
 }
 
@@ -682,13 +821,13 @@
 :root[data-theme="light"] .listItem:hover,
 :root[data-theme="light"] .settingsToggleRow:hover {
   background: rgba(245, 241, 235, 0.96) !important;
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   box-shadow: none !important;
 }
 
 :root[data-theme="light"] .thinkingModeChipActive {
-  background: rgba(240, 237, 231, 0.98) !important;
-  border-color: rgba(232, 228, 222, 0.98) !important;
+  background: rgba(240, 233, 223, 0.98) !important;
+  border-color: rgba(233, 225, 215, 0.98) !important;
   color: rgba(45, 43, 40, 0.96) !important;
   box-shadow: none !important;
 }
@@ -697,8 +836,8 @@
 :root[data-theme="light"] .snapshotsCard .btn,
 :root[data-theme="light"] .listActions .btn,
 :root[data-theme="light"] .settingsModal .btn.btn-sm {
-  background: rgba(240, 237, 231, 0.96) !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  background: rgba(240, 233, 223, 0.96) !important;
+  border: 1px solid rgba(233, 225, 215, 0.96) !important;
   color: rgba(62, 49, 39, 0.96) !important;
   box-shadow: none !important;
 }
@@ -708,7 +847,7 @@
 :root[data-theme="light"] .listActions .btn:hover,
 :root[data-theme="light"] .settingsModal .btn.btn-sm:hover {
   background: rgba(245, 241, 235, 0.98) !important;
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   color: rgba(45, 43, 40, 0.96) !important;
   box-shadow: none !important;
 }
@@ -758,14 +897,14 @@
 }
 
 :root[data-theme="light"] .topicPopover {
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   box-shadow: 0 18px 40px rgba(45, 43, 40, 0.08) !important;
 }
 
 :root[data-theme="light"] .topicPopover::after {
   background: var(--light-flat-bg) !important;
-  border-top-color: rgba(232, 228, 222, 0.96) !important;
-  border-right-color: rgba(232, 228, 222, 0.96) !important;
+  border-top-color: rgba(233, 225, 215, 0.96) !important;
+  border-right-color: rgba(233, 225, 215, 0.96) !important;
 }
 
 :root[data-theme="light"] .settingsModal,
@@ -778,7 +917,7 @@
 :root[data-theme="light"] .settingsPanelBody,
 :root[data-theme="light"] .snapshotsScrollContainer {
   background: var(--light-soft-bg) !important;
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -787,13 +926,13 @@
 :root[data-theme="light"] .settingsSnapshotsCard,
 :root[data-theme="light"] .snapshotsCard {
   background: var(--light-flat-bg) !important;
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   box-shadow: none !important;
 }
 
 :root[data-theme="light"] .snapshotsCard .cardBody {
   background: var(--light-flat-bg) !important;
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   box-shadow: none !important;
 }
 
@@ -818,7 +957,7 @@
 :root[data-theme="light"] .snapshotsCard .listItem,
 :root[data-theme="light"] .snapshotsCard .listActions {
   background: var(--light-soft-bg) !important;
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   box-shadow: none !important;
 }
 
@@ -839,7 +978,7 @@
 :root[data-theme="light"] .settingsSnapshotsCard .listItem:hover,
 :root[data-theme="light"] .snapshotsCard .listItem:hover {
   background: var(--light-soft-hover) !important;
-  border-color: rgba(232, 228, 222, 0.98) !important;
+  border-color: rgba(233, 225, 215, 0.98) !important;
   box-shadow: none !important;
 }
 
@@ -876,7 +1015,7 @@
 
 :root[data-theme="light"] .lightWindowCreateWorkspaceButton:hover,
 :root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:hover {
-  border-color: rgba(232, 228, 222, 0.96) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
   background: rgba(245, 241, 235, 0.98) !important;
   color: rgba(45, 43, 40, 0.96) !important;
   box-shadow: none !important;
@@ -953,8 +1092,8 @@
   min-height: 34px !important;
   padding: 0 12px !important;
   border-radius: 14px !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
-  background: rgba(240, 237, 231, 0.96) !important;
+  border: 1px solid rgba(233, 225, 215, 0.96) !important;
+  background: rgba(240, 233, 223, 0.96) !important;
   color: rgba(62, 49, 39, 0.96) !important;
   box-shadow: none !important;
   font-size: 13px !important;
@@ -980,8 +1119,8 @@
 :root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:hover,
 :root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:active,
 :root[data-theme="light"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton:focus-visible {
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
-  background: rgba(240, 237, 231, 0.96) !important;
+  border: 1px solid rgba(233, 225, 215, 0.96) !important;
+  background: rgba(240, 233, 223, 0.96) !important;
   color: rgba(62, 49, 39, 0.96) !important;
   box-shadow: none !important;
   transform: none !important;
@@ -1155,7 +1294,7 @@
 :root[data-theme="light"] .settingsModal select.input,
 :root[data-theme="light"] .settingsModal .textarea {
   background: transparent !important;
-  border: 1px solid #e8e4de !important;
+  border: 1px solid #e9e1d7 !important;
   box-shadow: none !important;
   color: #2d2b28 !important;
 }
@@ -1169,7 +1308,7 @@
 :root[data-theme="light"] .settingsModal select.input:focus,
 :root[data-theme="light"] .settingsModal .textarea:focus {
   background: transparent !important;
-  border-color: #e8e4de !important;
+  border-color: #e9e1d7 !important;
   box-shadow: none !important;
   color: #2d2b28 !important;
 }
@@ -1354,7 +1493,7 @@
 /* Absolute EOF lock: light chat model menu must render above the session strip */
 :root[data-theme="light"] .lightChatWindow {
   background: var(--light-flat-bg) !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  border: 1px solid rgba(233, 225, 215, 0.96) !important;
   box-shadow:
     0 1px 8px rgba(0, 0, 0, 0.03),
     0 14px 28px rgba(45, 43, 40, 0.05) !important;
@@ -1459,7 +1598,7 @@
 
 :root[data-theme="light"] .lightChatWindow .sessionListWrap {
   background: rgba(250, 249, 246, 0.982) !important;
-  border-bottom: 1px solid rgba(232, 228, 222, 0.96) !important;
+  border-bottom: 1px solid rgba(233, 225, 215, 0.96) !important;
   box-shadow: none !important;
   position: relative !important;
   z-index: 2 !important;
@@ -1479,22 +1618,21 @@
   transition: opacity 0.18s ease !important;
 }
 
+/* Session list has fade on BOTH sides in light theme — symmetric with dark. */
 :root[data-theme="light"] .lightChatWindow .sessionListWrap::before {
-  opacity: 0 !important;
+  display: block !important;
+  opacity: 1 !important;
   left: 0 !important;
   right: auto !important;
   background: linear-gradient(to right, rgba(250, 249, 246, 0.98), rgba(250, 249, 246, 0)) !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .sessionListWrap::after {
+  display: block !important;
   opacity: 1 !important;
-  background: linear-gradient(to left, rgba(250, 249, 246, 0.98), rgba(250, 249, 246, 0)) !important;
   right: 0 !important;
   left: auto !important;
-}
-
-:root[data-theme="light"] .lightChatWindow .sessionListWrap.scrolledLeft::before {
-  opacity: 1 !important;
+  background: linear-gradient(to left, rgba(250, 249, 246, 0.98), rgba(250, 249, 246, 0)) !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .sessionListWrap:not(.scrolledRight)::after {
@@ -1570,7 +1708,7 @@
   left: -24px !important;
   right: -24px !important;
   height: 1px !important;
-  background: rgba(232, 228, 222, 0.96) !important;
+  background: rgba(233, 225, 215, 0.96) !important;
   pointer-events: none !important;
   z-index: 3 !important;
 }
@@ -1579,7 +1717,7 @@
 
 :root[data-theme="light"] .lightDockButton:hover,
 :root[data-theme="light"] .lightDockButtonLink:hover {
-  color: #cf7b48 !important;
+  color: #d97757 !important;
   background: transparent !important;
   box-shadow: none !important;
   outline: none !important;
@@ -1600,7 +1738,7 @@
 :root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive,
 :root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive:hover {
   color: #fbf5ec !important;
-  background: #cf7b48 !important;
+  background: #d97757 !important;
   border-radius: 999px !important;
   box-shadow: none !important;
   outline: none !important;
@@ -1628,7 +1766,7 @@
   height: 40px !important;
   padding: 0 16px !important;
   border-radius: 999px !important;
-  background: #cf7b48 !important;
+  background: #d97757 !important;
   color: #fffaf6 !important;
   border: 1px solid transparent !important;
   box-shadow: none !important;
@@ -1646,7 +1784,7 @@
 :root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):hover:not(:disabled),
 :root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):focus-visible:not(:disabled),
 :root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):active:not(:disabled) {
-  background: #cf7b48 !important;
+  background: #d97757 !important;
   color: #fffaf6 !important;
   border-color: transparent !important;
   box-shadow: none !important;
@@ -1657,7 +1795,7 @@
 }
 
 :root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):disabled {
-  background: #cf7b48 !important;
+  background: #d97757 !important;
   color: #fffaf6 !important;
   border-color: transparent !important;
   box-shadow: none !important;
@@ -1691,7 +1829,7 @@
 
 :root[data-theme="light"] .lightDock {
   background: var(--light-flat-bg) !important;
-  border-color: rgba(232, 228, 222, 0.98) !important;
+  border-color: rgba(233, 225, 215, 0.98) !important;
   box-shadow:
     0 1px 8px rgba(45, 43, 40, 0.04),
     0 14px 28px rgba(45, 43, 40, 0.06) !important;
@@ -1701,7 +1839,7 @@
 
 :root[data-theme="light"] .lightDockGrip {
   height: 32px !important;
-  color: #cf7b48 !important;
+  color: #d97757 !important;
 }
 
 :root[data-theme="light"] .lightDockButton,
@@ -1730,7 +1868,7 @@
   padding: 9px 11px !important;
   border-radius: 999px !important;
   background: rgba(248, 242, 236, 0.98) !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  border: 1px solid rgba(233, 225, 215, 0.96) !important;
   box-shadow: 0 6px 14px rgba(45, 43, 40, 0.05) !important;
 }
 
@@ -1743,7 +1881,7 @@
   margin-top: 6px !important;
   padding: 13px 14px !important;
   border-radius: 18px !important;
-  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  border: 1px solid rgba(233, 225, 215, 0.96) !important;
   background: linear-gradient(180deg, rgba(255, 252, 248, 0.98), rgba(250, 247, 242, 0.98)) !important;
   box-shadow: 0 8px 18px rgba(45, 43, 40, 0.05) !important;
 }
@@ -1752,7 +1890,7 @@
 :root[data-theme="light"] .lightChatWindow .webGroundingToggle.active,
 :root[data-theme="light"] .workspaceShellLightDockMode .webGroundingToggle.active,
 :root[data-theme="light"] .webGroundingToggle.active {
-  background: #cf7b48 !important;
+  background: #d97757 !important;
   color: #fffaf6 !important;
   border-color: transparent !important;
   box-shadow: none !important;
@@ -1763,4 +1901,526 @@
 :root[data-theme="light"] .snapshotsCard .listItem,
 :root[data-theme="light"] .snapshotsCard .listActions {
   border-radius: 16px !important;
+}
+
+/* Absolute EOF lock: proposal "+" accept button — match send button palette */
+:root[data-theme="light"] .proposalAddButton:not([title="Applied"]):not(.proposalAddButtonApplied) {
+  background: #d97757 !important;
+  color: #fffaf6 !important;
+  border: 0 !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.15) !important;
+}
+
+:root[data-theme="light"] .proposalAddButton:not([title="Applied"]):not(.proposalAddButtonApplied):hover {
+  background: #d97757 !important;
+  color: #fffaf6 !important;
+  border: 0 !important;
+  box-shadow: 0 6px 16px rgba(217, 119, 87, 0.22) !important;
+}
+
+/* Absolute EOF lock: proposal mini item hover — no hover effect (match dark). */
+:root[data-theme="light"] .proposalMiniItem:hover {
+  background: transparent !important;
+  border: 0 !important;
+  border-color: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+}
+
+/* Absolute EOF lock: Delete button geometry matches Cancel in light theme.
+   Cancel (.btnGhost) has border-radius: 16; Delete (.btn.btnDanger) was 22. */
+:root[data-theme="light"] .btn.btnDanger {
+  min-height: 40px !important;
+  padding: 10px 14px !important;
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+/* Absolute EOF lock: applied proposal (✓) mirrors the plus (+) button —
+   solid brand orange + cream text, same as send button. */
+:root[data-theme="light"] .proposalAddButton[title="Applied"],
+:root[data-theme="light"] .proposalAddButtonApplied,
+:root[data-theme="light"] .proposalAddButton[title="Applied"]:disabled,
+:root[data-theme="light"] .proposalAddButtonApplied:disabled,
+:root[data-theme="light"] .proposalAddButton[title="Applied"]:hover,
+:root[data-theme="light"] .proposalAddButtonApplied:hover {
+  background: #d97757 !important;
+  border: 0 !important;
+  color: #fffaf6 !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.15) !important;
+  opacity: 1 !important;
+}
+:root[data-theme="light"] .proposalAddButton[title="Applied"] .proposalAppliedMark,
+:root[data-theme="light"] .proposalAddButtonApplied .proposalAppliedMark,
+:root[data-theme="light"] .proposalAddButton[title="Applied"] .proposalAppliedMark svg,
+:root[data-theme="light"] .proposalAddButtonApplied .proposalAppliedMark svg {
+  color: #fffaf6 !important;
+  fill: #fffaf6 !important;
+}
+
+/* Soft solid warm tone for inline success notice (no green glass). */
+:root[data-theme="light"] .inlineNoticeSuccess {
+  background: #ebe4d3 !important;
+  border: 1px solid #d9cfb9 !important;
+  color: #5a4f3f !important;
+  box-shadow: none !important;
+}
+
+/* Clip the session list wrapper so nothing can poke out of its left edge. */
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  overflow: hidden !important;
+}
+
+/* Subtle blur on New Workspace modal overlay — was too heavy at 6px. */
+.quizOverlay:has(.workspaceCreateModal) {
+  backdrop-filter: blur(2px) !important;
+  -webkit-backdrop-filter: blur(2px) !important;
+  background: rgba(0, 0, 0, 0.22) !important;
+}
+
+/* Absolute EOF lock: sessionShadow gradient in light theme matches chat cream
+   background instead of near-pure white #fcfdff which visually popped as a
+   bright band behind the session list. */
+:root[data-theme="light"] .sessionShadow::after,
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionShadow::after,
+:root[data-theme="light"] .lightChatWindow .sessionShadow::after {
+  background: linear-gradient(to bottom,
+      rgba(250, 249, 246, 0.98) 0%,
+      rgba(250, 249, 246, 0.76) 20%,
+      rgba(250, 249, 246, 0.42) 40%,
+      rgba(250, 249, 246, 0.16) 60%,
+      rgba(250, 249, 246, 0.04) 80%,
+      transparent 100%) !important;
+}
+
+/* Absolute EOF lock: light chat window geometry — all four corners rounded
+   (was erroneously top-only in a prior pass), header padding matches dark,
+   session list has no extra clip-path, and the left/right scroll fades are
+   explicitly bounded inside the session list wrapper so they can't bleed
+   into the chat area below. */
+:root[data-theme="light"] .lightChatWindow {
+  border-radius: 24px !important;
+}
+:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
+  padding: 16px 18px 12px !important;
+  overflow: visible !important;
+}
+:root[data-theme="light"] .lightChatWindow .sessionList {
+  clip-path: none !important;
+}
+/* Session list fade via mask-image on the wrapper itself — guarantees the
+   fade is confined to the wrap's own bounds (cannot bleed into chat area
+   below) AND is perfectly symmetric left/right. Pseudo-element fades are
+   fully disabled to remove cascade noise. */
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  overflow: hidden !important;
+  position: relative !important;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 34px,
+    #000 calc(100% - 34px),
+    transparent 100%
+  ) !important;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 34px,
+    #000 calc(100% - 34px),
+    transparent 100%
+  ) !important;
+}
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::after,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap.scrolledLeft::before,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap:not(.scrolledRight)::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  opacity: 0 !important;
+}
+
+/* Absolute EOF lock: inline quiz inside chat — light-theme v2.
+   - card uses the same warm gradient as .proposalInlineCard so it reads
+     as a distinct block from the chat bubble (same visual weight as proposal)
+   - hover has no orange border; subtle cream tone shift only
+   - correct answer = brand orange #d97757 (already the CTA accent — no new green)
+   - wrong answer = muted cream with faded text (no red hue at all) */
+:root[data-theme="light"] .inlineQuizCard {
+  gap: 12px !important;
+  margin-top: 6px !important;
+  padding: 13px 14px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(233, 225, 215, 0.96) !important;
+  background: linear-gradient(180deg, rgba(255, 252, 248, 0.98), rgba(250, 247, 242, 0.98)) !important;
+  box-shadow: 0 8px 18px rgba(45, 43, 40, 0.05) !important;
+}
+:root[data-theme="light"] .inlineQuizQuestion {
+  color: rgba(45, 43, 40, 0.92) !important;
+}
+:root[data-theme="light"] .inlineQuizChoice {
+  background: #fcfbf8 !important;
+  border: 1px solid rgba(216, 208, 192, 0.9) !important;
+  color: rgba(62, 49, 39, 0.92) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled) {
+  background: #f5f1ea !important;
+  border-color: rgba(200, 192, 176, 0.96) !important;
+  color: rgba(45, 43, 40, 0.98) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .inlineQuizCorrect,
+:root[data-theme="light"] .inlineQuizCorrect:hover,
+:root[data-theme="light"] .inlineQuizCorrect:disabled {
+  background: #d97757 !important;
+  border: 1px solid #d97757 !important;
+  color: #fffaf6 !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.15) !important;
+}
+:root[data-theme="light"] .inlineQuizWrong,
+:root[data-theme="light"] .inlineQuizWrong:hover,
+:root[data-theme="light"] .inlineQuizWrong:disabled {
+  background: #ede7dc !important;
+  border: 1px solid rgba(216, 208, 192, 0.9) !important;
+  color: rgba(120, 108, 96, 0.92) !important;
+  box-shadow: none !important;
+}
+
+/* Absolute EOF lock: dock buttons as "rounded squares" instead of pills.
+   Active was pill (999) — looked out of character against the squared panel.
+   16px reads as soft-square, consistent with panel's 26px container radius. */
+:root[data-theme="light"] .lightDockButton,
+:root[data-theme="light"] .lightDockButtonLink,
+:root[data-theme="light"] .lightDock .lightDockButton,
+:root[data-theme="light"] .lightDock .lightDockButtonLink,
+:root[data-theme="light"] .lightDockButton:hover,
+:root[data-theme="light"] .lightDockButtonLink:hover,
+:root[data-theme="light"] .lightDockButtonActive,
+:root[data-theme="light"] .lightDockButtonActive:hover,
+:root[data-theme="light"] .lightDock .lightDockButtonActive,
+:root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive,
+:root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive:hover {
+  border-radius: 16px !important;
+}
+
+/* Absolute EOF lock: dock icons a touch bigger (24 → 28) without resizing the
+   button or the panel itself. Applies to both themes. */
+:root[data-theme="light"] .lightDockButton svg,
+:root[data-theme="light"] .lightDockButtonLink svg,
+:root[data-theme="dark"] .lightDockButton svg,
+:root[data-theme="dark"] .lightDockButtonLink svg {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+/* Absolute EOF lock: inactive Web toggle reads as neutral cream (matches
+   Expand graph / Ingest topics) — previously it had an orange tint at rest
+   which looked half-active. Hover picks up a subtle orange border so it still
+   hints at being the web-grounding control. Active state is #d97757 + white
+   text (the existing rule earlier in this file). */
+:root[data-theme="light"] .lightChatWindow .webGroundingToggle:not(.active),
+:root[data-theme="light"] .workspaceShellLightDockMode .webGroundingToggle:not(.active) {
+  background: rgba(240, 233, 223, 0.88) !important;
+  border: 1px solid rgba(233, 225, 215, 0.92) !important;
+  color: rgba(139, 133, 128, 0.92) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .webGroundingToggle:not(.active):hover,
+:root[data-theme="light"] .workspaceShellLightDockMode .webGroundingToggle:not(.active):hover {
+  background: rgba(240, 233, 223, 0.98) !important;
+  border-color: rgba(217, 119, 87, 0.3) !important;
+  color: rgba(45, 43, 40, 0.96) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .webGroundingToggle:not(.active) svg,
+:root[data-theme="light"] .workspaceShellLightDockMode .webGroundingToggle:not(.active) svg {
+  color: rgba(139, 133, 128, 0.92) !important;
+}
+
+/* Absolute EOF lock: tighter vertical rhythm between the templates row
+   (Web / Expand graph / Ingest topics) and the composer below. Dark theme
+   already reads tight because of its composer-wrap gradient overlay; light
+   was inheriting base-shell padding (16/18) which felt airy. Halve the top
+   padding and inter-row gap. */
+:root[data-theme="light"] .lightChatWindow .assistantComposerWrap,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap {
+  padding: 10px 18px 14px !important;
+  gap: 6px !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantTemplates,
+:root[data-theme="light"] .workspaceShellLightDockMode .assistantTemplates {
+  padding-bottom: 0 !important;
+  gap: 8px !important;
+}
+
+/* Absolute EOF lock: de-glass in light theme.
+   User feedback: "Snapshot badge / Save layout / Node started / Current / quiz
+   card — всё стеклянное". We kill the translucent backgrounds and borders on
+   the surfaces that are supposed to read as matte cream chips, not windows.
+   Keeps colour palette brand-aligned (cream #f0e9df / border #d8d2c6 / text
+   #736e66) instead of the blue-gray rgba that leaked from the dark theme. */
+
+/* Badges: Snapshot N, zone labels, kind chips, Current marker, etc. */
+:root[data-theme="light"] .badge,
+:root[data-theme="light"] .badge-gray,
+:root[data-theme="light"] .badge-yellow,
+:root[data-theme="light"] .badge-blue,
+:root[data-theme="light"] .badge-green {
+  background: #f0e9df !important;
+  border: 1px solid #d8d2c6 !important;
+  color: #736e66 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Red badge (for snapshot kind labels like "Node started"): solid muted red
+   so it still reads as attention but doesn't feel translucent. */
+:root[data-theme="light"] .badge-red {
+  background: #f9e6e3 !important;
+  border: 1px solid #e6b8b0 !important;
+  color: #a63a2f !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Error notices in the chat / dialogs should NOT scream red — they read as
+   "something went wrong but recoverable". Match the proposal-pending chip
+   palette (cream body, muted warm text) so they blend into the light flow. */
+:root[data-theme="light"] .inlineNotice.inlineNoticeError,
+:root[data-theme="light"] .lightChatWindow .inlineNotice.inlineNoticeError,
+:root[data-theme="light"] .workspaceShellLightDockMode .inlineNotice.inlineNoticeError {
+  background: #f6f3ec !important;
+  border: 1px solid #d8d2c6 !important;
+  color: rgba(62, 49, 39, 0.82) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Save layout button (pageStatControlActive) — was translucent orange glass,
+   now a solid cream chip with orange text so it still reads as "editing".
+   NOTE: intentionally does NOT include `.floatingStatusButtonActive` because
+   that class ALSO applies to the theme-toggle (moon/sun) and viewport-lock
+   buttons at the top right; pasting an orange border onto those made the
+   hover feel wrong. If we ever need floatingStatus active state restyled,
+   do it per-instance, not blanket. */
+:root[data-theme="light"] .pageStatControlActive {
+  background: #f0e9df !important;
+  border: 1px solid #d97757 !important;
+  color: #d97757 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Revert any stray orange outline on the top-right floating status buttons
+   (theme toggle, viewport lock, layout edit pencil). They should keep their
+   base light-theme look without the orange-active treatment an earlier EOF
+   block accidentally applied. */
+:root[data-theme="light"] .floatingStatusButton,
+:root[data-theme="light"] .floatingStatusButton:hover,
+:root[data-theme="light"] .floatingStatusButtonActive,
+:root[data-theme="light"] .floatingStatusButtonActive:hover {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(17, 24, 39, 0.1) !important;
+  color: rgba(17, 24, 39, 0.86) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .floatingStatusButton:hover {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(17, 24, 39, 0.18) !important;
+  color: rgba(17, 24, 39, 0.96) !important;
+}
+
+/* Closure / inline quiz card — flat cream so questions don't look like
+   floating glass panels. */
+:root[data-theme="light"] .inlineQuizCard,
+:root[data-theme="light"] .lightChatWindow .inlineQuizCard,
+:root[data-theme="light"] .workspaceShellLightDockMode .inlineQuizCard {
+  background: #f6f3ec !important;
+  border: 1px solid #d8d2c6 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Inline quiz choices (answer pills) — cream base, cream-darker hover instead
+   of the dark-theme white-at-alpha 0.1 which reads as pitch black on the
+   light background. Correct / wrong / selected states are handled elsewhere. */
+:root[data-theme="light"] .inlineQuizChoice,
+:root[data-theme="light"] .lightChatWindow .inlineQuizChoice,
+:root[data-theme="light"] .workspaceShellLightDockMode .inlineQuizChoice {
+  background: #fcfbf8 !important;
+  border: 1px solid #d8d2c6 !important;
+  color: rgba(62, 49, 39, 0.92) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled),
+:root[data-theme="light"] .lightChatWindow .inlineQuizChoice:hover:not(:disabled),
+:root[data-theme="light"] .workspaceShellLightDockMode .inlineQuizChoice:hover:not(:disabled) {
+  background: #f3ede3 !important;
+  border-color: #c9c0ae !important;
+  color: rgba(45, 43, 40, 0.98) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .inlineQuizChoice:focus-visible:not(:disabled),
+:root[data-theme="light"] .lightChatWindow .inlineQuizChoice:focus-visible:not(:disabled) {
+  outline: 2px solid rgba(217, 119, 87, 0.4) !important;
+  outline-offset: 2px !important;
+}
+
+/* Closure actions row — now only contains the button (and optional error /
+   success badges). The "Close prerequisites first" hint moved to its own
+   line above the row (see WorkspaceShell.tsx), so we don't need the old
+   flex-order / row-reverse juggling. The button sits naturally on the
+   right via `justify-content: flex-end` inherited from dark-theme-core.css. */
+:root[data-theme="light"] .topicClosureActions {
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+/* Closure actions row — re-assert `order: 2` on the Start Quiz / Mark
+   Finished button AFTER the earlier `all: unset !important` block (line
+   ~1618) which silently reset `order` to initial. Without this, dark-theme-
+   core's `order: 2` is lost and the button flows before the hint. The
+   `:not(...)` selector matches the all-unset rule's specificity so the
+   later-in-file declaration wins the cascade. */
+:root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon) {
+  order: 2 !important;
+}
+
+/* Hint styling — kept; dark-theme-core already declares order: 1 for both
+   themes, which survives because no later rule resets it. */
+:root[data-theme="light"] .topicClosureActions .topicClosureBlockedHint {
+  display: inline-flex !important;
+  align-items: center !important;
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  color: rgba(217, 119, 87, 0.94) !important;
+}
+
+/* Absolute EOF lock: unified primary brand-orange button treatment.
+   Covers Save (Settings), Start closure quiz, Mark as finished, chat send
+   button, empty-state Create Graph. Previously each had its own hover:
+   some darkened, some shifted to green, some added glow/shadow. User
+   feedback: "один и тот же ховер". Fixed recipe: brand orange #d97757 at
+   rest AND on hover, no shadow, no colour shift, just a tiny brightness
+   dip for tactile feel. Focus ring uses the same orange. */
+:root[data-theme="light"] .assistantSendButton:not(.assistantSendButtonIcon),
+:root[data-theme="light"] .assistantSendButton:not(.assistantSendButtonIcon):hover,
+:root[data-theme="light"] .assistantSendButton:not(.assistantSendButtonIcon):focus-visible,
+:root[data-theme="light"] .assistantSendButton:not(.assistantSendButtonIcon):active:not(:disabled),
+:root[data-theme="light"] .emptyStateAction,
+:root[data-theme="light"] .emptyStateAction:hover,
+:root[data-theme="light"] .emptyStateAction:focus-visible,
+:root[data-theme="light"] .emptyStateAction:active:not(:disabled) {
+  background: #d97757 !important;
+  color: #fffaf6 !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+  outline: none !important;
+  transition: filter 140ms ease !important;
+}
+
+:root[data-theme="light"] .assistantSendButton:not(.assistantSendButtonIcon):hover:not(:disabled),
+:root[data-theme="light"] .emptyStateAction:hover:not(:disabled) {
+  filter: brightness(0.94) !important;
+}
+
+:root[data-theme="light"] .assistantSendButton:not(.assistantSendButtonIcon):focus-visible,
+:root[data-theme="light"] .emptyStateAction:focus-visible {
+  outline: 2px solid rgba(217, 119, 87, 0.5) !important;
+  outline-offset: 2px !important;
+}
+
+:root[data-theme="light"] .assistantSendButton:not(.assistantSendButtonIcon):disabled,
+:root[data-theme="light"] .emptyStateAction:disabled {
+  background: #d97757 !important;
+  color: #fffaf6 !important;
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  filter: none !important;
+}
+
+
+/* De-glass top-stats badges that aren't `.badge-*` but still used to render
+   translucent green/yellow chips (Review count, Review Pressure, Complete %,
+   Assessment cards). Make them solid so the top bar reads as one palette. */
+:root[data-theme="light"] .pageStat,
+:root[data-theme="light"] .pageStatWarn,
+:root[data-theme="light"] .pageStatComplete,
+:root[data-theme="light"] .pageStatGood,
+:root[data-theme="light"] .pageStatAssessment,
+:root[data-theme="light"] .pageStatHint {
+  background: #f0e9df !important;
+  border: 1px solid #d8d2c6 !important;
+  color: rgba(62, 49, 39, 0.9) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .pageStat strong,
+:root[data-theme="light"] .pageStatWarn strong,
+:root[data-theme="light"] .pageStatComplete strong,
+:root[data-theme="light"] .pageStatGood strong,
+:root[data-theme="light"] .pageStatAssessment strong {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+/* ABSOLUTE EOF — hover on a (non-active) session chip does nothing visual.
+   Background, border, colour all stay identical to rest; only the cursor
+   changes. Multiple older blocks still painted a cream wash on hover
+   (sessionItem:hover → rgba(245, 241, 235, 0.96) and similar); this rule
+   runs last so it wins regardless. */
+:root[data-theme="light"] .lightChatWindow .sessionItem:not(.sessionItemActive):hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroup:not(.sessionItemGroupActive):hover,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChip:not(.lightChatSessionChipActive):hover {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--dt-light-muted) !important;
+}
+
+/* ABSOLUTE EOF — kill the mono face on digit-heavy chrome (top stats, badges,
+   eyebrow labels, artifact-kind tags). User feedback: "числа разные шрифты,
+   closure 0 другой чем в чате, нолик уродский". System mono with slashed
+   zero was bleeding through. Using sans (Manrope) across these so digits
+   line up with the chat body. Code / debug log / textarea still use mono. */
+.pageStat,
+.pageStat strong,
+.pageStat span,
+.badge,
+.topicPopoverEyebrow,
+.topicPopoverArtifactKind {
+  font-family: var(--sans) !important;
+  font-variant-numeric: lining-nums !important;
+  letter-spacing: 0 !important;
+}
+
+/* Keep the topic popover close (×) button anchored to the right edge of
+   the header row. Some override earlier in the cascade started pushing it
+   inward when the eyebrow's font / spacing changed — forcing margin-left
+   auto locks it against the right padding. */
+:root[data-theme="light"] .topicPopoverHeader .topicPopoverClose {
+  margin-left: auto !important;
 }

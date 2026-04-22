@@ -96,6 +96,7 @@ export function LightWorkspaceWindow({
   availableGraphs,
   setCreateGraphOpen,
   setCreateGraphError,
+  closing,
   activeGraph,
   lightWorkspaceExpandedGraphId,
   setLightWorkspaceExpandedGraphId,
@@ -138,11 +139,12 @@ export function LightWorkspaceWindow({
   setDeleteConfirm: React.Dispatch<React.SetStateAction<{ graphId: string; title: string } | null>>;
   selectedTopicId: string | null;
   handleSelectTopic: (topicId: string | null, anchor: TopicAnchorPoint | null) => void;
+  closing?: boolean;
 }): React.JSX.Element {
   return (
     <div
       ref={workspaceWindowRef}
-      className="lightFloatingWindow lightWorkspaceWindow lightFloatingWindowEnter"
+      className={`lightFloatingWindow lightWorkspaceWindow ${closing ? "lightFloatingWindowExit" : "lightFloatingWindowEnter"}`}
       style={{ left: `${workspaceWindowPosition.x}px`, top: `${workspaceWindowPosition.y}px` }}
     >
       <div className="lightFloatingWindowHeader" onPointerDown={(event) => beginFloatingDrag("workspace", event)}>
@@ -465,10 +467,12 @@ export function LightChatWindow({
   selectedChatModel,
   setSelectedChatModel,
   sendChat,
+  closing,
 }: {
   chatWindowRef: React.RefObject<HTMLDivElement | null>;
   chatWindowPosition: { x: number; y: number };
   assistantWidth: number;
+  closing?: boolean;
   beginFloatingDrag: (target: "chat", event: React.PointerEvent<HTMLElement>) => void;
   assistantDisplayName: string;
   activeSession: ChatSessionSummary | null;
@@ -510,7 +514,7 @@ export function LightChatWindow({
   return (
     <div
       ref={chatWindowRef}
-      className="lightFloatingWindow lightChatWindow lightFloatingWindowEnter"
+      className={`lightFloatingWindow lightChatWindow ${closing ? "lightFloatingWindowExit" : "lightFloatingWindowEnter"}`}
       style={{
         left: `${chatWindowPosition.x}px`,
         top: `${chatWindowPosition.y}px`,

@@ -228,6 +228,7 @@ input[type="number"] {
   animation: chatPulse 0.9s ease-in-out infinite;
 }
 
+
 .chatTypingDot:nth-child(2) {
   animation-delay: 0.12s;
 }

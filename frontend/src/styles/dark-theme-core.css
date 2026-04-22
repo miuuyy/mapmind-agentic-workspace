@@ -106,7 +106,7 @@
 }
 
 :root[data-theme="light"] .topicClosureBlockedHint {
-  color: rgba(171, 77, 36, 0.94) !important;
+  color: rgba(217, 119, 87, 0.94) !important;
 }
 
 :root[data-theme="dark"] .topicClosureBlockedHint {
