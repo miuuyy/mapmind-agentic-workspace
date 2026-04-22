@@ -491,30 +491,7 @@
   color: inherit !important;
 }
 
-:root[data-theme="light"] .quizModal .inlineNoticeSuccess {
-  background: rgba(45, 102, 72, 0.1) !important;
-  border-color: rgba(45, 102, 72, 0.22) !important;
-  color: rgba(45, 102, 72, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizModal .inlineNoticeError {
-  background: rgba(220, 38, 38, 0.08) !important;
-  border-color: rgba(220, 38, 38, 0.22) !important;
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
-:root[data-theme="light"] .quizReviewLine {
-  color: rgba(71, 85, 105, 0.92) !important;
-}
-
-:root[data-theme="light"] .quizReviewWrong {
-  color: rgba(185, 28, 28, 0.96) !important;
-}
-
 /* Final logs pass: one flat list, no grouped columns/cards, no clipped top glow */
-.debugLogsModal {
-  width: min(1080px, calc(100vw - 56px)) !important;
-}
 
 .debugLogsList {
   min-height: 0;
@@ -530,22 +507,6 @@
   padding: 0;
 }
 
-.debugLogRow {
-  padding: 10px 0 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.debugLogRowLine {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  font-family: var(--mono);
-  font-size: 11px;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.46);
-}
-
 .debugLogRowSource {
   padding: 2px 7px;
   border-radius: 999px;
@@ -554,104 +515,19 @@
   color: rgba(255, 255, 255, 0.74);
 }
 
-.debugLogRowMethod,
-.debugLogRowStatus,
-.debugLogRowDuration {
-  color: rgba(255, 255, 255, 0.64);
-}
-
 .debugLogRowPath {
   color: rgba(255, 255, 255, 0.82);
   word-break: break-word;
-}
-
-.debugLogRowTitle {
-  margin-top: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.debugLogRowMessage,
-.debugLogRowDetails pre {
-  margin: 6px 0 0;
-  font-family: var(--mono);
-  font-size: 11px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: rgba(255, 255, 255, 0.72);
-}
-
-.debugLogRowDetails {
-  margin-top: 6px;
-}
-
-.debugLogRowDetails summary {
-  cursor: pointer;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.52);
-  text-transform: lowercase;
-}
-
-.debugLogRowDetailBlock {
-  margin-top: 8px;
-}
-
-.debugLogRowDetailLabel {
-  margin-bottom: 4px;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.42);
 }
 
 :root[data-theme="light"] .debugLogsModal .settingsContentHeader::after {
   display: none !important;
 }
 
-:root[data-theme="light"] .debugLogsModal,
-:root[data-theme="light"] .debugLogsModal .settingsContent,
-:root[data-theme="light"] .debugLogsModal .settingsContentHeader,
-:root[data-theme="light"] .debugLogsList {
-  background: #faf9f6 !important;
-}
-
-:root[data-theme="light"] .debugLogRow {
-  border-bottom-color: rgba(232, 228, 222, 0.92) !important;
-}
-
-:root[data-theme="light"] .debugLogRowLine {
-  color: rgba(139, 133, 128, 0.92) !important;
-}
-
 :root[data-theme="light"] .debugLogRowSource {
   border-color: rgba(232, 228, 222, 0.98) !important;
   background: rgba(244, 239, 233, 0.92) !important;
   color: rgba(114, 108, 101, 0.96) !important;
-}
-
-:root[data-theme="light"] .debugLogRowMethod,
-:root[data-theme="light"] .debugLogRowStatus,
-:root[data-theme="light"] .debugLogRowDuration {
-  color: rgba(114, 108, 101, 0.92) !important;
-}
-
-:root[data-theme="light"] .debugLogRowPath,
-:root[data-theme="light"] .debugLogRowTitle {
-  color: rgba(45, 43, 40, 0.96) !important;
-}
-
-:root[data-theme="light"] .debugLogRowMessage,
-:root[data-theme="light"] .debugLogRowDetails pre {
-  color: rgba(71, 85, 105, 0.88) !important;
-}
-
-:root[data-theme="light"] .debugLogRowDetails summary,
-:root[data-theme="light"] .debugLogRowDetailLabel {
-  color: rgba(139, 133, 128, 0.88) !important;
 }
 
 /* Final quiz modal pass for light theme */

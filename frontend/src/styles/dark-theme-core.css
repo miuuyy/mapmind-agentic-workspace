@@ -391,51 +391,6 @@
   border-radius: 999px !important;
 }
 
-:root[data-theme="dark"] .settingsModal,
-:root[data-theme="dark"] .settingsContent,
-:root[data-theme="dark"] .settingsSidebar,
-:root[data-theme="dark"] .settingsContentHeader,
-:root[data-theme="dark"] .settingsContentScroll,
-:root[data-theme="dark"] .settingsPanel,
-:root[data-theme="dark"] .settingsPanelHeader,
-:root[data-theme="dark"] .settingsPanelBody,
-:root[data-theme="dark"] .debugLogsModal,
-:root[data-theme="dark"] .debugLogsModal .settingsContent,
-:root[data-theme="dark"] .debugLogsModal .settingsContentHeader,
-:root[data-theme="dark"] .debugLogsList {
-  background: #0b0b0c !important;
-}
-
-:root[data-theme="dark"] .settingsModal,
-:root[data-theme="dark"] .debugLogsModal {
-  border-radius: 28px !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  box-shadow:
-    0 24px 58px rgba(0, 0, 0, 0.52),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset !important;
-}
-
-:root[data-theme="dark"] .settingsTab {
-  border-radius: 16px !important;
-  padding: 12px 14px !important;
-}
-
-:root[data-theme="dark"] .settingsPanel,
-:root[data-theme="dark"] .settingsPanelHeader,
-:root[data-theme="dark"] .settingsPanelBody,
-:root[data-theme="dark"] .settingsSnapshotsCard,
-:root[data-theme="dark"] .snapshotsCard {
-  border-radius: 22px !important;
-}
-
-:root[data-theme="dark"] .settingsToggleRow,
-:root[data-theme="dark"] .settingsInlineNotice,
-:root[data-theme="dark"] .inlineNotice,
-:root[data-theme="dark"] .listItem,
-:root[data-theme="dark"] .thinkingModeChip {
-  border-radius: 16px !important;
-}
-
 :root[data-theme="dark"] .settingsContentHeader::after,
 :root[data-theme="dark"] .debugLogsModal .settingsContentHeader::after {
   display: block !important;
@@ -505,11 +460,6 @@
   border-radius: 999px !important;
 }
 
-:root[data-theme="dark"] .badge {
-  min-height: 24px !important;
-  padding: 4px 10px !important;
-}
-
 :root[data-theme="dark"] .lightWorkspaceFolderAction,
 :root[data-theme="dark"] .lightWorkspaceFolderAction:hover,
 :root[data-theme="dark"] .lightWorkspaceFolderActionActive,
@@ -517,15 +467,6 @@
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
-}
-
-:root[data-theme="dark"] .lightWorkspaceFolderAction:hover,
-:root[data-theme="dark"] .lightWorkspaceFolderActionActive {
-  color: rgba(255, 255, 255, 0.9) !important;
-}
-
-:root[data-theme="dark"] .lightWorkspaceFolderActionDanger:hover {
-  color: rgba(248, 113, 113, 0.98) !important;
 }
 
 :root[data-theme="dark"] .proposalInlineCard,
@@ -548,62 +489,8 @@
   color: rgba(255, 255, 255, 0.96) !important;
 }
 
-:root[data-theme="dark"] .proposalInlinePendingLabel {
-  color: rgba(255, 255, 255, 0.68) !important;
-}
-
-:root[data-theme="dark"] .proposalInlinePendingDots span {
-  background: rgba(255, 255, 255, 0.58) !important;
-}
-
 :root[data-theme="dark"] .proposalAddButton {
   border-radius: 999px !important;
-}
-
-:root[data-theme="dark"] .settingsModal,
-:root[data-theme="dark"] .debugLogsModal,
-:root[data-theme="dark"] .settingsContent,
-:root[data-theme="dark"] .settingsSidebar,
-:root[data-theme="dark"] .settingsContentHeader,
-:root[data-theme="dark"] .settingsContentScroll,
-:root[data-theme="dark"] .settingsPanel,
-:root[data-theme="dark"] .settingsPanelHeader,
-:root[data-theme="dark"] .settingsPanelBody,
-:root[data-theme="dark"] .debugLogsModal .settingsContent,
-:root[data-theme="dark"] .debugLogsModal .settingsContentHeader,
-:root[data-theme="dark"] .debugLogsList {
-  background: #0b0b0c !important;
-}
-
-:root[data-theme="dark"] .settingsModal,
-:root[data-theme="dark"] .debugLogsModal {
-  border-radius: 28px !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  box-shadow:
-    0 24px 58px rgba(0, 0, 0, 0.52),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset !important;
-}
-
-:root[data-theme="dark"] .settingsSidebar {
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-:root[data-theme="dark"] .settingsTab {
-  border-radius: 16px !important;
-  padding: 12px 14px !important;
-}
-
-:root[data-theme="dark"] .settingsPanel,
-:root[data-theme="dark"] .settingsPanelHeader,
-:root[data-theme="dark"] .settingsPanelBody,
-:root[data-theme="dark"] .settingsSnapshotsCard,
-:root[data-theme="dark"] .snapshotsCard,
-:root[data-theme="dark"] .settingsToggleRow,
-:root[data-theme="dark"] .settingsInlineNotice,
-:root[data-theme="dark"] .inlineNotice,
-:root[data-theme="dark"] .listItem,
-:root[data-theme="dark"] .thinkingModeChip {
-  border-radius: 16px !important;
 }
 
 
@@ -629,37 +516,6 @@
   border-radius: 999px !important;
 }
 
-:root[data-theme="dark"] .proposalInlineCard,
-:root[data-theme="dark"] .proposalInlinePending {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 18px !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="dark"] .proposalInlineTitle {
-  color: rgba(255, 255, 255, 0.96) !important;
-}
-
-:root[data-theme="dark"] .proposalInlinePendingLabel {
-  color: rgba(255, 255, 255, 0.68) !important;
-}
-
-:root[data-theme="dark"] .proposalInlinePendingDots span {
-  background: rgba(255, 255, 255, 0.58) !important;
-}
-
-:root[data-theme="dark"] .proposalAddButton {
-  border-radius: 999px !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 255, 255, 0.09) !important;
-}
-
-:root[data-theme="dark"] .proposalAddButton:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.16) !important;
-}
-
 :root[data-theme="dark"] .proposalAddButton[title="Applied"],
 :root[data-theme="dark"] .proposalAddButtonApplied,
 :root[data-theme="dark"] .proposalAddButton[title="Applied"]:disabled,
@@ -670,74 +526,6 @@
   border-color: rgba(48, 209, 88, 0.16) !important;
   color: rgba(143, 226, 165, 0.94) !important;
   opacity: 1 !important;
-}
-
-:root[data-theme="dark"] .settingsModal,
-:root[data-theme="dark"] .debugLogsModal,
-:root[data-theme="dark"] .settingsContent,
-:root[data-theme="dark"] .settingsSidebar,
-:root[data-theme="dark"] .settingsContentHeader,
-:root[data-theme="dark"] .settingsContentScroll,
-:root[data-theme="dark"] .settingsPanel,
-:root[data-theme="dark"] .settingsPanelHeader,
-:root[data-theme="dark"] .settingsPanelBody,
-:root[data-theme="dark"] .debugLogsModal .settingsContent,
-:root[data-theme="dark"] .debugLogsModal .settingsContentHeader,
-:root[data-theme="dark"] .debugLogsList {
-  background: #0b0b0c !important;
-}
-
-:root[data-theme="dark"] .settingsModal,
-:root[data-theme="dark"] .debugLogsModal {
-  border-radius: 28px !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  box-shadow:
-    0 24px 58px rgba(0, 0, 0, 0.52),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset !important;
-}
-
-:root[data-theme="dark"] .settingsSidebar {
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-:root[data-theme="dark"] .settingsTab {
-  border-radius: 16px !important;
-  padding: 12px 14px !important;
-}
-
-:root[data-theme="dark"] .settingsPanel,
-:root[data-theme="dark"] .settingsPanelHeader,
-:root[data-theme="dark"] .settingsPanelBody,
-:root[data-theme="dark"] .settingsSnapshotsCard,
-:root[data-theme="dark"] .snapshotsCard,
-:root[data-theme="dark"] .settingsToggleRow,
-:root[data-theme="dark"] .settingsInlineNotice,
-:root[data-theme="dark"] .inlineNotice,
-:root[data-theme="dark"] .listItem,
-:root[data-theme="dark"] .thinkingModeChip {
-  border-radius: 16px !important;
-}
-
-:root[data-theme="dark"] .debugLogsList {
-  padding-top: 14px !important;
-  padding-bottom: 18px !important;
-}
-
-:root[data-theme="dark"] .lightWorkspaceFolderAction:hover,
-:root[data-theme="dark"] .lightWorkspaceFolderActionActive,
-:root[data-theme="dark"] .lightWorkspaceFolderActionDanger:hover {
-  background: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="dark"] .lightWorkspaceFolderAction:hover,
-:root[data-theme="dark"] .lightWorkspaceFolderActionActive {
-  color: rgba(255, 255, 255, 0.9) !important;
-}
-
-:root[data-theme="dark"] .lightWorkspaceFolderActionDanger:hover {
-  color: rgba(248, 113, 113, 0.98) !important;
 }
 
 
@@ -821,24 +609,6 @@
   background: #0b0b0c !important;
 }
 
-:root[data-theme="dark"] .settingsModal,
-:root[data-theme="dark"] .debugLogsModal {
-  border-radius: 28px !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  box-shadow:
-    0 24px 58px rgba(0, 0, 0, 0.52),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset !important;
-}
-
-:root[data-theme="dark"] .settingsSidebar {
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-:root[data-theme="dark"] .settingsTab {
-  border-radius: 16px !important;
-  padding: 12px 14px !important;
-}
-
 :root[data-theme="dark"] .settingsPanel,
 :root[data-theme="dark"] .settingsPanelHeader,
 :root[data-theme="dark"] .settingsPanelBody,
@@ -850,49 +620,6 @@
 :root[data-theme="dark"] .listItem,
 :root[data-theme="dark"] .thinkingModeChip {
   border-radius: 16px !important;
-}
-
-:root[data-theme="dark"] .lightChatWindow .assistantComposer {
-  position: relative !important;
-}
-
-:root[data-theme="dark"] .lightChatWindow .assistantComposerWrap {
-  padding: 18px 20px 20px !important;
-}
-
-:root[data-theme="dark"] .lightChatWindow .assistantComposerWrap::before {
-  display: block !important;
-  height: 56px !important;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(5, 5, 5, 0.06) 16%,
-    rgba(5, 5, 5, 0.18) 34%,
-    rgba(5, 5, 5, 0.44) 56%,
-    rgba(5, 5, 5, 0.74) 78%,
-    #050505 100%
-  ) !important;
-  opacity: 1 !important;
-}
-
-:root[data-theme="dark"] .lightChatWindow .assistantInput {
-  min-height: 108px !important;
-  padding-right: 54px !important;
-  padding-bottom: 18px !important;
-  border-radius: 18px !important;
-}
-
-:root[data-theme="dark"] .lightChatWindow .assistantSendButtonIcon {
-  position: absolute !important;
-  right: 12px !important;
-  bottom: 12px !important;
-  width: 29px !important;
-  min-width: 29px !important;
-  height: 29px !important;
-  padding: 7px !important;
-  margin: 0 !important;
-  align-self: auto !important;
-  border-radius: 999px !important;
 }
 
 
@@ -920,15 +647,6 @@
     0 0 0 1px rgba(255, 255, 255, 0.04) inset !important;
 }
 
-:root[data-theme="dark"] .settingsSidebar {
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-:root[data-theme="dark"] .settingsTab {
-  border-radius: 16px !important;
-  padding: 12px 14px !important;
-}
-
 :root[data-theme="dark"] .settingsPanel,
 :root[data-theme="dark"] .settingsPanelHeader,
 :root[data-theme="dark"] .settingsPanelBody,
@@ -937,103 +655,11 @@
   border-radius: 22px !important;
 }
 
-:root[data-theme="dark"] .settingsToggleRow,
-:root[data-theme="dark"] .settingsInlineNotice,
-:root[data-theme="dark"] .inlineNotice,
-:root[data-theme="dark"] .listItem,
-:root[data-theme="dark"] .thinkingModeChip {
-  border-radius: 16px !important;
-}
-
-:root[data-theme="dark"] .debugLogsList {
-  padding-top: 14px !important;
-  padding-bottom: 18px !important;
-}
-
-:root[data-theme="dark"] .debugLogRowSource {
-  border-radius: 999px !important;
-}
-
 :root[data-theme="dark"] .lightChatWindow .assistantComposer {
   position: relative !important;
 }
 
-:root[data-theme="dark"] .lightChatWindow .assistantComposerWrap {
-  padding: 18px 20px 20px !important;
-}
-
-:root[data-theme="dark"] .lightChatWindow .assistantComposerWrap::before {
-  display: block !important;
-  height: 56px !important;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(5, 5, 5, 0.06) 16%,
-    rgba(5, 5, 5, 0.18) 34%,
-    rgba(5, 5, 5, 0.44) 56%,
-    rgba(5, 5, 5, 0.74) 78%,
-    #050505 100%
-  ) !important;
-  opacity: 1 !important;
-}
-
-:root[data-theme="dark"] .lightChatWindow .assistantInput {
-  min-height: 108px !important;
-  padding-right: 54px !important;
-  padding-bottom: 18px !important;
-  border-radius: 18px !important;
-}
-
-:root[data-theme="dark"] .lightChatWindow .assistantSendButtonIcon {
-  position: absolute !important;
-  right: 12px !important;
-  bottom: 12px !important;
-  width: 29px !important;
-  min-width: 29px !important;
-  height: 29px !important;
-  padding: 7px !important;
-  margin: 0 !important;
-  align-self: auto !important;
-  border-radius: 999px !important;
-}
-
 /* Absolute EOF dark-theme pass: settings, logs, and chat composer geometry */
-:root[data-theme="dark"] .settingsModal,
-:root[data-theme="dark"] .debugLogsModal,
-:root[data-theme="dark"] .quizModal {
-  border-radius: 28px !important;
-}
-
-:root[data-theme="dark"] .settingsSidebar {
-  background: rgba(9, 9, 10, 0.94) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-:root[data-theme="dark"] .settingsContentHeader,
-:root[data-theme="dark"] .debugLogsModal .settingsContentHeader,
-:root[data-theme="dark"] .quizModalHeader {
-  padding: 22px 24px 14px !important;
-}
-
-:root[data-theme="dark"] .settingsContentScroll,
-:root[data-theme="dark"] .debugLogsList,
-:root[data-theme="dark"] .quizModalBody {
-  padding-left: 24px !important;
-  padding-right: 24px !important;
-}
-
-:root[data-theme="dark"] .settingsTab {
-  border-radius: 16px !important;
-  padding: 12px 14px !important;
-}
-
-:root[data-theme="dark"] .settingsPanel,
-:root[data-theme="dark"] .settingsPanelHeader,
-:root[data-theme="dark"] .settingsPanelBody,
-:root[data-theme="dark"] .snapshotsCard,
-:root[data-theme="dark"] .settingsSnapshotsCard {
-  border-radius: 22px !important;
-}
 
 :root[data-theme="dark"] .settingsToggleRow,
 :root[data-theme="dark"] .settingsInlineNotice,
@@ -1041,11 +667,6 @@
 :root[data-theme="dark"] .listItem,
 :root[data-theme="dark"] .thinkingModeChip {
   border-radius: 16px !important;
-}
-
-:root[data-theme="dark"] .debugLogsList {
-  padding-top: 14px !important;
-  padding-bottom: 18px !important;
 }
 
 :root[data-theme="dark"] .debugLogRowSource {
@@ -1181,11 +802,6 @@
   border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
-:root[data-theme="dark"] .settingsTab {
-  border-radius: 16px !important;
-  padding: 12px 14px !important;
-}
-
 :root[data-theme="dark"] .settingsPanel,
 :root[data-theme="dark"] .settingsPanelHeader,
 :root[data-theme="dark"] .settingsPanelBody,
@@ -1204,10 +820,6 @@
 :root[data-theme="dark"] .debugLogsList {
   padding-top: 14px !important;
   padding-bottom: 18px !important;
-}
-
-:root[data-theme="dark"] .lightWorkspaceFolder {
-  border-radius: 18px !important;
 }
 
 :root[data-theme="dark"] .lightWorkspaceFolderMain {

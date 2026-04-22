@@ -454,11 +454,6 @@
   ) !important;
 }
 
-:root[data-theme="light"] .quizModalHeader::after,
-:root[data-theme="light"] .settingsContentHeader::after {
-  display: none !important;
-}
-
 :root[data-theme="light"] .settingsFooterBar {
   background: linear-gradient(
     180deg,
@@ -482,24 +477,12 @@
   }
 }
 
-:root[data-theme="light"] .lightDockButton::before,
-:root[data-theme="light"] .lightDockButtonLink::before {
-  background: rgba(214, 106, 51, 0.14) !important;
-}
-
 :root[data-theme="light"] .lightDockButton:hover,
 :root[data-theme="light"] .lightDockButtonLink:hover,
 :root[data-theme="light"] .lightDockButtonActive {
   color: rgba(92, 53, 35, 0.98) !important;
   background: rgba(214, 106, 51, 0.16) !important;
   border-radius: 999px !important;
-}
-
-:root[data-theme="light"] .lightDockButtonActive::before {
-  opacity: 0 !important;
-  transform: scale(1) !important;
-  background: transparent !important;
-  box-shadow: none !important;
 }
 
 :root[data-theme="light"] .sidebarNewAction,
@@ -542,44 +525,6 @@
   border: 0 !important;
   box-shadow: none !important;
   padding-inline: 0 !important;
-}
-
-:root[data-theme="light"] .assistantComposer,
-:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposer {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-}
-
-:root[data-theme="light"] .assistantInput,
-:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput,
-:root[data-theme="light"] .input,
-:root[data-theme="light"] select.input,
-:root[data-theme="light"] .textarea {
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .assistantInput:focus,
-:root[data-theme="light"] .workspaceShellLightDockMode .assistantInput:focus,
-:root[data-theme="light"] .input:focus,
-:root[data-theme="light"] select.input:focus,
-:root[data-theme="light"] .textarea:focus {
-  border-color: rgba(195, 90, 44, 0.34) !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .pageStat,
-:root[data-theme="light"] .pageStatWarn,
-:root[data-theme="light"] .pageStatHint,
-:root[data-theme="light"] .pageStatGood,
-:root[data-theme="light"] .pageStatComplete,
-:root[data-theme="light"] .pageStatAssessment {
-  background: rgba(255, 255, 255, 0.94) !important;
-  border: 1px solid var(--border) !important;
-  color: rgba(45, 43, 40, 0.82) !important;
-  box-shadow: none !important;
 }
 
 :root[data-theme="light"] .pageStatControl,
@@ -673,11 +618,6 @@
   padding: 14px 16px 16px !important;
   background: transparent !important;
   border-top: 0 !important;
-}
-
-:root[data-theme="light"] .assistantComposerWrap::before,
-:root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap::before {
-  display: none !important;
 }
 
 :root[data-theme="light"] .assistantComposer,
@@ -1808,51 +1748,6 @@
   box-shadow: 0 1px 8px rgba(0, 0, 0, 0.03) !important;
 }
 /* EOF real final override: light dock/chat */
-:root[data-theme="light"] .lightDockButtonActive {
-  color: rgba(62, 49, 39, 0.96) !important;
-  background: rgba(214, 106, 51, 0.16) !important;
-  border-radius: 999px !important;
-}
-
-:root[data-theme="light"] .lightDockButtonActive::before {
-  opacity: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .lightChatWindow {
-  background: rgba(255, 255, 255, 0.978) !important;
-}
-
-:root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader {
-  border-bottom: 0 !important;
-}
-
-:root[data-theme="light"] .lightChatWindow .sessionListWrap {
-  background: transparent !important;
-  border-bottom: 1px solid rgba(232, 228, 222, 0.9) !important;
-}
-
-:root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
-:root[data-theme="light"] .lightChatWindow .sessionListWrap::after,
-:root[data-theme="light"] .lightChatWindow .assistantComposerWrap::before {
-  display: none !important;
-}
-
-:root[data-theme="light"] .lightChatWindow .sessionList,
-:root[data-theme="light"] .lightChatWindow .assistantThread,
-:root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
-  background: rgba(252, 251, 248, 0.94) !important;
-}
-
-:root[data-theme="light"] .lightChatWindow .sessionItem,
-:root[data-theme="light"] .lightChatWindow .sessionItemGroup {
-  background: rgba(240, 237, 231, 0.88) !important;
-  border: 1px solid transparent !important;
-  border-radius: 999px !important;
-  color: var(--dt-light-muted) !important;
-  box-shadow: none !important;
-}
 
 :root[data-theme="light"] .lightChatWindow .sessionItem:hover,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroup:hover {
