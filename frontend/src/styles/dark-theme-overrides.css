@@ -1388,3 +1388,56 @@
   font-weight: 700 !important;
   line-height: 1 !important;
 }
+
+/* Final lock for the current dark chat/proposal pass */
+:root[data-theme="dark"] .inlineNoticeError {
+  border-color: rgba(197, 109, 89, 0.24) !important;
+  background: linear-gradient(180deg, rgba(34, 18, 16, 0.96), rgba(28, 15, 14, 0.98)) !important;
+  color: rgba(240, 182, 170, 0.9) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="dark"] .proposalInlineCard {
+  gap: 12px !important;
+  margin-top: 6px !important;
+  padding: 13px 14px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: linear-gradient(180deg, rgba(17, 17, 18, 0.98), rgba(11, 11, 12, 0.985)) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24) !important;
+}
+
+:root[data-theme="dark"] .proposalInlinePendingLabel {
+  color: rgba(255, 255, 255, 0.72) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+:root[data-theme="dark"] .proposalInlinePendingDots {
+  gap: 4px !important;
+}
+
+:root[data-theme="dark"] .proposalInlinePendingDots span {
+  width: 4px !important;
+  height: 4px !important;
+  background: rgba(255, 255, 255, 0.58) !important;
+}
+
+:root[data-theme="dark"] .lightDock {
+  gap: 7px !important;
+  padding: 6px 9px 9px !important;
+}
+
+:root[data-theme="dark"] .lightDockGrip {
+  height: 32px !important;
+}
+
+:root[data-theme="dark"] .lightDockButton,
+:root[data-theme="dark"] .lightDockButtonLink {
+  width: 54px !important;
+  height: 54px !important;
+}
+
+:root[data-theme="dark"] .proposalInlinePending {
+  padding: 11px 12px !important;
+}

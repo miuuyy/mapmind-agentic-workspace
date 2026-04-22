@@ -6,10 +6,10 @@ import { API_BASE } from "../lib/api";
 import {
   LIGHT_DESKTOP_LAYOUT_STORAGE_KEY,
   clampFloatingPosition,
+  canPlaceFloatingRect,
   computeCanonicalLightDesktopLayout,
   makeFloatingRect,
   readStoredLightDesktopLayout,
-  resolveFloatingCollision,
   toFloatingRect,
   type FloatingRect,
   type FloatingWindowDragTarget,
@@ -321,6 +321,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const dragStateRef = React.useRef<{
     target: FloatingWindowDragTarget;
     origin: FloatingWindowPosition;
+    lastValid: FloatingWindowPosition;
     startPointerX: number;
     startPointerY: number;
     shellRect: DOMRect;
@@ -350,7 +351,13 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const lightChatPanelOpen = experimentalLightDesktop && assistantOpen;
   const overlayLeftInset = experimentalLightDesktop ? 104 : overlayLeftOffset;
   const overlayRightInset = experimentalLightDesktop ? 24 : overlayRightOffset;
-  const dockIconWeight = themeMode === "dark" ? "regular" : "duotone";
+  const getDockIconWeight = React.useCallback(
+    (isActive: boolean) => {
+      if (themeMode === "dark") return "regular";
+      return isActive ? "regular" : "duotone";
+    },
+    [themeMode],
+  );
 
   const graphCanvasBackgroundFill = themeMode === "light" ? "#f7f7f4" : "#000000";
   const [topicAssetDialog, setTopicAssetDialog] = React.useState<{
@@ -394,11 +401,13 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     dragStateRef.current = {
       target,
       origin,
+      lastValid: origin,
       startPointerX: event.clientX,
       startPointerY: event.clientY,
       shellRect,
       size: { width: targetRect.width, height: targetRect.height },
     };
+    document.body.style.userSelect = "none";
     event.preventDefault();
   }, [chatWindowPosition, dockPosition, experimentalLightDesktop, workspaceWindowPosition]);
 
@@ -412,20 +421,39 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       };
       const blockedRects: FloatingRect[] = [];
 
-      if (drag.target !== "dock") {
-        const dockRect = dockRef.current?.getBoundingClientRect();
-        if (dockRect) blockedRects.push(toFloatingRect(drag.shellRect, dockRect));
+      // Only TOP TAGS (individual stat chips + topic popover) block window drag.
+      // Block each chip independently, not the whole container — container has empty padding
+      // that would create a phantom block. Windows/chat/dock do NOT block each other.
+      const statsContainer = floatingStatsRef.current;
+      if (statsContainer) {
+        for (const child of Array.from(statsContainer.children) as HTMLElement[]) {
+          const rect = child.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            blockedRects.push(toFloatingRect(drag.shellRect, rect));
+          }
+        }
       }
-      if (drag.target !== "workspace" && lightWorkspacePanelOpen) {
-        const workspaceRect = workspaceWindowRef.current?.getBoundingClientRect();
-        if (workspaceRect) blockedRects.push(toFloatingRect(drag.shellRect, workspaceRect));
-      }
-      if (drag.target !== "chat" && lightChatPanelOpen) {
-        const chatRect = chatWindowRef.current?.getBoundingClientRect();
-        if (chatRect) blockedRects.push(toFloatingRect(drag.shellRect, chatRect));
+      if (selectedTopic && popoverPosition) {
+        const topicPopoverRect = topicPopoverRef.current?.getBoundingClientRect();
+        if (topicPopoverRect) blockedRects.push(toFloatingRect(drag.shellRect, topicPopoverRect));
       }
 
-      const resolved = resolveFloatingCollision(drag.target, nextPosition, drag.size, drag.shellRect, blockedRects);
+      const clampedCandidate = clampFloatingPosition(drag.target, nextPosition, drag.size, drag.shellRect);
+      const candidateRect = makeFloatingRect(clampedCandidate, drag.size);
+      const xOnlyCandidate = { x: clampedCandidate.x, y: drag.lastValid.y };
+      const yOnlyCandidate = { x: drag.lastValid.x, y: clampedCandidate.y };
+      const xOnlyRect = makeFloatingRect(xOnlyCandidate, drag.size);
+      const yOnlyRect = makeFloatingRect(yOnlyCandidate, drag.size);
+      let resolved = drag.lastValid;
+
+      if (canPlaceFloatingRect(candidateRect, blockedRects)) {
+        resolved = clampedCandidate;
+      } else if (canPlaceFloatingRect(xOnlyRect, blockedRects)) {
+        resolved = xOnlyCandidate;
+      } else if (canPlaceFloatingRect(yOnlyRect, blockedRects)) {
+        resolved = yOnlyCandidate;
+      }
+      drag.lastValid = resolved;
 
       if (drag.target === "workspace") {
         setWorkspaceWindowPosition(resolved);
@@ -437,6 +465,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     };
     const handlePointerUp = () => {
       dragStateRef.current = null;
+      document.body.style.userSelect = "";
     };
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
@@ -444,7 +473,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [lightChatPanelOpen, lightWorkspacePanelOpen]);
+  }, [floatingStatsRef, lightChatPanelOpen, lightWorkspacePanelOpen, popoverPosition, selectedTopic, topicPopoverRef]);
 
   const applyCanonicalLightDesktopLayout = React.useCallback(() => {
     if (!experimentalLightDesktop) return;
@@ -524,44 +553,18 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     const dockRect = dockRef.current?.getBoundingClientRect();
     const workspaceRect = workspaceWindowRef.current?.getBoundingClientRect();
     const chatRect = chatWindowRef.current?.getBoundingClientRect();
-    const floatingStatsRect = floatingStatsRef.current?.getBoundingClientRect();
-    const topicPopoverRect = topicPopoverRef.current?.getBoundingClientRect();
 
     const dockSize = dockRect ? { width: dockRect.width, height: dockRect.height } : { width: 72, height: 320 };
     const workspaceSize = workspaceRect ? { width: workspaceRect.width, height: workspaceRect.height } : { width: 400, height: 520 };
     const chatSize = chatRect ? { width: chatRect.width, height: chatRect.height } : { width: Math.min(Math.max(assistantWidth, 390), 460), height: 760 };
 
     const nextDockPosition = clampFloatingPosition("dock", dockPosition, dockSize, shellRect);
-    let nextWorkspacePosition = workspaceWindowPosition;
-    let nextChatPosition = chatWindowPosition;
-
-    const dockBlockedRect = makeFloatingRect(nextDockPosition, dockSize);
-    const auxiliaryBlockedRects: FloatingRect[] = [];
-
-    if (floatingStatsRect) {
-      auxiliaryBlockedRects.push(toFloatingRect(shellRect, floatingStatsRect));
-    }
-    if (selectedTopic && popoverPosition && topicPopoverRect) {
-      auxiliaryBlockedRects.push(toFloatingRect(shellRect, topicPopoverRect));
-    }
-
-    if (lightWorkspacePanelOpen) {
-      nextWorkspacePosition = resolveFloatingCollision(
-        "workspace",
-        workspaceWindowPosition,
-        workspaceSize,
-        shellRect,
-        [dockBlockedRect, ...auxiliaryBlockedRects],
-      );
-    }
-
-    if (lightChatPanelOpen) {
-      const blockedRects = [dockBlockedRect, ...auxiliaryBlockedRects];
-      if (lightWorkspacePanelOpen) {
-        blockedRects.push(makeFloatingRect(nextWorkspacePosition, workspaceSize));
-      }
-      nextChatPosition = resolveFloatingCollision("chat", chatWindowPosition, chatSize, shellRect, blockedRects);
-    }
+    const nextWorkspacePosition = lightWorkspacePanelOpen
+      ? clampFloatingPosition("workspace", workspaceWindowPosition, workspaceSize, shellRect)
+      : workspaceWindowPosition;
+    const nextChatPosition = lightChatPanelOpen
+      ? clampFloatingPosition("chat", chatWindowPosition, chatSize, shellRect)
+      : chatWindowPosition;
 
     if (nextDockPosition.x !== dockPosition.x || nextDockPosition.y !== dockPosition.y) {
       setDockPosition(nextDockPosition);
@@ -1788,7 +1791,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   title={copy.shell.workspace}
                   type="button"
                 >
-                  <SquaresFour size={28} weight={dockIconWeight} />
+                  <SquaresFour size={28} weight={getDockIconWeight(lightWorkspacePanelOpen)} />
                 </button>
                 <button
                   className={`lightDockButton ${lightChatPanelOpen ? "lightDockButtonActive" : ""}`}
@@ -1796,17 +1799,17 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   title={copy.shell.chat}
                   type="button"
                 >
-                  <ChatCircleDots size={28} weight={dockIconWeight} />
+                  <ChatCircleDots size={28} weight={getDockIconWeight(lightChatPanelOpen)} />
                 </button>
                 <button className={`lightDockButton ${isSettingsOpen ? "lightDockButtonActive" : ""}`} onClick={openConfigurationSettings} title={copy.shell.configuration} type="button">
-                  <GearSix size={28} weight={dockIconWeight} />
+                  <GearSix size={28} weight={getDockIconWeight(isSettingsOpen)} />
                 </button>
                 <a className="lightDockButton lightDockButtonLink" href="https://mapmind.space/how-to-use" rel="noreferrer" target="_blank" title={copy.sidebar.documentation}>
-                  <BookBookmark size={28} weight={dockIconWeight} />
+                  <BookBookmark size={28} weight={getDockIconWeight(false)} />
                 </a>
                 {debugModeEnabled ? (
                   <button className={`lightDockButton ${isLogsOpen ? "lightDockButtonActive" : ""}`} onClick={openDebugLogs} title={copy.sidebar.logs} type="button">
-                    <BugBeetle size={28} weight={dockIconWeight} />
+                    <BugBeetle size={28} weight={getDockIconWeight(isLogsOpen)} />
                   </button>
                 ) : null}
               </div>

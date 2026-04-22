@@ -56,6 +56,7 @@ import {
   shouldKeepCurrentAnchor,
   type PopoverPosition,
 } from "./lib/appUiHelpers";
+import { canPlaceFloatingRect, toFloatingRect, type FloatingRect } from "./lib/floatingDesktopLayout";
 import { fetchChatSessions, markChatProposalApplied, reconcileThreadMessages } from "./lib/chatRequests";
 import {
   buildFallbackAssessment,
@@ -861,6 +862,7 @@ export default function App(): React.JSX.Element {
   useEffect(() => {
     function stopDrag(): void {
       popoverDragRef.current = null;
+      document.body.style.userSelect = "";
     }
 
     function onPointerMove(event: PointerEvent): void {
@@ -873,8 +875,25 @@ export default function App(): React.JSX.Element {
       const nextTop = drag.startY + (event.clientY - drag.pointerY);
       const boundedLeft = Math.max(16, Math.min(shellRect.width - popover.offsetWidth - 16, nextLeft));
       const boundedTop = Math.max(16, Math.min(shellRect.height - popover.offsetHeight - 16, nextTop));
+      const blockedRects: FloatingRect[] = [];
+      const blockedSelectors = [".lightDock", ".lightWorkspaceWindow", ".lightChatWindow", ".floatingStatsContainer"];
+      for (const selector of blockedSelectors) {
+        const element = shell.querySelector(selector);
+        if (!(element instanceof HTMLElement)) continue;
+        blockedRects.push(toFloatingRect(shellRect, element.getBoundingClientRect()));
+      }
+      const candidateRect = {
+        x: boundedLeft,
+        y: boundedTop,
+        width: popover.offsetWidth,
+        height: popover.offsetHeight,
+      } satisfies FloatingRect;
       setPopoverFollowAnchor(false);
+      document.body.style.userSelect = "none";
       setPopoverPosition((current) => {
+        if (!canPlaceFloatingRect(candidateRect, blockedRects)) {
+          return current;
+        }
         const next = {
           left: boundedLeft,
           top: boundedTop,

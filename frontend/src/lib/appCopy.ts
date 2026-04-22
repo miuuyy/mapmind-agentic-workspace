@@ -1,6 +1,6 @@
 export const APP_COPY = {
   shell: {
-    workspace: "Workspace",
+    workspace: "Clew Workspace",
     workspaceCount: (count: number) => `${count} workspaces`,
     newWorkspace: "New workspace",
     closedTopics: (count: number) => `${count} closed`,

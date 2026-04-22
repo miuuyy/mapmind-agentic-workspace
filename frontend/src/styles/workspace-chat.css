@@ -14,6 +14,17 @@
   letter-spacing: -0.01em;
 }
 
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 .sessionItemInline:hover {
   color: inherit;
 }
@@ -206,12 +217,12 @@
 .chatBubbleLoading {
   flex-direction: row;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .chatTypingDot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.68);
   animation: chatPulse 0.9s ease-in-out infinite;
@@ -679,14 +690,16 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding-top: 2px;
+  margin-top: 4px;
+  padding: 12px 13px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(16, 16, 17, 0.98), rgba(11, 11, 12, 0.985));
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .proposalInlinePending {
-  padding: 10px 11px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: linear-gradient(180deg, rgba(18, 18, 18, 0.98), rgba(12, 12, 12, 0.985));
+  padding: 11px 12px;
 }
 
 .proposalInlinePendingRow {
@@ -699,18 +712,19 @@
 .proposalInlinePendingLabel {
   color: rgba(255, 255, 255, 0.72);
   font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0.01em;
 }
 
 .proposalInlinePendingDots {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .proposalInlinePendingDots span {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.62);
   animation: proposalPendingPulse 0.9s ease-in-out infinite;
@@ -1427,13 +1441,14 @@ select.input {
 }
 
 .inlineNotice {
-  padding: 9px 10px;
-  border-radius: 6px;
+  padding: 11px 13px;
+  border-radius: 15px;
   border: 1px solid rgba(255, 255, 255, 0.09);
   background: rgba(255, 255, 255, 0.04);
   color: rgba(255, 255, 255, 0.76);
   font-size: 12px;
-  line-height: 1.45;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 .inlineNoticeWarn {

@@ -155,6 +155,12 @@ export function useSettingsController({
   setCurvedEdgeLinesEnabled,
   saveWorkspaceConfig,
 }: UseSettingsControllerArgs): SettingsController {
+  const normalizeIntegerDraft = (value: number, minimum: number, maximum?: number): number => {
+    const sanitized = Number.isFinite(value) ? Math.round(value) : minimum;
+    if (typeof maximum === "number") return Math.min(maximum, Math.max(minimum, sanitized));
+    return Math.max(minimum, sanitized);
+  };
+
   const [providerDraft, setProviderDraft] = useState("gemini");
   const [modelDraft, setModelDraft] = useState("gemini-2.5-pro");
   const [modelPresetDraft, setModelPresetDraft] = useState("gemini-2.5-pro");
@@ -291,6 +297,20 @@ export function useSettingsController({
 
   function saveSettings(): void {
     if (!currentConfig) return;
+    const normalizedPlannerMaxTokens = normalizeIntegerDraft(plannerMaxTokensDraft, 100);
+    const normalizedPlannerThinkingBudget = normalizeIntegerDraft(plannerThinkingBudgetDraft, 100);
+    const normalizedOrchestratorMaxTokens = normalizeIntegerDraft(orchestratorMaxTokensDraft, 100);
+    const normalizedQuizMaxTokens = normalizeIntegerDraft(quizMaxTokensDraft, 100);
+    const normalizedAssistantMaxTokens = normalizeIntegerDraft(assistantMaxTokensDraft, 100);
+    const normalizedMemoryHistoryLimit = normalizeIntegerDraft(memoryHistoryLimitDraft, 4, 120);
+
+    if (normalizedPlannerMaxTokens !== plannerMaxTokensDraft) setPlannerMaxTokensDraft(normalizedPlannerMaxTokens);
+    if (normalizedPlannerThinkingBudget !== plannerThinkingBudgetDraft) setPlannerThinkingBudgetDraft(normalizedPlannerThinkingBudget);
+    if (normalizedOrchestratorMaxTokens !== orchestratorMaxTokensDraft) setOrchestratorMaxTokensDraft(normalizedOrchestratorMaxTokens);
+    if (normalizedQuizMaxTokens !== quizMaxTokensDraft) setQuizMaxTokensDraft(normalizedQuizMaxTokens);
+    if (normalizedAssistantMaxTokens !== assistantMaxTokensDraft) setAssistantMaxTokensDraft(normalizedAssistantMaxTokens);
+    if (normalizedMemoryHistoryLimit !== memoryHistoryLimitDraft) setMemoryHistoryLimitDraft(normalizedMemoryHistoryLimit);
+
     const patch: WorkspaceConfigPatch = {};
     if (providerDraft !== currentConfig.ai_provider) patch.ai_provider = providerDraft;
     if (modelDraft !== currentConfig.default_model) patch.default_model = modelDraft;
@@ -300,15 +320,15 @@ export function useSettingsController({
     if (thinkingModeDraft !== currentConfig.thinking_mode) patch.thinking_mode = thinkingModeDraft;
     if (memoryModeDraft !== (currentConfig.memory_mode ?? "balanced")) patch.memory_mode = memoryModeDraft;
     if (thinkingModeDraft === "custom") {
-      if (plannerMaxTokensDraft !== currentConfig.planner_max_output_tokens) patch.planner_max_output_tokens = plannerMaxTokensDraft;
-      if (plannerThinkingBudgetDraft !== currentConfig.planner_thinking_budget) patch.planner_thinking_budget = plannerThinkingBudgetDraft;
-      if (orchestratorMaxTokensDraft !== currentConfig.orchestrator_max_output_tokens) patch.orchestrator_max_output_tokens = orchestratorMaxTokensDraft;
-      if (quizMaxTokensDraft !== currentConfig.quiz_max_output_tokens) patch.quiz_max_output_tokens = quizMaxTokensDraft;
-      if (assistantMaxTokensDraft !== currentConfig.assistant_max_output_tokens) patch.assistant_max_output_tokens = assistantMaxTokensDraft;
+      if (normalizedPlannerMaxTokens !== currentConfig.planner_max_output_tokens) patch.planner_max_output_tokens = normalizedPlannerMaxTokens;
+      if (normalizedPlannerThinkingBudget !== currentConfig.planner_thinking_budget) patch.planner_thinking_budget = normalizedPlannerThinkingBudget;
+      if (normalizedOrchestratorMaxTokens !== currentConfig.orchestrator_max_output_tokens) patch.orchestrator_max_output_tokens = normalizedOrchestratorMaxTokens;
+      if (normalizedQuizMaxTokens !== currentConfig.quiz_max_output_tokens) patch.quiz_max_output_tokens = normalizedQuizMaxTokens;
+      if (normalizedAssistantMaxTokens !== currentConfig.assistant_max_output_tokens) patch.assistant_max_output_tokens = normalizedAssistantMaxTokens;
     }
     if (assistantNicknameDraft !== (currentConfig.assistant_nickname ?? "")) patch.assistant_nickname = assistantNicknameDraft;
     if (memoryModeDraft === "custom") {
-      if (memoryHistoryLimitDraft !== (currentConfig.memory_history_message_limit ?? 32)) patch.memory_history_message_limit = memoryHistoryLimitDraft;
+      if (normalizedMemoryHistoryLimit !== (currentConfig.memory_history_message_limit ?? 32)) patch.memory_history_message_limit = normalizedMemoryHistoryLimit;
       if (memoryIncludeGraphContextDraft !== (currentConfig.memory_include_graph_context ?? true)) patch.memory_include_graph_context = memoryIncludeGraphContextDraft;
       if (memoryIncludeProgressContextDraft !== (currentConfig.memory_include_progress_context ?? true)) patch.memory_include_progress_context = memoryIncludeProgressContextDraft;
       if (memoryIncludeQuizContextDraft !== (currentConfig.memory_include_quiz_context ?? true)) patch.memory_include_quiz_context = memoryIncludeQuizContextDraft;

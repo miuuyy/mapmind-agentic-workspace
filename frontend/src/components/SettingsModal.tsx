@@ -362,23 +362,23 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                         <div className="settingsInlineFields">
                           <label className="field">
                             <span className="fieldLabel">{copy.settingsPanel.plannerMaxOutputTokens}</span>
-                            <input className="input" type="number" min={100} step={100} value={plannerMaxTokensDraft} onChange={(event) => setPlannerMaxTokensDraft(Number(event.target.value) || 100)} />
+                            <input className="input" type="number" step={100} value={plannerMaxTokensDraft} onChange={(event) => setPlannerMaxTokensDraft(Number.isNaN(event.currentTarget.valueAsNumber) ? 0 : event.currentTarget.valueAsNumber)} />
                           </label>
                           <label className="field">
                             <span className="fieldLabel">{copy.settingsPanel.plannerThinkingBudget}</span>
-                            <input className="input" type="number" min={100} step={100} value={plannerThinkingBudgetDraft} onChange={(event) => setPlannerThinkingBudgetDraft(Number(event.target.value) || 100)} />
+                            <input className="input" type="number" step={100} value={plannerThinkingBudgetDraft} onChange={(event) => setPlannerThinkingBudgetDraft(Number.isNaN(event.currentTarget.valueAsNumber) ? 0 : event.currentTarget.valueAsNumber)} />
                           </label>
                           <label className="field">
                             <span className="fieldLabel">{copy.settingsPanel.orchestratorMaxOutputTokens}</span>
-                            <input className="input" type="number" min={100} step={100} value={orchestratorMaxTokensDraft} onChange={(event) => setOrchestratorMaxTokensDraft(Number(event.target.value) || 100)} />
+                            <input className="input" type="number" step={100} value={orchestratorMaxTokensDraft} onChange={(event) => setOrchestratorMaxTokensDraft(Number.isNaN(event.currentTarget.valueAsNumber) ? 0 : event.currentTarget.valueAsNumber)} />
                           </label>
                           <label className="field">
                             <span className="fieldLabel">{copy.settingsPanel.quizMaxOutputTokens}</span>
-                            <input className="input" type="number" min={100} step={100} value={quizMaxTokensDraft} onChange={(event) => setQuizMaxTokensDraft(Number(event.target.value) || 100)} />
+                            <input className="input" type="number" step={100} value={quizMaxTokensDraft} onChange={(event) => setQuizMaxTokensDraft(Number.isNaN(event.currentTarget.valueAsNumber) ? 0 : event.currentTarget.valueAsNumber)} />
                           </label>
                           <label className="field">
                             <span className="fieldLabel">{copy.settingsPanel.assistantMaxOutputTokens}</span>
-                            <input className="input" type="number" min={100} step={100} value={assistantMaxTokensDraft} onChange={(event) => setAssistantMaxTokensDraft(Number(event.target.value) || 100)} />
+                            <input className="input" type="number" step={100} value={assistantMaxTokensDraft} onChange={(event) => setAssistantMaxTokensDraft(Number.isNaN(event.currentTarget.valueAsNumber) ? 0 : event.currentTarget.valueAsNumber)} />
                           </label>
                         </div>
                       ) : null}
@@ -485,11 +485,9 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                               <input
                                 className="input"
                                 type="number"
-                                min={4}
-                                max={120}
                                 step={1}
                                 value={memoryHistoryLimitDraft}
-                                onChange={(event) => setMemoryHistoryLimitDraft(Number(event.target.value) || 4)}
+                                onChange={(event) => setMemoryHistoryLimitDraft(Number.isNaN(event.currentTarget.valueAsNumber) ? 0 : event.currentTarget.valueAsNumber)}
                               />
                             </label>
                           </div>

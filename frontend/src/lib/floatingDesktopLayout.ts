@@ -14,7 +14,7 @@ export type FloatingRect = {
 
 export const LIGHT_DESKTOP_LAYOUT_STORAGE_KEY = "knowledge_graph_light_desktop_layout_v1";
 
-const FLOATING_WINDOW_COLLISION_MARGIN = 18;
+const FLOATING_WINDOW_COLLISION_MARGIN = 8;
 
 export type StoredLightDesktopLayout = {
   dock: FloatingWindowPosition;
@@ -52,6 +52,14 @@ function floatingRectsOverlap(a: FloatingRect, b: FloatingRect, margin = FLOATIN
   );
 }
 
+export function canPlaceFloatingRect(
+  rect: FloatingRect,
+  blockedRects: FloatingRect[],
+  margin = FLOATING_WINDOW_COLLISION_MARGIN,
+): boolean {
+  return blockedRects.every((blockedRect) => !floatingRectsOverlap(rect, blockedRect, margin));
+}
+
 export function clampFloatingPosition(
   target: FloatingWindowDragTarget,
   position: FloatingWindowPosition,
@@ -59,7 +67,7 @@ export function clampFloatingPosition(
   shellRect: DOMRect,
 ): FloatingWindowPosition {
   return {
-    x: Math.max(target === "dock" ? 6 : 84, Math.min(shellRect.width - size.width - 10, position.x)),
+    x: Math.max(target === "dock" ? 6 : 10, Math.min(shellRect.width - size.width - 10, position.x)),
     y: Math.max(10, Math.min(shellRect.height - size.height - 10, position.y)),
   };
 }

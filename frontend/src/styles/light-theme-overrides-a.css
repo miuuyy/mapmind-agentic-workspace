@@ -484,18 +484,22 @@
 
 :root[data-theme="light"] .lightDockButton::before,
 :root[data-theme="light"] .lightDockButtonLink::before {
-  background: rgba(195, 90, 44, 0.14) !important;
+  background: rgba(214, 106, 51, 0.14) !important;
 }
 
 :root[data-theme="light"] .lightDockButton:hover,
 :root[data-theme="light"] .lightDockButtonLink:hover,
 :root[data-theme="light"] .lightDockButtonActive {
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(92, 53, 35, 0.98) !important;
+  background: rgba(214, 106, 51, 0.16) !important;
+  border-radius: 999px !important;
 }
 
 :root[data-theme="light"] .lightDockButtonActive::before {
-  opacity: 1 !important;
+  opacity: 0 !important;
   transform: scale(1) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 :root[data-theme="light"] .sidebarNewAction,
@@ -610,13 +614,13 @@
 
 :root[data-theme="light"] .lightDockButton::before,
 :root[data-theme="light"] .lightDockButtonLink::before {
-  background: rgba(195, 90, 44, 0.12) !important;
+  background: rgba(214, 106, 51, 0.14) !important;
 }
 
 :root[data-theme="light"] .lightDockButtonActive,
 :root[data-theme="light"] .lightDockButton:hover,
 :root[data-theme="light"] .lightDockButtonLink:hover {
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(92, 53, 35, 0.98) !important;
 }
 
 :root[data-theme="light"] .quizModalHeader,
@@ -891,13 +895,16 @@
 }
 
 :root[data-theme="light"] .lightDockButtonActive {
-  color: rgba(131, 55, 24, 0.96) !important;
+  color: rgba(92, 53, 35, 0.98) !important;
+  background: rgba(214, 106, 51, 0.16) !important;
+  border-radius: 999px !important;
 }
 
 :root[data-theme="light"] .lightDockButtonActive::before {
-  opacity: 1 !important;
+  opacity: 0 !important;
   transform: scale(1) !important;
-  background: rgba(195, 90, 44, 0.12) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 :root[data-theme="light"] .lightWorkspaceListItem {
@@ -1605,6 +1612,34 @@
   color: #ffffff !important;
 }
 
+:root[data-theme="light"] .topicClosureActions .assistantSendButton.startQuizButton,
+:root[data-theme="light"] .topicClosureActions .assistantSendButton.startQuizButton:hover,
+:root[data-theme="light"] .topicClosureActions .assistantSendButton.startQuizButton:focus-visible,
+:root[data-theme="light"] .topicClosureActions .assistantSendButton.markFinishedButton,
+:root[data-theme="light"] .topicClosureActions .assistantSendButton.markFinishedButton:hover,
+:root[data-theme="light"] .topicClosureActions .assistantSendButton.markFinishedButton:focus-visible {
+  background: #cf7b48 !important;
+  border-color: transparent !important;
+  color: #fffaf6 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+:root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon),
+:root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):hover,
+:root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):focus-visible,
+:root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):active:not(:disabled) {
+  background: #cf7b48 !important;
+  border-color: transparent !important;
+  color: #fffaf6 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
 :root[data-theme="light"] .assistantSendButton:disabled,
 :root[data-theme="light"] .workspaceShellLightDockMode .assistantSendButton:disabled {
   background: rgba(195, 90, 44, 0.92) !important;
@@ -1632,6 +1667,12 @@
 :root[data-theme="light"] .startQuizButton:focus-visible {
   border-radius: 999px !important;
   box-shadow: none !important;
+  background: #cf7b48 !important;
+  border-color: transparent !important;
+  color: #fffaf6 !important;
+  filter: none !important;
+  transform: none !important;
+  transition: none !important;
 }
 
 /* DeepTutor light-theme palette pass: unify chat/workspace surfaces */
@@ -1769,10 +1810,13 @@
 /* EOF real final override: light dock/chat */
 :root[data-theme="light"] .lightDockButtonActive {
   color: rgba(62, 49, 39, 0.96) !important;
+  background: rgba(214, 106, 51, 0.16) !important;
+  border-radius: 999px !important;
 }
 
 :root[data-theme="light"] .lightDockButtonActive::before {
-  background: rgba(195, 90, 44, 0.08) !important;
+  opacity: 0 !important;
+  background: transparent !important;
   box-shadow: none !important;
 }
 
@@ -1839,10 +1883,13 @@
 /* EOF final override: light dock/chat */
 :root[data-theme="light"] .lightDockButtonActive {
   color: rgba(62, 49, 39, 0.96) !important;
+  background: rgba(214, 106, 51, 0.16) !important;
+  border-radius: 999px !important;
 }
 
 :root[data-theme="light"] .lightDockButtonActive::before {
-  background: rgba(195, 90, 44, 0.08) !important;
+  opacity: 0 !important;
+  background: transparent !important;
   box-shadow: none !important;
 }
 

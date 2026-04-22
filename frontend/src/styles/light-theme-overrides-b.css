@@ -5,10 +5,13 @@
 
 :root[data-theme="light"] .lightDockButtonActive {
   color: rgba(62, 49, 39, 0.96) !important;
+  background: rgba(214, 106, 51, 0.16) !important;
+  border-radius: 999px !important;
 }
 
 :root[data-theme="light"] .lightDockButtonActive::before {
-  background: rgba(195, 90, 44, 0.08) !important;
+  opacity: 0 !important;
+  background: transparent !important;
   box-shadow: none !important;
 }
 
@@ -92,11 +95,14 @@
 
 :root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive {
   color: rgba(62, 49, 39, 0.96) !important;
+  background: rgba(214, 106, 51, 0.16) !important;
+  border-radius: 999px !important;
 }
 
 :root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive::before {
-  background: rgba(195, 90, 44, 0.08) !important;
-  box-shadow: inset 0 0 0 1px rgba(195, 90, 44, 0.1) !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 /* Tight light-chat cleanup */
@@ -117,11 +123,14 @@
 
 :root[data-theme="light"] .lightDockButtonActive {
   color: var(--dt-light-text) !important;
+  background: rgba(214, 106, 51, 0.16) !important;
+  border-radius: 999px !important;
 }
 
 :root[data-theme="light"] .lightDockButtonActive::before {
-  background: rgba(195, 90, 44, 0.12) !important;
-  box-shadow: inset 0 0 0 1px rgba(195, 90, 44, 0.12) !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .sessionListWrap {
@@ -183,11 +192,14 @@
 
 :root[data-theme="light"] .lightDockButtonActive {
   color: rgba(62, 49, 39, 0.96) !important;
+  background: rgba(214, 106, 51, 0.16) !important;
+  border-radius: 999px !important;
 }
 
 :root[data-theme="light"] .lightDockButtonActive::before {
-  background: rgba(195, 90, 44, 0.08) !important;
-  box-shadow: inset 0 0 0 1px rgba(195, 90, 44, 0.1) !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 :root[data-theme="light"] .chatMessage-user .chatBubble,
@@ -222,10 +234,13 @@
 
 :root[data-theme="light"] .lightDockButtonActive {
   color: var(--dt-light-primary) !important;
+  background: rgba(214, 106, 51, 0.16) !important;
+  border-radius: 999px !important;
 }
 
 :root[data-theme="light"] .lightDockButtonActive::before {
-  background: rgba(195, 90, 44, 0.1) !important;
+  opacity: 0 !important;
+  background: transparent !important;
 }
 
 :root[data-theme="light"] .lightWorkspaceWindow {
@@ -443,8 +458,8 @@
 }
 /* EOF ultimate override */
 :root[data-theme="light"] .lightDockButtonActive {
-  color: rgba(62, 49, 39, 0.96) !important;
-  background: rgba(195, 90, 44, 0.12) !important;
+  color: rgba(92, 53, 35, 0.98) !important;
+  background: rgba(214, 106, 51, 0.16) !important;
   border-radius: 999px !important;
 }
 :root[data-theme="light"] .lightDockButtonActive::before {
@@ -513,15 +528,15 @@
   padding: 7px !important;
   margin: 0 !important;
   border: 0 !important;
-  background: rgb(195, 90, 44) !important;
-  color: rgb(255, 255, 255) !important;
-  box-shadow: 0 4px 12px rgba(195, 90, 44, 0.15) !important;
+  background: #cf7b48 !important;
+  color: #fffaf6 !important;
+  box-shadow: 0 4px 12px rgba(207, 123, 72, 0.15) !important;
   align-self: auto !important;
 }
 :root[data-theme="light"] .lightChatWindow .assistantSendButtonIcon:hover:not(:disabled) {
-  background: rgb(195, 90, 44) !important;
+  background: #cf7b48 !important;
   border: 0 !important;
-  box-shadow: 0 6px 16px rgba(195, 90, 44, 0.22) !important;
+  box-shadow: 0 6px 16px rgba(207, 123, 72, 0.22) !important;
 }
 :root[data-theme="light"] .lightDockButtonActive::before,
 :root[data-theme="light"] .lightDock .lightDockButtonActive::before,
@@ -530,9 +545,9 @@
   box-shadow: none !important;
 }
 :root[data-theme="light"] .lightChatWindow .assistantComposer .assistantSendButton.assistantSendButtonIcon {
-  background: rgb(195, 90, 44) !important;
+  background: #cf7b48 !important;
   border: 0 !important;
-  box-shadow: 0 4px 12px rgba(195, 90, 44, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(207, 123, 72, 0.15) !important;
 }
 :root[data-theme="light"] .lightChatWindow .assistantComposer .assistantSendButton.assistantSendButtonIcon svg {
   width: 15px !important;
@@ -1448,7 +1463,7 @@
 
 :root[data-theme="light"] .lightDockButton::before,
 :root[data-theme="light"] .lightDockButtonLink::before {
-  background: rgba(195, 90, 44, 0.1) !important;
+  background: rgba(214, 106, 51, 0.12) !important;
 }
 
 :root[data-theme="light"] .lightDockButtonActive,
@@ -1459,8 +1474,8 @@
 :root[data-theme="light"] .lightDockButtonActive::before,
 :root[data-theme="light"] .lightDock .lightDockButtonActive::before,
 :root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive::before {
-  background: rgba(195, 90, 44, 0.12) !important;
-  box-shadow: none !important;
+  background: rgba(214, 106, 51, 0.2) !important;
+  box-shadow: inset 0 0 0 1px rgba(182, 84, 43, 0.16) !important;
 }
 
 :root[data-theme="light"] .lightWindowCreateWorkspaceButton,
@@ -2006,7 +2021,7 @@
 :root[data-theme="light"] .lightChatWindow .sessionListWrap::after {
   display: block !important;
   top: 0 !important;
-  bottom: 0 !important;
+  bottom: 1px !important;
   width: 34px !important;
   pointer-events: none !important;
   z-index: 1 !important;
@@ -2100,4 +2115,205 @@
   background: rgba(232, 228, 222, 0.96) !important;
   pointer-events: none !important;
   z-index: 3 !important;
+}
+
+/* Absolute EOF lock: landing-accent pass for light theme */
+:root[data-theme="light"] .lightDock {
+  gap: 7px !important;
+  padding: 6px 9px 9px !important;
+}
+
+:root[data-theme="light"] .lightDockGrip {
+  height: 32px !important;
+  color: #cf7b48 !important;
+}
+
+:root[data-theme="light"] .lightDockButton,
+:root[data-theme="light"] .lightDockButtonLink {
+  width: 54px !important;
+  height: 54px !important;
+  overflow: hidden !important;
+  border: 0 !important;
+}
+
+:root[data-theme="light"] .lightDockButton:hover,
+:root[data-theme="light"] .lightDockButtonLink:hover {
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #cf7b48 !important;
+}
+
+:root[data-theme="light"] .lightDockButton::before,
+:root[data-theme="light"] .lightDockButtonLink::before,
+:root[data-theme="light"] .lightDockButton::after,
+:root[data-theme="light"] .lightDockButtonLink::after {
+  content: none !important;
+  display: none !important;
+  background: transparent !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive,
+:root[data-theme="light"] .lightDockButtonActive:hover,
+:root[data-theme="light"] .lightDock .lightDockButtonActive,
+:root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive,
+:root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive:hover {
+  color: #fbf5ec !important;
+  background: #cf7b48 !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+:root[data-theme="light"] .lightDockButtonActive::before,
+:root[data-theme="light"] .lightDock .lightDockButtonActive::before,
+:root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive::before {
+  opacity: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Keep closure CTA stable instead of inheriting the generic darkening hover */
+:root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon) {
+  all: unset !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: max-content !important;
+  height: 40px !important;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+  background: #cf7b48 !important;
+  color: #fffaf6 !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  filter: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+:root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):hover:not(:disabled),
+:root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):focus-visible:not(:disabled),
+:root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):active:not(:disabled) {
+  background: #cf7b48 !important;
+  color: #fffaf6 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+  transition: none !important;
+  outline: none !important;
+}
+
+:root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon):disabled {
+  background: #cf7b48 !important;
+  color: #fffaf6 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  opacity: 0.72 !important;
+  cursor: not-allowed !important;
+}
+
+/* Final lock for the current UI pass */
+:root[data-theme="light"] .inlineNoticeError {
+  border-color: rgba(222, 131, 102, 0.24) !important;
+  background: linear-gradient(180deg, rgba(255, 246, 243, 0.96), rgba(252, 242, 238, 0.98)) !important;
+  color: rgba(145, 72, 50, 0.92) !important;
+  box-shadow: 0 6px 16px rgba(156, 99, 76, 0.08) !important;
+}
+
+:root[data-theme="light"] .proposalInlineCard {
+  gap: 12px !important;
+  margin-top: 6px !important;
+  padding: 13px 14px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  background: linear-gradient(180deg, rgba(255, 252, 248, 0.98), rgba(250, 247, 242, 0.98)) !important;
+  box-shadow: 0 10px 24px rgba(45, 43, 40, 0.06) !important;
+}
+
+:root[data-theme="light"] .proposalInlinePendingLabel {
+  color: rgba(88, 83, 75, 0.78) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+:root[data-theme="light"] .proposalInlinePendingDots {
+  gap: 4px !important;
+}
+
+:root[data-theme="light"] .proposalInlinePendingDots span {
+  width: 4px !important;
+  height: 4px !important;
+  background: rgba(120, 115, 106, 0.42) !important;
+}
+
+:root[data-theme="light"] .lightDock {
+  gap: 7px !important;
+  padding: 6px 9px 9px !important;
+}
+
+:root[data-theme="light"] .lightDockGrip {
+  height: 32px !important;
+}
+
+:root[data-theme="light"] .lightDockButton,
+:root[data-theme="light"] .lightDockButtonLink {
+  width: 54px !important;
+  height: 54px !important;
+}
+
+:root[data-theme="light"] .lightDockButton svg,
+:root[data-theme="light"] .lightDockButtonLink svg {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+:root[data-theme="light"] .chatTypingDot {
+  width: 4px !important;
+  height: 4px !important;
+  background: rgba(180, 92, 56, 0.62) !important;
+}
+
+:root[data-theme="light"] .chatBubbleLoading {
+  gap: 4px !important;
+  padding: 9px 11px !important;
+  border-radius: 999px !important;
+  background: rgba(248, 242, 236, 0.98) !important;
+  border: 1px solid rgba(232, 228, 222, 0.96) !important;
+  box-shadow: 0 6px 14px rgba(45, 43, 40, 0.05) !important;
+}
+
+:root[data-theme="light"] .proposalInlinePending {
+  padding: 11px 12px !important;
+}
+
+:root[data-theme="light"] .proposalInlineCard {
+  box-shadow: 0 8px 18px rgba(45, 43, 40, 0.05) !important;
+}
+
+/* Absolute EOF lock: final web button parity (patch 02:21:54 — match send button) */
+:root[data-theme="light"] .lightChatWindow .webGroundingToggle.active,
+:root[data-theme="light"] .workspaceShellLightDockMode .webGroundingToggle.active,
+:root[data-theme="light"] .webGroundingToggle.active {
+  background: #cf7b48 !important;
+  color: #fffaf6 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Absolute EOF lock: light snapshots list items — more rounded (matches dark feel) */
+:root[data-theme="light"] .settingsSnapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listItem,
+:root[data-theme="light"] .snapshotsCard .listActions {
+  border-radius: 16px !important;
 }

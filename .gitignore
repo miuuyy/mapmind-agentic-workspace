@@ -28,6 +28,8 @@ frontend/dist/
 frontend/test-results/
 backend/workspace.db
 backend/mapmind.db
+backend/*.db
+backend/*.db-*
 backend/uvicorn.log
 frontend/public/styles.css
 tmp-layout-check.png

@@ -1426,12 +1426,14 @@ function GraphCanvasComponent({
     activePointersRef.current.clear();
     pinchGestureRef.current = null;
     dragStartRef.current = null;
+    document.body.style.userSelect = "";
     if (canvasRef.current) {
       canvasRef.current.style.cursor = layoutEditModeRef.current ? "crosshair" : "grab";
     }
   }
 
   function onPointerDown(event: React.PointerEvent<HTMLCanvasElement>): void {
+    document.body.style.userSelect = "none";
     activePointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (canvasRef.current) {
       canvasRef.current.setPointerCapture(event.pointerId);
@@ -1629,6 +1631,7 @@ function GraphCanvasComponent({
         : null;
     if (activePointersRef.current.size === 0) {
       gestureConsumedRef.current = false;
+      document.body.style.userSelect = "";
     }
     if (canvasRef.current) canvasRef.current.style.cursor = layoutEditModeRef.current ? "crosshair" : "grab";
   }
@@ -1641,6 +1644,7 @@ function GraphCanvasComponent({
     draggedNodeRef.current = null;
     isDraggingRef.current = false;
     gestureConsumedRef.current = false;
+    document.body.style.userSelect = "";
   }
 
   return (

@@ -32,13 +32,13 @@ your workspace.
    cp .env.example .env
    ./scripts/dev.sh
    ```
-
    After this, the binary lives at `./.venv/bin/clew-study-assist` inside your
    clone. You do not need the backend to be running while MCP is in use —
    the server reads the same SQLite database directly.
 
 2. **Tell your AI client where to find it.** Pick the section below that
    matches your client, replace `/absolute/path/to/clew` with the
+   absolute path to your clone, and paste.
    absolute path to your clone, and paste.
 
 ## Claude Desktop
