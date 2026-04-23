@@ -2722,3 +2722,19 @@ button.btn.btnDanger,
   font-weight: 600 !important;
   opacity: 1 !important;
 }
+
+/* Off-state settings switch picks up the cream row tone so the inactive
+   control sits flush with the surrounding settingsToggleRow card. Active
+   state is left alone — the original brand pill in light-theme-core.css
+   stays in charge. */
+:root[data-theme="light"] .settingsSwitch:not(.settingsSwitchActive) {
+  background: rgba(233, 225, 215, 0.95);
+  border-color: rgba(195, 90, 44, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(195, 90, 44, 0.08);
+}
+
+:root[data-theme="light"] .settingsSwitch:not(.settingsSwitchActive) .settingsSwitchKnob {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(195, 90, 44, 0.18);
+  box-shadow: 0 1px 2px rgba(45, 43, 40, 0.1);
+}

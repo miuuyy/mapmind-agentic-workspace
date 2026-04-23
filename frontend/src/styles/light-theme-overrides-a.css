@@ -1012,7 +1012,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: rgba(145, 63, 28, 0.92);
+  color: var(--mm-accent-green);
   flex-shrink: 0;
 }
 
