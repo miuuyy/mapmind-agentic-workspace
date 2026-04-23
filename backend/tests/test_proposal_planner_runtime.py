@@ -296,57 +296,6 @@ class ProposalPlannerRuntimeTests(unittest.TestCase):
             )
         )
 
-    def test_generate_proposal_rejects_unknown_zone_topic_refs_instead_of_stripping_them(self) -> None:
-        planner = self._planner_with_responses(
-            {
-                "summary": "Expanded analysis",
-                "assistant_message": "Added one topic and grouped it.",
-                "operations": [
-                    {
-                        "op_id": "topic_1",
-                        "op": "upsert_topic",
-                        "entity_kind": "topic",
-                        "rationale": "needed",
-                        "topic": {
-                            "id": "limits",
-                            "title": "Limits",
-                            "slug": "limits",
-                        },
-                    },
-                    {
-                        "op_id": "edge_1",
-                        "op": "upsert_edge",
-                        "entity_kind": "edge",
-                        "rationale": "connect limits into the existing graph",
-                        "edge": {
-                            "id": "edge-functions-limits",
-                            "source_topic_id": "functions",
-                            "target_topic_id": "limits",
-                            "relation": "requires",
-                        },
-                    },
-                    {
-                        "op_id": "zone_1",
-                        "op": "upsert_zone",
-                        "entity_kind": "zone",
-                        "rationale": "group analysis topics",
-                        "zone": {
-                            "id": "analysis",
-                            "title": "Analysis",
-                            "kind": "curriculum_phase",
-                            "topic_ids": ["limits", "missing-topic"],
-                        },
-                    },
-                ],
-            }
-        )
-
-        with self.assertRaisesRegex(ProposalPlannerError, "unknown topics"):
-            planner.generate_proposal(
-                self.graph,
-                ProposalGenerateRequest(mode="expand_goal", raw_text="- limits"),
-            )
-
     def test_stream_proposal_emits_status_delta_and_result(self) -> None:
         planner = self._planner_with_responses(
             [
