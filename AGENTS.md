@@ -100,7 +100,7 @@ PYTHONPATH=backend ./.venv/bin/python -m unittest discover -s backend/tests -v
 
 There are two documentation layers:
 
-- `documentation/` = product-facing docs source
+- `docs/site_faq/` = product-facing docs source
 - `docs/` = engineering and repo docs
 
 Do not mix them casually.

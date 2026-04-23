@@ -1,8 +1,8 @@
-# Documentation Source
+# Site FAQ Source
 
 This directory contains the product-facing markdown pages for Clew.
 
-These files are not engineering setup docs. They are the source material for the hosted documentation experience and for product-facing explanations of what Clew is, why it exists, and how to use it.
+These files are not engineering setup docs. They are source material for the hosted site FAQ experience and for product-facing explanations of what Clew is, why it exists, and how to use it.
 
 ## Pages
 
@@ -25,4 +25,4 @@ Keep these pages:
 - technically honest
 - free of repository-internal clutter
 
-For local setup, provider internals, or code structure, use [`../docs/`](../docs/README.md) instead.
+For local setup, provider internals, or code structure, use the engineering docs in [`../`](../README.md) instead.

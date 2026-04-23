@@ -2,7 +2,9 @@
 
 This directory contains the engineering-facing markdown for the public `main` branch.
 
-These docs are for people who want to run, inspect, modify, or extend the local edition. They are not the same thing as the product-facing docs in [`documentation/`](../documentation/README.md).
+These docs are for people who want to run, inspect, modify, or extend the local edition.
+
+Product-facing website/FAQ source lives in [`site_faq/`](site_faq/README.md). It is grouped here to keep markdown docs in one place, but it is not the same thing as the engineering docs below.
 
 ## Recommended reading order
 
@@ -15,6 +17,7 @@ These docs are for people who want to run, inspect, modify, or extend the local 
 7. [MCP Setup](MCP_SETUP.md)
 8. [0.2.0 Release Notes](RELEASE_0_2_0.md)
 9. [Architecture Decision Records](adr/README.md)
+10. [Site FAQ source](site_faq/README.md)
 
 ## What each file is for
 
@@ -26,7 +29,8 @@ These docs are for people who want to run, inspect, modify, or extend the local 
 - [Obsidian Bridge](OBSIDIAN.md): import an Obsidian vault into Clew or export a graph back into Markdown
 - [MCP Setup](MCP_SETUP.md): connect Clew Study Assist to Claude Desktop, Claude Code, or Cursor via the built-in MCP server
 - [0.2.0 Release Notes](RELEASE_0_2_0.md): product and code changes added in the 0.2.0 branch
-- [ADR index](adr/README.md): long-lived decisions that protect the product from drifting into weaker shapes
+- [ADR index](adr/README.md): long-lived decisions, including why external bridges must preserve the graph boundary
+- [Site FAQ source](site_faq/README.md): product-facing pages used by the hosted docs/site surface
 
 ## What is intentionally not here
 

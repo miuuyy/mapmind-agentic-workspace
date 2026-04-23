@@ -25,10 +25,54 @@ mapmind-agentic-workspace/
 ├── backend/         FastAPI app, domain model, repository, providers, tests
 ├── frontend/        React workspace, graph canvas, dialogs, settings, logs
 ├── contracts/       JSON transport files used by graph flows
-├── docs/            Engineering documentation
-├── documentation/   Product-facing documentation source
+├── docs/            Engineering docs, ADRs, release notes, site FAQ source
 └── scripts/         Local development helpers
 ```
+
+## Package responsibilities
+
+### Backend
+
+`backend/` contains the FastAPI app for the local edition.
+
+It is responsible for:
+
+- exposing API routes for graph, chat, quiz, snapshots, and settings
+- persisting workspace state in local SQLite
+- running orchestrator and planner flows
+- holding the provider seam for Gemini, OpenAI, and OpenAI-compatible endpoints
+- validating proposals before they can be applied
+- supporting local debug logging in `main`
+
+The backend should fail honestly: if a provider cannot satisfy a contract, or a proposal cannot be validated safely, it should reject explicitly instead of inventing a fake success path.
+
+### Frontend
+
+`frontend/` contains the React graph workspace.
+
+It is responsible for:
+
+- rendering the graph canvas
+- hosting assistant and proposal review flows
+- exposing settings for provider, model, memory, closure behavior, and local debug surfaces
+- keeping graph mutation visible and reviewable
+- preserving the graph as the main surface instead of drifting into dashboard or chat-first UI
+
+### Contracts
+
+`contracts/` contains transport-facing JSON contracts used by graph mutation flows.
+
+These files are not the whole domain model. They are explicit exchange surfaces that make proposal handling inspectable, tool-friendly, and separate from ad-hoc runtime code.
+
+### Scripts
+
+`scripts/` contains small local helpers:
+
+- `dev.sh` bootstraps dependencies and starts the backend and frontend
+- `stop_dev.sh` stops local listeners on known dev ports
+- `reset_db.sh` deletes and recreates the local SQLite seed workspace
+
+The scripts should stay small, explicit, and boring.
 
 ## Frontend structure
 

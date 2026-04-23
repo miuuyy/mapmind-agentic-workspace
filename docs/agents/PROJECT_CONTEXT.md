@@ -77,7 +77,7 @@ It should not feel like:
 
 ## Docs split
 
-- `documentation/` = product-facing docs source
+- `docs/site_faq/` = product-facing docs source
 - `docs/` = engineering docs
 
 Agents should preserve that split.

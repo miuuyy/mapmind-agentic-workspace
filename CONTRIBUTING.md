@@ -101,7 +101,7 @@ If there is visible UI behavior, include screenshots or a short before/after exp
 
 Clew uses two documentation layers:
 
-- `documentation/` for product-facing docs that later feed the hosted docs experience
+- `docs/site_faq/` for product-facing docs that later feed the hosted docs/site FAQ experience
 - `docs/` for engineering and local-developer guides
 
 If you add or rewrite docs, keep the distinction clean:
