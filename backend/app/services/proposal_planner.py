@@ -437,33 +437,6 @@ class ProposalPlanner:
                     resource.setdefault("kind", "reference")
         return GraphOperation.model_validate(data)
 
-    def _repair_zone_topic_refs(self, envelope: GraphProposalEnvelope, graph: StudyGraph) -> None:
-        """Strip zone references to topics that were not proposed or already in graph.
-
-        This runs after Gemini output is coerced but before validation.
-        Gemini sometimes generates zones referencing topic_ids it intended
-        to create but either forgot or lost due to output truncation.
-        Instead of failing the entire proposal, we strip the orphan refs
-        and add a warning so the user knows what happened.
-        """
-        existing_topic_ids = {t.id for t in graph.topics}
-        proposed_topic_ids = {
-            op.topic.id for op in envelope.operations if op.topic is not None
-        }
-        known = existing_topic_ids | proposed_topic_ids
-
-        for op in envelope.operations:
-            if op.op != "upsert_zone" or op.zone is None:
-                continue
-            orphans = [tid for tid in op.zone.topic_ids if tid not in known]
-            if not orphans:
-                continue
-            op.zone.topic_ids = [tid for tid in op.zone.topic_ids if tid in known]
-            envelope.warnings.append(
-                f"zone {op.zone.id}: stripped {len(orphans)} orphaned topic ref(s) "
-                f"that Gemini referenced but did not propose: {', '.join(sorted(orphans))}"
-            )
-
     def _proposal_response_schema(self) -> dict[str, Any]:
         return planner_response_json_schema()
 
@@ -503,7 +476,6 @@ class ProposalPlanner:
             ),
         )
         self._repairer.materialize_missing_zones(proposal_envelope, graph)
-        self._repair_zone_topic_refs(proposal_envelope, graph)
         apply_plan = self._normalizer.normalize(proposal_envelope, graph=graph)
         proposal_envelope.warnings = list(apply_plan.validation.warnings)
         apply_plan.normalized_proposal.warnings = list(apply_plan.validation.warnings)
