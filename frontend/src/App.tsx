@@ -65,8 +65,6 @@ import {
   computeGraphSummary,
   firstProposedTopicId,
   recentMessagesForContext,
-  summarizePreviewCounts,
-  summarizeTopOperations,
   templatePrompt,
 } from "./lib/graph";
 import { supportsObsidianDirectoryExport, writeObsidianExportPackageToDirectory } from "./lib/obsidianExport";
@@ -76,6 +74,7 @@ import {
   type ObsidianVaultEntry,
 } from "./lib/obsidianImport";
 import { useChatModelSelection } from "./hooks/useChatModelSelection";
+import { useTopicPopover } from "./hooks/useTopicPopover";
 import { useModalAccessibility } from "./lib/useModalAccessibility";
 import type {
   ChatMessage,
@@ -176,11 +175,6 @@ export default function App(): React.JSX.Element {
       return null;
     }
   });
-  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
-  const [selectedTopicAnchor, setSelectedTopicAnchor] = useState<TopicAnchorPoint | null>(null);
-  const [popoverPosition, setPopoverPosition] = useState<PopoverPosition | null>(null);
-  const [popoverDragOffset, setPopoverDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [popoverFollowAnchor, setPopoverFollowAnchor] = useState(true);
   const [chatByGraph, setChatByGraph] = useState<Record<string, GraphChatState>>({});
   const [chatLoading, setChatLoading] = useState(false);
   const [chatThreadLoading, setChatThreadLoading] = useState(false);
@@ -245,7 +239,6 @@ export default function App(): React.JSX.Element {
   const [straightEdgeLinesDraft, setStraightEdgeLinesDraft] = useState<boolean>(readStoredStraightEdgeLines);
   const [themeModeDraft, setThemeModeDraft] = useState<ThemeMode>(readInitialThemeMode);
   const graphShellRef = useRef<HTMLDivElement | null>(null);
-  const topicPopoverRef = useRef<HTMLDivElement | null>(null);
   const deleteGraphModalRef = useRef<HTMLDivElement | null>(null);
   const deleteGraphCancelButtonRef = useRef<HTMLButtonElement | null>(null);
   const sessionDeleteModalRef = useRef<HTMLDivElement | null>(null);
@@ -262,7 +255,6 @@ export default function App(): React.JSX.Element {
   const importObsidianFolderInputRef = useRef<HTMLInputElement | null>(null);
   const quizModalRef = useRef<HTMLDivElement | null>(null);
   const quizCloseButtonRef = useRef<HTMLButtonElement | null>(null);
-  const popoverDragRef = useRef<{ pointerX: number; pointerY: number; startX: number; startY: number } | null>(null);
   const chatViewportRef = useRef<HTMLDivElement | null>(null);
   const chatComposerRef = useRef<HTMLTextAreaElement | null>(null);
   const sessionListRef = useRef<HTMLDivElement | null>(null);
@@ -488,6 +480,18 @@ export default function App(): React.JSX.Element {
     [activeGraphId, availableGraphs],
   );
   const activeGraphManualLayout = useMemo(() => readManualLayoutPositions(activeGraph), [activeGraph]);
+  const {
+    selectedTopicId,
+    setSelectedTopicId,
+    selectedTopicAnchor,
+    setSelectedTopicAnchor,
+    selectedTopic,
+    popoverPosition,
+    topicPopoverRef,
+    popoverDragRef,
+    handleSelectedTopicAnchorChange,
+    handleSelectTopic,
+  } = useTopicPopover({ activeGraph, isMobileViewport, graphShellRef });
   const currentChatState = useMemo<GraphChatState>(
     () => {
       if (!activeGraph) return { input: "", messages: [] };
@@ -509,18 +513,6 @@ export default function App(): React.JSX.Element {
       // Ignore localStorage write failures.
     }
   }, [activeGraph?.graph_id, activeSessionId]);
-
-  useEffect(() => {
-    if (!activeGraph) {
-      setSelectedTopicId(null);
-      setSelectedTopicAnchor(null);
-      return;
-    }
-    setSelectedTopicId((previous) => {
-      const stillExists = activeGraph.topics.some((topic) => topic.id === previous);
-      return stillExists ? previous : null;
-    });
-  }, [activeGraph]);
 
   useEffect(() => {
     setQuizSuccess(null);
@@ -662,11 +654,6 @@ export default function App(): React.JSX.Element {
     };
   }, [activeGraph?.graph_id, activeSessionId]);
 
-  const selectedTopic: Topic | null = useMemo(() => {
-    if (!activeGraph || !selectedTopicId) return null;
-    return activeGraph.topics.find((topic) => topic.id === selectedTopicId) ?? null;
-  }, [activeGraph, selectedTopicId]);
-
   const focusData = useMemo(() => computeFocusData(activeGraph, selectedTopicId), [activeGraph, selectedTopicId]);
   const graphSummary = useMemo(() => computeGraphSummary(activeGraph), [activeGraph]);
   const fallbackAssessment = useMemo(() => buildFallbackAssessment(activeGraph, copy), [activeGraph, copy]);
@@ -755,161 +742,6 @@ export default function App(): React.JSX.Element {
   );
   const showGraphLoadingState = loading && !activeGraph;
   const showGraphEmptyState = !loading && !activeGraph;
-
-  useEffect(() => {
-    setPopoverFollowAnchor(true);
-    setPopoverDragOffset({ x: 0, y: 0 });
-    if (!selectedTopicId) {
-      setSelectedTopicAnchor(null);
-      setPopoverPosition(null);
-    }
-  }, [selectedTopicId]);
-
-  const selectedTopicAnchorRef = useRef(selectedTopicAnchor);
-  selectedTopicAnchorRef.current = selectedTopicAnchor;
-  const popoverDragOffsetRef = useRef(popoverDragOffset);
-  popoverDragOffsetRef.current = popoverDragOffset;
-  const lastAnchorCommitAtRef = useRef(0);
-  const handleSelectedTopicAnchorChange = useCallback((next: TopicAnchorPoint | null) => {
-    const current = selectedTopicAnchorRef.current;
-    if (isMobileViewport && current && next) return;
-    if (!popoverFollowAnchor && current && next) return;
-    if (shouldKeepCurrentAnchor(current, next)) return;
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
-    const elapsed = now - lastAnchorCommitAtRef.current;
-    if (!shouldCommitAnchorUpdate(current, next, elapsed)) return;
-    lastAnchorCommitAtRef.current = now;
-    if (!current && next) {
-      setSelectedTopicAnchor(next);
-      const base = computePopoverPosition(next, graphShellRef.current, topicPopoverRef.current);
-      if (base) {
-        const drag = popoverDragOffsetRef.current;
-        const positioned = {
-          left: base.left + drag.x,
-          top: base.top + drag.y,
-          side: base.side,
-        } satisfies PopoverPosition;
-        setPopoverPosition((existing) => (samePopoverPosition(existing, positioned) ? existing : positioned));
-      }
-      setPopoverFollowAnchor(false);
-      return;
-    }
-    setSelectedTopicAnchor(next);
-  }, [isMobileViewport, popoverFollowAnchor]);
-
-  useLayoutEffect(() => {
-    if (!popoverFollowAnchor) return;
-    if (!selectedTopic || !selectedTopicAnchor) {
-      setPopoverPosition(null);
-      return;
-    }
-
-    const updatePosition = () => {
-      const anchor = selectedTopicAnchorRef.current;
-      if (!anchor) {
-        setPopoverPosition(null);
-        return;
-      }
-      const base = computePopoverPosition(anchor, graphShellRef.current, topicPopoverRef.current);
-      if (!base) {
-        setPopoverPosition(null);
-        return;
-      }
-      const drag = popoverDragOffsetRef.current;
-      const next = {
-        left: base.left + drag.x,
-        top: base.top + drag.y,
-        side: base.side,
-      } satisfies PopoverPosition;
-      setPopoverPosition((current) => (samePopoverPosition(current, next) ? current : next));
-      setPopoverFollowAnchor(false);
-    };
-
-    const frame = window.requestAnimationFrame(updatePosition);
-    const shell = graphShellRef.current;
-    if (!shell) {
-      window.cancelAnimationFrame(frame);
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(() => updatePosition());
-    resizeObserver.observe(shell);
-    window.addEventListener("resize", updatePosition);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", updatePosition);
-    };
-    // Recreate the observer only when the selected topic changes.
-    // Anchor coordinates are read through refs inside the callback.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [popoverFollowAnchor, selectedTopic?.id]);
-
-  // Update the popover position without recreating the observer.
-  useEffect(() => {
-    if (!selectedTopic || !selectedTopicAnchor) return;
-    if (!popoverFollowAnchor) return;
-    const base = computePopoverPosition(selectedTopicAnchor, graphShellRef.current, topicPopoverRef.current);
-    if (!base) return;
-    const next = {
-      left: base.left + popoverDragOffset.x,
-      top: base.top + popoverDragOffset.y,
-      side: base.side,
-    } satisfies PopoverPosition;
-    setPopoverPosition((current) => (samePopoverPosition(current, next) ? current : next));
-  }, [popoverFollowAnchor, selectedTopic, selectedTopicAnchor, popoverDragOffset]);
-
-  useEffect(() => {
-    function stopDrag(): void {
-      popoverDragRef.current = null;
-      document.body.style.userSelect = "";
-    }
-
-    function onPointerMove(event: PointerEvent): void {
-      const drag = popoverDragRef.current;
-      const shell = graphShellRef.current;
-      const popover = topicPopoverRef.current;
-      if (!drag || !shell || !popover) return;
-      const shellRect = shell.getBoundingClientRect();
-      const nextLeft = drag.startX + (event.clientX - drag.pointerX);
-      const nextTop = drag.startY + (event.clientY - drag.pointerY);
-      const boundedLeft = Math.max(16, Math.min(shellRect.width - popover.offsetWidth - 16, nextLeft));
-      const boundedTop = Math.max(16, Math.min(shellRect.height - popover.offsetHeight - 16, nextTop));
-      const blockedRects: FloatingRect[] = [];
-      const blockedSelectors = [".lightDock", ".lightWorkspaceWindow", ".lightChatWindow", ".floatingStatsContainer"];
-      for (const selector of blockedSelectors) {
-        const element = shell.querySelector(selector);
-        if (!(element instanceof HTMLElement)) continue;
-        blockedRects.push(toFloatingRect(shellRect, element.getBoundingClientRect()));
-      }
-      const candidateRect = {
-        x: boundedLeft,
-        y: boundedTop,
-        width: popover.offsetWidth,
-        height: popover.offsetHeight,
-      } satisfies FloatingRect;
-      setPopoverFollowAnchor(false);
-      document.body.style.userSelect = "none";
-      setPopoverPosition((current) => {
-        if (!canPlaceFloatingRect(candidateRect, blockedRects)) {
-          return current;
-        }
-        const next = {
-          left: boundedLeft,
-          top: boundedTop,
-          side: current?.side ?? "right",
-        } satisfies PopoverPosition;
-        return samePopoverPosition(current, next) ? current : next;
-      });
-    }
-
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", stopDrag);
-    return () => {
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", stopDrag);
-    };
-  }, [selectedTopicAnchor]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1790,11 +1622,6 @@ export default function App(): React.JSX.Element {
     !isMobileViewport
     && viewportWidth - overlayLeftOffset - overlayRightOffset < COMPACT_TOP_OVERLAY_THRESHOLD;
 
-  const handleSelectTopic = useCallback((topicId: string | null, anchor: TopicAnchorPoint | null) => {
-    setSelectedTopicId(topicId);
-    setSelectedTopicAnchor(anchor);
-  }, []);
-
   const openSidebar = useCallback(() => {
     if (sidebarCloseTimerRef.current) {
       window.clearTimeout(sidebarCloseTimerRef.current);
@@ -2009,8 +1836,6 @@ export default function App(): React.JSX.Element {
         sendChat={sendChat}
         applyLoadingMessageId={applyLoadingMessageId}
         applyProposalFromMessage={applyProposalFromMessage}
-        summarizePreviewCounts={(proposal) => summarizePreviewCounts(proposal, copy)}
-        summarizeTopOperations={(proposal) => summarizeTopOperations(proposal, copy)}
         setSessionDeleteConfirm={setSessionDeleteConfirm}
         applyError={applyError}
         assistantTemplates={assistantTemplates}

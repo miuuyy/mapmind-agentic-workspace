@@ -23,6 +23,9 @@ import { useModalAccessibility } from "../lib/useModalAccessibility";
 import { GraphCanvas } from "./GraphCanvas";
 import type { TopicAnchorPoint } from "./GraphCanvas";
 import { AssistantModelMenuTrigger, LightChatWindow, LightWorkspaceWindow, TopicAssetModal } from "./WorkspaceShellAuxWindows";
+import { AssistantComposer } from "./assistant/AssistantComposer";
+import { AssistantSessionList } from "./assistant/AssistantSessionList";
+import { AssistantThread } from "./assistant/AssistantThread";
 import { ClewLoader } from "./ClewLoader";
 import { TopStatsOverlay } from "./TopStatsOverlay";
 import type {
@@ -195,8 +198,6 @@ type WorkspaceShellProps = {
   sendChat: (overridePrompt?: string, options?: { hiddenUserMessage?: boolean; baseMessages?: ChatMessage[] }) => Promise<void>;
   applyLoadingMessageId: string | null;
   applyProposalFromMessage: (messageId: string, proposal: ProposalGenerateResponse) => Promise<void>;
-  summarizePreviewCounts: (proposal: ProposalGenerateResponse) => Array<{ label: string; value: number }>;
-  summarizeTopOperations: (proposal: ProposalGenerateResponse) => Array<{ label: string; target: string }>;
   setSessionDeleteConfirm: StateSetter<{ sessionId: string; title: string } | null>;
   applyError: string | null;
   assistantTemplates: AssistantTemplate[];
@@ -320,8 +321,6 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     sendChat,
     applyLoadingMessageId,
     applyProposalFromMessage,
-    summarizePreviewCounts,
-    summarizeTopOperations,
     setSessionDeleteConfirm,
     applyError,
     assistantTemplates,
@@ -1415,333 +1414,52 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                 </div>
               </div>
             </div>
-            <div className="sessionListWrap" ref={sessionListWrapRef}>
-              <div
-                className="sessionList"
-                ref={sessionListRef}
-                onScroll={() => {
-                  const el = sessionListRef.current;
-                  const wrap = sessionListWrapRef.current;
-                  if (!el || !wrap) return;
-                  wrap.classList.toggle("scrolledLeft", el.scrollLeft > 4);
-                  wrap.classList.toggle("scrolledRight", el.scrollLeft >= el.scrollWidth - el.clientWidth - 4);
-                }}
-                onMouseDown={(e) => {
-                  if (!sessionListRef.current) return;
-                  sessionDragRef.current = { startX: e.clientX, scrollLeft: sessionListRef.current.scrollLeft };
-                }}
-                onMouseMove={(e) => {
-                  if (!sessionDragRef.current || !sessionListRef.current) return;
-                  const dx = e.clientX - sessionDragRef.current.startX;
-                  sessionListRef.current.scrollLeft = sessionDragRef.current.scrollLeft - dx;
-                }}
-                onMouseUp={() => { sessionDragRef.current = null; }}
-                onMouseLeave={() => { sessionDragRef.current = null; }}
-                onWheel={(e) => {
-                  if (!sessionListRef.current) return;
-                  if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
-                    e.preventDefault();
-                    sessionListRef.current.scrollLeft += e.deltaY;
-                  }
-                }}
-              >
-                <button
-                  className={`sessionItem ${!activeSessionId ? "sessionItemActive" : ""}`}
-                  onClick={() => setActiveSessionId(null)}
-                  type="button"
-                >
-                  <span className="sessionItemLabel">{copy.sessions.general}</span>
-                  <span className="sessionItemBadge">
-                    {generalSession?.message_count ?? 0}
-                  </span>
-                </button>
-                {topicSessions.map((session) => (
-                  <div
-                    key={session.session_id}
-                    className={`sessionItemGroup ${activeSessionId === session.session_id ? "sessionItemGroupActive" : ""}`}
-                  >
-                    <button
-                      className="sessionItemInline"
-                      onClick={() => setActiveSessionId(session.session_id)}
-                      type="button"
-                    >
-                      <span className="sessionItemLabel">{session.title ?? session.topic_id}</span>
-                      <span className="sessionItemBadge">{session.message_count}</span>
-                    </button>
-                    <button
-                      className="sessionDeleteBtn"
-                      title={copy.sessions.deleteSession}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        setSessionDeleteConfirm({ sessionId: session.session_id, title: session.title ?? session.topic_id ?? copy.sessions.fallbackSessionTitle });
-                      }}
-                      aria-label={copy.sessions.deleteSessionAria(session.title ?? session.topic_id ?? copy.sessions.fallbackSessionTitle)}
-                      type="button"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                {selectedTopic && !chatSessions.find((session) => session.topic_id === selectedTopicId) ? (
-                  <button
-                    className="sessionItem sessionItemNew"
-                    type="button"
-                    onClick={() => { void createTopicSession(); }}
-                  >
-                    {copy.sessions.learnTopic(selectedTopic.title)}
-                  </button>
-                ) : null}
-              </div>
-            </div>
+            <AssistantSessionList
+              copy={copy}
+              sessionListWrapRef={sessionListWrapRef}
+              sessionListRef={sessionListRef}
+              sessionDragRef={sessionDragRef}
+              activeSessionId={activeSessionId}
+              setActiveSessionId={setActiveSessionId}
+              generalSession={generalSession}
+              topicSessions={topicSessions}
+              setSessionDeleteConfirm={setSessionDeleteConfirm}
+              chatSessions={chatSessions}
+              selectedTopic={selectedTopic}
+              selectedTopicId={selectedTopicId}
+              createTopicSession={createTopicSession}
+            />
 
             <div className="sessionShadow" />
-            <div ref={chatViewportRef} className="assistantThread">
-              {chatThreadLoading ? (
-                <div className="assistantHello assistantHelloLoading" role="status" aria-label="Loading chat thread">
-                  <ClewLoader size={56} />
-                </div>
-              ) : null}
-              {currentChatState.messages.length === 0 && !chatThreadLoading ? (
-                <div className="assistantHello">
-                  <div className="assistantHelloTitle">{copy.sessions.helloTitle}</div>
-                  <div className="assistantHelloCopy">{copy.sessions.helloCopy}</div>
-                </div>
-              ) : null}
-              {visibleMessages.length > 0 ? (
-                visibleMessages.map((message) => {
-                  const proposal = message.proposal;
-                  const proposalCounts = proposal ? summarizePreviewCounts(proposal) : [];
-                  const proposalHighlights = proposal ? summarizeTopOperations(proposal) : [];
-                  return (
-                    <div key={message.id} className={`chatMessage chatMessage-${message.role}`}>
-                      <div className="chatBubble">
-                        <div className="chatCopy">{renderDisplayText(message.content)}</div>
-                        {message.inline_quiz ? (() => {
-                          const quiz = message.inline_quiz;
-                          const answered = quiz.answered_index != null;
-                          return (
-                            <div className="inlineQuizCard">
-                              <div className="inlineQuizQuestion">{renderDisplayText(quiz.question)}</div>
-                              <div className="inlineQuizChoices">
-                                {quiz.choices.map((choice: string, idx: number) => {
-                                  let cls = "inlineQuizChoice";
-                                  if (answered) {
-                                    if (idx === quiz.correct_index) cls += " inlineQuizCorrect";
-                                    else if (idx === quiz.answered_index) cls += " inlineQuizWrong";
-                                    else cls += " inlineQuizDimmed";
-                                  }
-                                  return (
-                                    <button
-                                      key={idx}
-                                      className={cls}
-                                      type="button"
-                                      disabled={answered || chatLoading}
-                                      onClick={() => {
-                                        const answeredMessages = currentChatState.messages.map((entry) =>
-                                          entry.id === message.id && entry.inline_quiz
-                                            ? { ...entry, inline_quiz: { ...entry.inline_quiz, answered_index: idx } }
-                                            : entry,
-                                        );
-                                        updateCurrentChatState((prev) => ({
-                                          ...prev,
-                                          messages: answeredMessages,
-                                        }));
-                                      }}
-                                    >
-                                      {renderDisplayText(choice)}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })() : null}
-                        {message.role === "assistant" && message.fallback_used ? (
-                          <div className="chatMetaRow">
-                            <span className="badge badge-yellow">{copy.sessions.fallbackUsed}</span>
-                          </div>
-                        ) : null}
-                        {message.planning_status ? (
-                          <div className="proposalInlineCard proposalInlinePending">
-                            <div className="proposalInlinePendingRow">
-                              <div className="proposalInlinePendingLabel">{message.planning_status}</div>
-                              <div className="proposalInlinePendingDots" aria-hidden="true">
-                                <span />
-                                <span />
-                                <span />
-                              </div>
-                            </div>
-                          </div>
-                        ) : null}
-                        {message.planning_error ? (
-                          <div className="inlineNotice inlineNoticeError">{message.planning_error}</div>
-                        ) : null}
-                        {proposal ? (
-                          <div className="proposalInlineCard">
-                            <div className="proposalInlineHead">
-                              <div>
-                                <div className="proposalInlineTitle">{proposal.display.summary}</div>
-                                {proposal.proposal_envelope.assistant_message ? (
-                                  <div className="mutedSmall">{proposal.proposal_envelope.assistant_message}</div>
-                                ) : null}
-                              </div>
-                              <button
-                                className={`proposalAddButton${message.proposal_applied ? " proposalAddButtonApplied" : ""}`}
-                                disabled={
-                                  applyLoadingMessageId === message.id ||
-                                  message.proposal_applied ||
-                                  !proposal.apply_plan.validation.ok
-                                }
-                                onClick={() => void applyProposalFromMessage(message.id, proposal)}
-                                type="button"
-                                aria-label={message.proposal_applied ? copy.sessions.proposalApplied : copy.sessions.addProposalToGraph}
-                                title={message.proposal_applied ? copy.sessions.applied : copy.sessions.addProposalToGraph}
-                              >
-                                {applyLoadingMessageId === message.id ? "…" : message.proposal_applied ? <span className="proposalAppliedMark" aria-hidden="true"><Check size={12} weight="bold" /></span> : "+"}
-                              </button>
-                            </div>
-                            {proposalCounts.length > 0 ? (
-                              <div className="previewStatGrid">
-                                {proposalCounts.map((item) => (
-                                  <div key={item.label} className="previewStatCard">
-                                    <strong>{item.value}</strong>
-                                    <span>{item.label}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
-                            {proposalHighlights.length > 0 ? (
-                              <div className="proposalMiniList">
-                                {proposalHighlights.map((item, index) => (
-                                  <button
-                                    key={`${item.label}-${item.target}-${index}`}
-                                    className="proposalMiniItem"
-                                    type="button"
-                                    onClick={() => {
-                                      updateCurrentChatState((current) => ({
-                                        ...current,
-                                        input: `Expand from topic ${item.target} to topic: `,
-                                      }));
-                                      window.requestAnimationFrame(() => chatComposerRef.current?.focus());
-                                    }}
-                                  >
-                                    <span>{item.target}</span>
-                                    <span className="badge badge-gray">{item.label}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            ) : null}
-                            {proposal.apply_plan.validation.errors.length > 0 ? (
-                              <div className="stackCompact">
-                                {proposal.apply_plan.validation.errors.map((entry) => (
-                                  <div key={entry} className="inlineNotice inlineNoticeError">
-                                    {entry}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
-                            {proposal.apply_plan.validation.warnings.length > 0 ? (
-                              <div className="stackCompact">
-                                {proposal.apply_plan.validation.warnings.map((entry) => (
-                                  <div key={entry} className="inlineNotice inlineNoticeWarn">
-                                    {entry}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : null}
-              {chatLoading && !hasInlinePlanningWidget ? (
-                <div className="chatMessage chatMessage-assistant">
-                  <div className="chatBubble chatBubbleLoading">
-                    <span className="chatTypingDot" />
-                    <span className="chatTypingDot" />
-                    <span className="chatTypingDot" />
-                  </div>
-                </div>
-              ) : null}
-            </div>
+            <AssistantThread
+              copy={copy}
+              chatViewportRef={chatViewportRef}
+              chatThreadLoading={chatThreadLoading}
+              currentChatState={currentChatState}
+              visibleMessages={visibleMessages}
+              chatLoading={chatLoading}
+              hasInlinePlanningWidget={hasInlinePlanningWidget}
+              applyLoadingMessageId={applyLoadingMessageId}
+              applyProposalFromMessage={applyProposalFromMessage}
+              updateCurrentChatState={updateCurrentChatState}
+              chatComposerRef={chatComposerRef}
+            />
 
-            <div className="assistantComposerWrap">
-              {chatError ? <div className="inlineNotice inlineNoticeError">{chatError}</div> : null}
-              {chatSessionsError ? <div className="inlineNotice inlineNoticeError">{chatSessionsError}</div> : null}
-              {applyError ? <div className="inlineNotice inlineNoticeError">{applyError}</div> : null}
-              <div className="assistantTemplates">
-                <button
-                  className={`assistantTemplate webGroundingToggle ${composerUseGrounding ? "active" : ""}`}
-                  onClick={() => setComposerUseGrounding((current) => !current)}
-                  title={copy.sessions.groundingToggle}
-                  type="button"
-                >
-                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
-                  Web
-                </button>
-                {assistantTemplates.map((template) => (
-                  <button
-                    key={template.id}
-                    className="assistantTemplate"
-                    onClick={() => {
-                      updateCurrentChatState((current) => ({
-                        ...current,
-                        input: template.value,
-                      }));
-                      window.requestAnimationFrame(() => chatComposerRef.current?.focus());
-                    }}
-                    type="button"
-                  >
-                    {template.label}
-                  </button>
-                ))}
-              </div>
-              <div className="assistantComposer">
-                <textarea
-                  ref={chatComposerRef}
-                  className="assistantInput"
-                  value={currentChatState.input}
-                  onChange={(event) =>
-                    updateCurrentChatState((current) => ({
-                      ...current,
-                      input: event.target.value,
-                    }))
-                  }
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && !event.shiftKey) {
-                      event.preventDefault();
-                      void sendChat();
-                    }
-                  }}
-                  placeholder={copy.sessions.composerPlaceholder}
-                />
-                <button
-                  className="assistantSendButton assistantSendButtonIcon"
-                  disabled={chatLoading || chatThreadLoading || !currentChatState.input.trim()}
-                  onClick={() => void sendChat()}
-                  type="button"
-                >
-                  {chatLoading ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
-                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25"></circle>
-                      <path d="M12 2a10 10 0 0 1 10 10"></path>
-                    </svg>
-                  ) : (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 19V5"></path>
-                      <path d="M5 12L12 5L19 12"></path>
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
+            <AssistantComposer
+              copy={copy}
+              chatError={chatError}
+              chatSessionsError={chatSessionsError}
+              applyError={applyError}
+              composerUseGrounding={composerUseGrounding}
+              setComposerUseGrounding={setComposerUseGrounding}
+              assistantTemplates={assistantTemplates}
+              updateCurrentChatState={updateCurrentChatState}
+              chatComposerRef={chatComposerRef}
+              currentChatState={currentChatState}
+              chatLoading={chatLoading}
+              chatThreadLoading={chatThreadLoading}
+              sendChat={() => void sendChat()}
+            />
           </aside>
           ) : null}
 
