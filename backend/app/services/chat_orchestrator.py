@@ -107,11 +107,6 @@ class ChatOrchestratorService:
                 if isinstance(candidate, dict):
                     result_payload = candidate
                     break
-        except ProposalPlannerError as exc:
-            raise ChatOrchestratorError(
-                f"proposal generation failed: {exc}",
-                diagnostics=getattr(exc, "diagnostics", None),
-            ) from exc
         except Exception as exc:
             raise ChatOrchestratorError(
                 f"proposal generation failed: {exc}",

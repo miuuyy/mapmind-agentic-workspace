@@ -7,8 +7,9 @@ import unittest
 from app.llm.base import LLMProviderError, LLMStructuredResponse, LLMStructuredStreamChunk
 from app.models.domain import ProposalGenerateRequest
 from app.services.bootstrap import build_seed_workspace
-from app.services.proposal_planner import ProposalPlanner, ProposalPlannerError
 from app.services.proposal_normalizer import ProposalNormalizer
+from app.services.proposal_planner import ProposalPlanner, ProposalPlannerError
+from app.services.proposal_repairer import ProposalRepairer
 
 
 class _ProviderStub:
@@ -57,6 +58,7 @@ class ProposalPlannerRuntimeTests(unittest.TestCase):
         planner._settings = SimpleNamespace(default_model="gemini-3-pro-preview", planner_max_output_tokens=200000)
         planner._provider = _ProviderStub(responses)
         planner._normalizer = ProposalNormalizer()
+        planner._repairer = ProposalRepairer()
         return planner
 
     def _valid_expand_response(self):

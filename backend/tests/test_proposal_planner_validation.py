@@ -4,7 +4,9 @@ import unittest
 
 from app.models.domain import GraphOperation, GraphProposalEnvelope, ProposalEdge, ProposalIntent, ProposalSourceBundle, ProposalZone
 from app.services.bootstrap import build_seed_workspace
+from app.services.proposal_normalizer import ProposalNormalizer
 from app.services.proposal_planner import ProposalPlanner, ProposalPlannerError
+from app.services.proposal_repairer import ProposalRepairer
 from app.services.proposal_validator import ProposalValidator
 
 
@@ -12,6 +14,8 @@ class ProposalPlannerValidationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.graph = next(graph for graph in build_seed_workspace().graphs if graph.graph_id == "mathematics-demo")
         self.planner = ProposalPlanner.__new__(ProposalPlanner)
+        self.planner._repairer = ProposalRepairer()
+        self.planner._normalizer = ProposalNormalizer()
         self.validator = ProposalValidator()
 
     def _proposal(self, *operations: GraphOperation) -> GraphProposalEnvelope:

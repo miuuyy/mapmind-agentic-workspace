@@ -10,7 +10,6 @@ from typing import Any
 
 from app.models.domain import (
     Edge,
-    QuizAttempt,
     StudyGraph,
     Topic,
     WorkspaceDocument,

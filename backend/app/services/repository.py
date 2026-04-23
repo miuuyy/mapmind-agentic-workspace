@@ -15,19 +15,14 @@ from app.models.domain import Artifact, ChatMessage, CreateGraphRequest, Edge, G
 from app.services.obsidian_export import build_obsidian_export_package
 from app.services.repository_config import apply_workspace_config_update
 from app.services.repository_storage import (
-    apply_workspace_secrets,
     ensure_seed_snapshot,
     init_repository_storage,
     insert_snapshot,
     list_snapshot_records,
     load_current_workspace,
     load_workspace_snapshot,
-    migrate_workspace_secrets,
-    normalized_secret_value,
     purge_graph_runtime_state,
     save_workspace_secrets,
-    snapshot_workspace_document,
-    workspace_document_from_snapshot_row,
 )
 from app.services.zone_style_service import resolve_zone_style
 
@@ -518,7 +513,7 @@ class GraphRepository:
         workspace.active_graph_id = graph.graph_id
 
         with self._connect() as conn:
-            self._purge_graph_runtime_state(conn, graph.graph_id)
+            purge_graph_runtime_state(conn, graph.graph_id)
             snapshot_id = self._insert_snapshot(
                 conn,
                 workspace,
@@ -538,7 +533,7 @@ class GraphRepository:
         if workspace.active_graph_id == graph_id:
             workspace.active_graph_id = workspace.graphs[0].graph_id if workspace.graphs else None
         with self._connect() as conn:
-            self._purge_graph_runtime_state(conn, graph_id)
+            purge_graph_runtime_state(conn, graph_id)
             snapshot_id = self._insert_snapshot(
                 conn,
                 workspace,
@@ -616,7 +611,7 @@ class GraphRepository:
         workspace.graphs.append(graph)
         workspace.active_graph_id = graph.graph_id
         with self._connect() as conn:
-            self._purge_graph_runtime_state(conn, graph.graph_id)
+            purge_graph_runtime_state(conn, graph.graph_id)
             snapshot_id = self._insert_snapshot(
                 conn,
                 workspace,
@@ -772,30 +767,6 @@ class GraphRepository:
         if not any(topic.id == normalized for topic in graph.topics):
             raise ValueError(f"topic {normalized} not found in graph {graph_id}")
         return normalized
-
-    @staticmethod
-    def _purge_graph_runtime_state(conn: sqlite3.Connection, graph_id: str) -> None:
-        purge_graph_runtime_state(conn, graph_id)
-
-    @staticmethod
-    def _snapshot_workspace_document(workspace: WorkspaceDocument) -> WorkspaceDocument:
-        return snapshot_workspace_document(workspace)
-
-    def _workspace_document_from_snapshot_row(self, conn: sqlite3.Connection, row: sqlite3.Row) -> WorkspaceDocument:
-        return workspace_document_from_snapshot_row(conn, row)
-
-    def _apply_workspace_secrets(self, conn: sqlite3.Connection, workspace: WorkspaceDocument) -> None:
-        apply_workspace_secrets(conn, workspace)
-
-    def _save_workspace_secrets(self, conn: sqlite3.Connection, workspace: WorkspaceDocument) -> None:
-        save_workspace_secrets(conn, workspace)
-
-    def _migrate_workspace_secrets(self, conn: sqlite3.Connection) -> None:
-        migrate_workspace_secrets(conn)
-
-    @staticmethod
-    def _normalized_secret_value(value: object) -> str | None:
-        return normalized_secret_value(value)
 
     def _apply_operation(
         self,

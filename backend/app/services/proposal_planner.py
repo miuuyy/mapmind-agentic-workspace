@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from collections import Counter
 from typing import Any, Iterable
 from uuid import uuid4
 
@@ -98,27 +99,7 @@ class ProposalPlanner:
                 collected_text += delta
                 yield {"type": "delta", "text": delta}
         draft = self._coerce_proposal_draft_from_text(collected_text, finish_reason=finish_reason)
-        try:
-            op_count = collected_text.count('"op_id"')
-            usage_str = ""
-            if usage_metadata:
-                try:
-                    if hasattr(usage_metadata, "model_dump"):
-                        usage_str = str(usage_metadata.model_dump(mode="json"))
-                    else:
-                        usage_str = str(usage_metadata)
-                except Exception:
-                    usage_str = str(usage_metadata)
-            logger.info(f"Stream summary: {len(collected_text)} chars, ~{op_count} operations")
-            logger.info(f"Stream usage: {usage_str}")
-            import re as _re
-            op_ids = _re.findall(r'"op_id"\s*:\s*"([^"]+)"', collected_text)
-            from collections import Counter
-            dupes = {k: v for k, v in Counter(op_ids).items() if v > 2}
-            if dupes:
-                logger.warning(f"Stream repetition detected! Duplicate op_ids: {dupes}")
-        except Exception:
-            pass
+        self._log_stream_diagnostics(collected_text, usage_metadata)
         try:
             result = self._finalize_proposal(
                 graph=graph,
@@ -373,18 +354,6 @@ class ProposalPlanner:
         blocks = [block.strip() for block in re.split(r"\n\s*\n", sanitized_raw_text) if block.strip()]
         return len(blocks)
 
-    def _extract_urls(self, raw_text: str) -> list[str]:
-        urls = [match.group(1).rstrip(".,;") for match in MARKDOWN_LINK_URL_RE.finditer(raw_text)]
-        urls.extend(match.group(0).rstrip(".,;") for match in URL_RE.finditer(raw_text))
-        unique: list[str] = []
-        seen: set[str] = set()
-        for url in urls:
-            if url in seen:
-                continue
-            seen.add(url)
-            unique.append(url)
-        return unique
-
     def _extract_json_candidate(self, text: str) -> str | None:
         cleaned = text.strip()
         fenced = re.search(r"```(?:json)?\s*(\{.*\})\s*```", cleaned, re.DOTALL)
@@ -402,6 +371,21 @@ class ProposalPlanner:
         if previous_text and current_text.startswith(previous_text):
             return current_text[len(previous_text) :]
         return current_text
+
+    def _log_stream_diagnostics(self, collected_text: str, usage_metadata: Any) -> None:
+        op_count = collected_text.count('"op_id"')
+        if hasattr(usage_metadata, "model_dump"):
+            usage_str = str(usage_metadata.model_dump(mode="json"))
+        elif usage_metadata:
+            usage_str = str(usage_metadata)
+        else:
+            usage_str = ""
+        logger.info(f"Stream summary: {len(collected_text)} chars, ~{op_count} operations")
+        logger.info(f"Stream usage: {usage_str}")
+        op_ids = re.findall(r'"op_id"\s*:\s*"([^"]+)"', collected_text)
+        dupes = {op_id: count for op_id, count in Counter(op_ids).items() if count > 2}
+        if dupes:
+            logger.warning(f"Stream repetition detected! Duplicate op_ids: {dupes}")
 
     def _invalid_json_error(
         self,
@@ -518,8 +502,7 @@ class ProposalPlanner:
                 grounding_used=bool(request.use_grounding),
             ),
         )
-        repairer = getattr(self, "_repairer", None) or ProposalRepairer()
-        repairer.materialize_missing_zones(proposal_envelope, graph)
+        self._repairer.materialize_missing_zones(proposal_envelope, graph)
         self._repair_zone_topic_refs(proposal_envelope, graph)
         apply_plan = self._normalizer.normalize(proposal_envelope, graph=graph)
         proposal_envelope.warnings = list(apply_plan.validation.warnings)
@@ -546,10 +529,8 @@ class ProposalPlanner:
         graph: StudyGraph,
         proposal: GraphProposalEnvelope,
     ) -> None:
-        repairer = getattr(self, "_repairer", None) or ProposalRepairer()
-        repairer.materialize_missing_zones(proposal, graph)
-        normalizer = getattr(self, "_normalizer", None) or ProposalNormalizer()
-        apply_plan = normalizer.normalize(proposal, graph=graph)
+        self._repairer.materialize_missing_zones(proposal, graph)
+        apply_plan = self._normalizer.normalize(proposal, graph=graph)
         proposal.warnings = list(apply_plan.validation.warnings)
         if not apply_plan.validation.ok:
             diagnostics: dict[str, Any] = {

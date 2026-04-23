@@ -318,7 +318,7 @@ def _sanitize_path_segment(value: str, *, fallback: str) -> str:
 
 
 def _titleize_relation(relation: str) -> str:
-    return relation.replace("_", " ").title()
+    return relation.title()
 
 
 def _yaml_string(value: str) -> str:

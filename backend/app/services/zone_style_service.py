@@ -3,7 +3,7 @@ from __future__ import annotations
 from hashlib import sha1
 import re
 
-from app.models.domain import GraphProposalEnvelope, StudyGraph, WorkspaceDocument, Zone
+from app.models.domain import StudyGraph, WorkspaceDocument, Zone
 
 
 _HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
@@ -25,36 +25,6 @@ _ZONE_STYLE_PALETTE: tuple[tuple[str, float], ...] = (
     ("#10b981", 0.65),
     ("#a855f7", 0.73),
 )
-
-
-def assign_proposal_zone_styles(envelope: GraphProposalEnvelope, graph: StudyGraph) -> None:
-    existing_by_id = {zone.id: zone for zone in graph.zones}
-    occupied_styles = {
-        (zone.color, _normalized_intensity(zone.intensity))
-        for zone in graph.zones
-        if _is_hex_color(zone.color)
-    }
-    assigned_new_zone_styles: dict[str, tuple[str, float]] = {}
-
-    for operation in envelope.operations:
-        if operation.zone is None:
-            continue
-        existing = existing_by_id.get(operation.zone.id)
-        if existing is not None and _is_hex_color(existing.color):
-            operation.zone.color = existing.color
-            operation.zone.intensity = existing.intensity
-            occupied_styles.add((existing.color, _normalized_intensity(existing.intensity)))
-            continue
-        style = assigned_new_zone_styles.get(operation.zone.id)
-        if style is None:
-            style = _allocate_style(
-                graph_id=graph.graph_id,
-                zone_id=operation.zone.id,
-                occupied_styles=occupied_styles,
-            )
-            assigned_new_zone_styles[operation.zone.id] = style
-            occupied_styles.add((style[0], _normalized_intensity(style[1])))
-        operation.zone.color, operation.zone.intensity = style
 
 
 def resolve_zone_style(zone_id: str, zone_map: dict[str, Zone], *, graph_id: str) -> tuple[str, float]:
