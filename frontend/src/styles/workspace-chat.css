@@ -1594,9 +1594,9 @@ select.input {
 }
 
 .inlineNoticeError {
-  border-color: rgba(255, 69, 58, 0.18);
-  background: rgba(255, 69, 58, 0.08);
-  color: rgba(255, 184, 177, 0.96);
+  border-color: rgba(255, 69, 58, 0.28);
+  background: rgba(255, 69, 58, 0.12);
+  color: var(--red);
 }
 
 .inlineNoticeNeutral {

@@ -1488,6 +1488,25 @@ body {
   box-shadow: 0 10px 24px rgba(30, 41, 59, 0.08);
 }
 
+/* Horizontal variant — same dock, rotated 90°: used at the bottom of narrow
+   viewports instead of the custom three-tab bar we had before. Identical
+   chrome (bg, blur, border, shadow) and identical button behaviour
+   (.lightDockButton / .lightDockButtonActive) so the mobile dock is 1:1
+   with desktop, just laid along the other axis. */
+.lightDockHorizontal {
+  position: fixed;
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  flex-direction: row;
+  width: auto;
+  max-width: calc(100% - 24px);
+  padding: 9px 6px;
+  z-index: 50;
+}
+
 .lightDockGrip {
   width: 100%;
   height: 32px;

@@ -1,5 +1,5 @@
 import React from "react";
-import { BookBookmark, BugBeetle, CaretDown, CaretLeft, CaretRight, ChatCircleDots, Check, CrosshairSimple, DownloadSimple, GearSix, PencilSimple, SquaresFour } from "@phosphor-icons/react";
+import { BookBookmark, BugBeetle, CaretDown, CaretLeft, CaretRight, ChatCircleDots, Check, CrosshairSimple, DownloadSimple, GearSix, List, PencilSimple, SquaresFour } from "@phosphor-icons/react";
 
 import { APP_NAME, ASSISTANT_MIN_WIDTH, type AuthSessionPayload, type GraphChatState, type ThemeMode, type WorkspaceSurfacePayload } from "../lib/appContracts";
 import { API_BASE } from "../lib/api";
@@ -1506,20 +1506,31 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
         </div>
 
         {isMobileViewport ? (
-          <div className="mobileDock">
+          (() => {
+            const workspaceActive = !assistantOpen && !mobileMenuOpen && !isSettingsOpen;
+            return (
+          <div className="lightDock lightDockHorizontal">
             <button
-              className="mobileDockItem mobileDockItemActive"
+              className={`lightDockButton ${workspaceActive ? "lightDockButtonActive" : ""}`}
               type="button"
+              aria-label={copy.shell.workspace}
+              title={copy.shell.workspace}
               onClick={() => {
+                if (modalSurfaceLocked) {
+                  closeOverlaySurfaces();
+                }
                 setMobileMenuOpen(false);
+                setAssistantWidth(0);
               }}
             >
-              <span className="mobileDockLabel">{copy.shell.workspace}</span>
+              <SquaresFour size={28} weight={getDockIconWeight(workspaceActive)} />
             </button>
             {activeGraph ? (
               <button
-                className={`mobileDockItem mobileDockItemChat ${assistantOpen ? "mobileDockItemActive" : ""}`}
+                className={`lightDockButton ${assistantOpen ? "lightDockButtonActive" : ""}`}
                 type="button"
+                aria-label={copy.shell.chat}
+                title={copy.shell.chat}
                 onClick={() => {
                   if (modalSurfaceLocked) {
                     closeOverlaySurfaces();
@@ -1534,52 +1545,21 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   });
                 }}
               >
-                <span className="mobileDockLabel">{copy.shell.chat}</span>
+                <ChatCircleDots size={28} weight={getDockIconWeight(assistantOpen)} />
               </button>
             ) : null}
             <button
-              className={`mobileDockItem ${mobileMenuOpen ? "mobileDockItemActive" : ""}`}
+              className={`lightDockButton ${isSettingsOpen ? "lightDockButtonActive" : ""}`}
               type="button"
-              onClick={() => {
-                if (modalSurfaceLocked) {
-                  closeOverlaySurfaces();
-                }
-                setMobileMenuOpen((current) => !current);
-              }}
+              aria-label={copy.shell.configuration}
+              title={copy.shell.configuration}
+              onClick={openConfigurationSettings}
             >
-              <span className="mobileDockLabel">{copy.shell.menu}</span>
+              <GearSix size={28} weight={getDockIconWeight(isSettingsOpen)} />
             </button>
           </div>
-        ) : null}
-        {isMobileViewport && mobileMenuOpen ? (
-          <>
-            <button
-              className="mobileMenuBackdrop"
-              type="button"
-              aria-label={copy.settingsPanel.closeSettings}
-              onClick={() => setMobileMenuOpen(false)}
-            />
-            <div className="mobileMenuSheet" role="dialog" aria-modal="true" aria-label={copy.shell.mobileMenuAria}>
-              <div className="mobileMenuSheetHeader">
-                <div className="sidebarAvatar">{sessionUser?.avatar_url ? <img src={sessionUser.avatar_url} alt="" className="sidebarAvatarImg" /> : userInitials(sessionUser?.name)}</div>
-                <div className="mobileMenuSheetMeta">
-                  <span className="mobileMenuSheetName">{sessionUser?.name ?? copy.shell.authenticatedUser}</span>
-                  <span className="mobileMenuSheetEmail">{sessionUser?.email ?? copy.shell.noEmail}</span>
-                </div>
-                <button
-                  className="mobileMenuCloseButton"
-                  type="button"
-                  aria-label={copy.settingsPanel.closeSettings}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  ✕
-                </button>
-              </div>
-              <button className="sidebarAccountPopoverItem" type="button" onClick={openConfigurationSettings}>
-                <GearSix size={14} weight="bold" className="sidebarIcon" /> {copy.shell.configuration}
-              </button>
-            </div>
-          </>
+            );
+          })()
         ) : null}
       </main>
       {topicAssetDialog ? (

@@ -1033,6 +1033,16 @@
   transform: none !important;
 }
 
+/* Absolute EOF lock: light snapshot rows should not change tone on hover */
+:root[data-theme="light"] .settingsSnapshotsCard .listItem:hover,
+:root[data-theme="light"] .snapshotsCard .listItem:hover {
+  background: rgba(250, 249, 246, 0.98) !important;
+  border-color: rgba(233, 225, 215, 0.96) !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
 :root[data-theme="light"] .lightWorkspaceWindow,
 :root[data-theme="light"] .lightWorkspaceWindowBody,
 :root[data-theme="light"] .lightWorkspaceExplorerBody {
@@ -2283,12 +2293,15 @@ button.btn.btnDanger,
   box-shadow: none !important;
 }
 
-/* Red badge (for snapshot kind labels like "Node started"): solid muted red
-   so it still reads as attention but doesn't feel translucent. */
+/* Red badge — brand orange pill matching the Start Closure Quiz button.
+   Uses the --mm-accent-green tokens (which resolve to brand orange #d97757
+   in light theme) so the Failed badge sits in the same visual family as
+   primary brand actions instead of pulling the eye with pure red. */
 :root[data-theme="light"] .badge-red {
-  background: #f9e6e3 !important;
-  border: 1px solid #e6b8b0 !important;
-  color: #a63a2f !important;
+  background: #d97757 !important;
+  border: 1px solid #d97757 !important;
+  color: #fffaf6 !important;
+  font-weight: 600 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-shadow: none !important;
@@ -2409,14 +2422,18 @@ button.btn.btnDanger,
   order: 2 !important;
 }
 
-/* Hint styling — kept; dark-theme-core already declares order: 1 for both
-   themes, which survives because no later rule resets it. */
+/* Hint styling. Font-size/line-height re-declared here because the shared
+   rule in dark-theme-core.css only loads when the dark bundle is active
+   (themeStyles.ts switches entrypoint files), so in the light theme the
+   font-size would otherwise fall back to 16px inherit. */
 :root[data-theme="light"] .topicClosureActions .topicClosureBlockedHint {
   display: inline-flex !important;
   align-items: center !important;
   flex: 0 0 auto !important;
   margin: 0 !important;
   white-space: nowrap !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
   color: rgba(217, 119, 87, 0.94) !important;
 }
 
@@ -2466,18 +2483,23 @@ button.btn.btnDanger,
 }
 
 
-/* De-glass top-stats badges that aren't `.badge-*` but still used to render
-   translucent green/yellow chips (Review count, Review Pressure, Complete %,
-   Assessment cards). Make them solid so the top bar reads as one palette. */
+/* Top-stats chips adopt the Workspace window palette — same cream fill +
+   cream tint border that `.lightWorkspaceWindow` uses for the selected
+   workspace panel. Tighter footprint so the row reads as small pills
+   rather than chunky stat cards. Snapshot label (rule below) keeps its
+   darker cream fill so it stays the one "contextual" marker in the row. */
 :root[data-theme="light"] .pageStat,
 :root[data-theme="light"] .pageStatWarn,
 :root[data-theme="light"] .pageStatComplete,
 :root[data-theme="light"] .pageStatGood,
 :root[data-theme="light"] .pageStatAssessment,
 :root[data-theme="light"] .pageStatHint {
-  background: #f0e9df !important;
-  border: 1px solid #d8d2c6 !important;
+  background: rgb(250, 249, 246) !important;
+  border: 1px solid rgba(223, 214, 203, 0.96) !important;
   color: rgba(62, 49, 39, 0.9) !important;
+  padding: 4px 9px !important;
+  min-height: 26px !important;
+  font-size: 11px !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-shadow: none !important;
@@ -2551,13 +2573,12 @@ button.btn.btnDanger,
   border: 0 !important;
 }
 
-/* Failed topic badge — softer: solid pale red fill + muted red text,
-   matching the badge-red sweep earlier in EOF but tighter here for the
-   topic popover context. */
+/* Failed topic badge in the popover — same brand orange as the global
+   .badge-red rule. No context-specific softening. */
 :root[data-theme="light"] .topicPopoverSection .badge-red {
-  background: #f6ebe8 !important;
-  border: 1px solid #e3b9b0 !important;
-  color: #a63a2f !important;
+  background: #d97757 !important;
+  border: 1px solid #d97757 !important;
+  color: #fffaf6 !important;
 }
 
 /* Unified number weight across stats. Prior mono removal left strong
@@ -2584,19 +2605,21 @@ button.btn.btnDanger,
   font-weight: 600 !important;
 }
 
-/* Snapshot badge in top stats — matches `.pageStat` shape and typography
-   so the row reads as one consistent set of tags. */
+/* Snapshot badge in top stats — cream fill that the surrounding `.pageStat`
+   chips used to carry, so Snapshot now reads as the one "contextual" marker
+   in the row while the stats chips blend into the chat-surface off-white. */
 :root[data-theme="light"] .floatingStatsContainer .badge.badge-gray,
 :root[data-theme="light"] .topOverlayInline .badge.badge-gray {
   font-family: var(--sans) !important;
   font-weight: 600 !important;
   font-variant-numeric: lining-nums tabular-nums !important;
   letter-spacing: 0 !important;
-  background: rgba(255, 255, 255, 0.86) !important;
-  border: 1px solid rgba(17, 24, 39, 0.12) !important;
-  color: rgba(60, 55, 50, 0.82) !important;
-  padding: 7px 14px !important;
-  border-radius: 12px !important;
+  background: #f0e9df !important;
+  border: 1px solid rgb(233, 225, 215) !important;
+  color: rgba(62, 49, 39, 0.9) !important;
+  padding: 4px 10px !important;
+  border-radius: 10px !important;
+  font-size: 11px !important;
 }
 
 /* Snapshots card in light — dark gets 22px radius but light was falling
