@@ -14,7 +14,7 @@ These files are not engineering setup docs. They are source material for the hos
 - [How to use](how-to-use.md)
 - [How it works](how-works.md)
 - [Obsidian and MCP](integrations.md)
-- [Community](community.md)
+- [Feedback](feedback.md)
 
 ## Writing rule
 

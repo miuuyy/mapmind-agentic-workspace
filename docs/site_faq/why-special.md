@@ -1,6 +1,6 @@
 # Why Special
 
-Clew is special because it solves the part of learning that usually stays invisible: structure.
+Clew solves the part of learning that usually stays invisible: structure.
 
 When I was trying to orient myself toward machine learning, the hard part was not "find another explanation of calculus" or "ask a chatbot what a vector is". The hard part was seeing the shape of the path:
 
@@ -12,11 +12,11 @@ When I was trying to orient myself toward machine learning, the hard part was no
 
 That is the product.
 
-## Roadmap.sh, But Personal
+## Roadmap.sh, but personal
 
 Public roadmaps are useful because they compress a field into a visible map.
 
-But they are still:
+But they are:
 
 - static
 - generic
@@ -24,17 +24,17 @@ But they are still:
 - disconnected from your current progress
 - hard to adapt to a weird personal goal
 
-Clew takes the roadmap idea and makes it personal. The path can start from your goal, your graph, your topic dump, your Obsidian vault, your current frontier.
+Clew takes the roadmap idea and makes it personal. The path can start from your goal, your graph, your topic dump, your Obsidian vault, or your current frontier.
 
-That is why the builder shorthand is:
+The builder shorthand:
 
 **roadmap.sh, but personalized and adaptive.**
 
-## AI Makes It Possible
+## AI does the structural heavy lifting
 
-Without AI, this would be too expensive to use.
+Building a 100-topic prerequisite graph by hand is too expensive to do more than once.
 
-Manually building a 100-topic prerequisite graph is the kind of thing people say they will do and then never do. Clew lets the model do the heavy structural drafting, then keeps the result reviewable.
+Clew lets the model do the structural drafting and keeps the result reviewable.
 
 The model can:
 
@@ -45,21 +45,17 @@ The model can:
 - attach resources
 - explain why a change belongs
 
-The product does not ask you to trust that blindly. It gives you the proposal.
+You do not trust that blindly. The model returns a proposal; you decide what lands on the graph.
 
-## Not Another Chat Wrapper
+## Chat alone loses structure
 
-Chat is useful, but chat alone loses shape.
+A chat thread scrolls away. Clew keeps the graph as the center of truth, and the assistant works inside a persistent workspace with selected-topic context, progress, closure state, recent history, model settings, and memory controls.
 
-Clew keeps the graph as the center of truth. The assistant works inside a persistent workspace with selected topic context, progress, closure state, recent history, model settings, and memory controls.
+The answer is attached to the path you are building, not floating in a thread.
 
-That means the answer is not floating in a thread. It is attached to the path you are building.
+## Narrower than Obsidian
 
-## Not Just Obsidian
-
-Obsidian is a great vault. Clew is not trying to replace the vault.
-
-Clew is narrower:
+Obsidian is a vault. Clew is narrower:
 
 - topics are study units
 - edges mean learning relationships
@@ -67,17 +63,17 @@ Clew is narrower:
 - progress is attached to topics
 - AI proposals can reshape the graph
 
-The Obsidian bridge exists because many people already have notes. Clew can turn that material into a learning graph, then export the graph back when you want your vault to carry the structure.
+The Obsidian bridge exists because many people already have notes. Clew can turn that material into a learning graph, then export it back when you want the vault to carry the structure.
 
-## Not A Fake Autonomous Agent
+## AI drafts, you review
 
-Clew uses AI heavily, but it does not pretend the model should secretly run your workspace.
+Clew uses AI heavily, but the model does not silently run the workspace.
 
-The boundary is:
+The boundary:
 
 - AI drafts
 - you review
 - accepted changes create snapshots
 - rollback remains available
 
-That is the right amount of agency for a learning tool. Powerful enough to create structure. Controlled enough that the structure still belongs to you.
+That is the amount of agency a learning tool should have — enough to create structure, not enough to take the graph out of your control.

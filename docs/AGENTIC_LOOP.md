@@ -102,10 +102,4 @@ That narrow action space is intentional. It keeps the model inside a legible pro
 
 ## What this loop is not trying to do
 
-It is not trying to become:
-
-- a background worker swarm
-- a hidden supervisor mesh
-- a fake autonomous curriculum oracle
-
-The loop exists to make one thing work well: **help a learner build and evolve a structured graph without losing control of the workspace**.
+It is not trying to become a background worker swarm or a hidden supervisor mesh. The loop exists to make one thing work well: **help a learner build and evolve a structured graph without losing control of the workspace**.

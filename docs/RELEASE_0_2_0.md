@@ -1,6 +1,6 @@
 # Clew 0.2.0 Release Notes
 
-0.2.0 is the branch where Clew stops feeling like a graph experiment and starts feeling like a product.
+0.2.0 takes Clew from a graph experiment to a product.
 
 The release is built around one idea:
 
@@ -71,4 +71,4 @@ Clew 0.2.0 turns the product into a clearer promise:
 
 You can start from a goal, notes, or messy topics; use AI to draft the structure; inspect the graph; study through it; and keep the path portable through Obsidian and MCP.
 
-The product is still local-first and hackable, but the surface is now much closer to the idea it is trying to prove.
+The product is still local-first and hackable, and the surface is closer to matching the product idea.

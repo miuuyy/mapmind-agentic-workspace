@@ -15,20 +15,7 @@ Before changing the product, read:
 
 ## What Clew is
 
-Clew is not:
-
-- a note-taking clone
-- a school checklist app
-- a chat wrapper around one provider
-- a fake “autonomous agent” demo
-
-It is:
-
-- a graph-first learning workspace
-- with explicit AI proposals
-- rollbackable graph/workspace state
-- topic closure logic
-- strong visual emphasis on dependency, structure, and progress
+Product identity lives in [`docs/agents/PROJECT_CONTEXT.md`](docs/agents/PROJECT_CONTEXT.md#product-identity). Read it before making product-shape changes.
 
 ## Core product invariants
 

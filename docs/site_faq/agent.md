@@ -1,6 +1,6 @@
 # Agent
 
-Clew uses AI as a structural partner for learning, not as a fake autonomous operator.
+Clew uses AI as a structural partner for learning.
 
 The model matters. Without it, building and maintaining a useful personal roadmap would take too much manual work. With it, you can ask for a large graph expansion, import messy notes, or audit missing foundations in minutes.
 

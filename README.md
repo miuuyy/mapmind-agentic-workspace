@@ -24,6 +24,8 @@ You can ask AI to turn a messy topic dump, an Obsidian vault, or a goal like "ge
 
 This repository is the local, hackable edition of Clew. If you want the fastest first look, start at [clew.my](https://clew.my). If you want provider control, local state, MCP, and graph import/export, run this repo.
 
+> The repo is still named `mapmind-agentic-workspace` for URL stability; the product is Clew.
+
 ## Quick Look
 
 - `The product idea`: a clear path to anything you want to learn
