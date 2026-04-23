@@ -14,6 +14,16 @@ def math_formatting_instruction() -> str:
     )
 
 
+def text_formatting_instruction() -> str:
+    return (
+        "TEXT FORMATTING RULES (user-visible content only — not JSON structure):\n"
+        "- Use **double asterisks** around short phrases to mark a bold emphasis when a term, name, or key quantity deserves visual weight.\n"
+        "- Bold is the only inline emphasis the renderer supports. Italic, code spans, headings, bullet lists, and links are NOT rendered — they will appear as literal characters. Do not use them.\n"
+        "- Use plain paragraph breaks (blank lines between paragraphs). Do not attempt lists with '-' or '1.' — write short sentences instead.\n"
+        "- Keep bold sparing: a few key terms per reply, not whole sentences. Never bold entire paragraphs or mechanical words like 'and', 'the', 'is'.\n"
+    )
+
+
 def planner_system_instruction() -> str:
     return (
         "You are a curriculum graph planner for a local study graph application. "
@@ -67,6 +77,7 @@ def orchestrator_system_instruction(*, language_name: str, persona_rules: str, u
         "- If action is propose_ingest or propose_expand, reply_message must describe the next step in future tense or present-progressive intent, not as a completed fact.\n"
         "- For propose_* actions, do NOT say or imply 'I generated', 'I created', 'I prepared', 'I added', or 'here is the proposal'. The proposal is not ready yet at that stage.\n"
         f"{math_formatting_instruction()}"
+        f"{text_formatting_instruction()}"
         "Allowed orchestrator actions:\n"
         f"{render_action_contract('orchestrator')}\n"
         "Inline quiz contract:\n"
@@ -87,6 +98,7 @@ def study_assistant_system_instruction(*, language_name: str, persona_rules: str
         "- Only the proposal/apply pipeline can change the graph.\n"
         "- If the learner dislikes a topic, talk about refocusing, skipping for now, or generating a future proposal, not deleting it.\n"
         f"{math_formatting_instruction()}"
+        f"{text_formatting_instruction()}"
         f"- Grounding mode for this request: {'web-enabled' if use_grounding else 'graph-local only'}.\n"
     )
 
@@ -98,5 +110,6 @@ def quiz_system_instruction(*, language_name: str) -> str:
         "Return valid JSON only. Do not reveal chain-of-thought or meta commentary.\n"
         f"Use the structured shape named {QUIZ_DRAFT_SHAPE_NAME}.\n"
         f"{math_formatting_instruction()}"
+        f"{text_formatting_instruction()}"
         f"{render_quiz_contract()}"
     )

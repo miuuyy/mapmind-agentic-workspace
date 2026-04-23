@@ -2653,6 +2653,24 @@ button.btn.btnDanger,
   color: rgba(128, 104, 78, 0.92) !important;
 }
 
+/* ABSOLUTE EOF — kill the `.sessionShadow::after` top-of-thread fade in light.
+   User feedback: the 44px cream gradient extended below the session-row divider
+   and was visible washing over messages as they scrolled past. Dropping it
+   entirely — messages meet the divider cleanly with no fade halo. */
+:root[data-theme="light"] .sessionShadow,
+:root[data-theme="light"] .sessionShadow::after,
+:root[data-theme="light"] .lightChatWindow .sessionShadow,
+:root[data-theme="light"] .lightChatWindow .sessionShadow::after,
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionShadow,
+:root[data-theme="light"] .workspaceShellLightDockMode .sessionShadow::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* ABSOLUTE EOF — active session chip: no hover state at all. Rest = hover =
    focus = active-state, single pill appearance. User: "при наводке на активную
    сессию не надо ховера / то что было с этим ховером должно быть просто всегда
