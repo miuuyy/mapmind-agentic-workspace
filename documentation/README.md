@@ -13,6 +13,7 @@ These files are not engineering setup docs. They are the source material for the
 - [Why special](why-special.md)
 - [How to use](how-to-use.md)
 - [How it works](how-works.md)
+- [Obsidian and MCP](integrations.md)
 - [Community](community.md)
 
 ## Writing rule

@@ -188,6 +188,21 @@ class ProposalPlannerValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ProposalPlannerError, "not allowed in proposal envelopes"):
             self.planner._validate_proposal_envelope(self.graph, proposal)
 
+    def test_mastery_operation_is_rejected(self) -> None:
+        proposal = self._proposal(
+            GraphOperation(
+                op_id="mastery_1",
+                op="set_mastery",
+                entity_kind="mastery",
+                rationale="completion must come from quiz closure",
+                topic_id="functions",
+                state="solid",
+            )
+        )
+
+        with self.assertRaisesRegex(ProposalPlannerError, "not allowed in proposal envelopes"):
+            self.planner._validate_proposal_envelope(self.graph, proposal)
+
 
 if __name__ == "__main__":
     unittest.main()

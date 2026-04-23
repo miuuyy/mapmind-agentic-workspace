@@ -10,7 +10,6 @@ ALLOWED_PROPOSAL_OPERATIONS = {
     "upsert_topic",
     "upsert_edge",
     "upsert_zone",
-    "set_mastery",
 }
 
 
@@ -78,15 +77,6 @@ class ProposalValidator:
                         "Some proposed zones only cover one topic; zones should usually represent larger learning regions."
                     )
                 continue
-
-            if operation.op == "set_mastery":
-                if not (operation.topic_id and operation.state):
-                    errors.append(f"{operation.op_id}: set_mastery missing topic_id or state")
-                    continue
-                if operation.topic_id not in known_topic_ids:
-                    errors.append(f"{operation.op_id}: mastery topic {operation.topic_id} is unknown")
-                if operation.state == "mastered":
-                    errors.append(f"{operation.op_id}: proposal generation cannot directly master topics")
 
         if not errors and not self._is_connected_after_apply(graph, envelope):
             errors.append("proposal would create disconnected graph islands; link new topics through meaningful prerequisites")

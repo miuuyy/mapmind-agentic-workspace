@@ -1,87 +1,74 @@
 # Showcase
 
-The fastest way to understand Clew is to look at the kinds of moments it creates.
+The fastest way to understand Clew is to look at the moments it creates.
 
-## 1. Start from messy input
+## 1. A Messy Goal Becomes A Path
 
-Most study systems assume you already know the structure.
+You start with something vague:
 
-Clew does not.
+> I want to learn enough math for machine learning.
 
-You can start from:
+Normally that turns into tabs, videos, saved posts, and a guilt pile.
 
-- rough topics
-- partial goals
-- mixed notes
-- incomplete resource lists
-- a vague target like “take me toward transformers”
+In Clew, AI can draft the structure: foundations, dependencies, middle layers, advanced branches, and frontier topics. You inspect the proposal before it becomes part of the graph.
 
-The system turns that into a proposal you can review, not into a fake final truth.
+The useful part is not that the graph is pretty. The useful part is that you can finally see what the subject is asking from you.
 
-## 2. Learn inside a visible structure
+## 2. A Topic Shows Its Neighborhood
 
-A graph is not just a prettier checklist.
+Click a topic and it stops being an isolated card.
 
-Clew shows:
+Clew shows the surrounding path:
 
-- what unlocks what
-- where the foundations actually are
-- where the frontier currently sits
-- where you are branching
-- where you are probably skipping too much
+- what leads into it
+- what it unlocks
+- what is blocked
+- which region it belongs to
+- where your current frontier sits
 
-That changes how study feels. You stop guessing the shape of the subject and start reading it directly.
+This is the difference between "I have a list of topics" and "I understand the route".
 
-## 3. Customize the graph like a workspace
+## 3. Obsidian Notes Become Structure
 
-The graph is not frozen.
+If you already have an Obsidian vault, Clew can import it.
 
-You can:
+Markdown notes become topics. Links become graph relationships. Folders can become zones. Missing links can become placeholders when you want them.
 
-- rename topics
-- move nodes
-- change language
-- attach resources
-- attach artifacts
-- import graph packs
-- export your graph with or without your own progress
+That means your existing notes can stop being only a vault and start acting like a map.
 
-Even after you finish a section, the graph stays useful as a record of the path you actually took.
+## 4. The Graph Goes Back To Obsidian
 
-## 4. Keep AI inside a controlled boundary
+Clew is not a trap for your data.
 
-Clew does not ask you to trust silent model behavior.
+You can export a graph as an Obsidian-ready folder with topic pages, resources, artifacts, and metadata. If Obsidian is where you keep long-term notes, Clew can be the place where you shape the learning path.
 
-The assistant can:
+## 5. External Assistants Can See The Workspace
 
-- answer questions
-- expand toward a goal
-- propose graph edits
-- generate quizzes
-- help you audit what is missing
+With Clew Study Assist MCP, Claude Desktop, Claude Code, Cursor, or another MCP client can inspect your local learning graph.
 
-But the graph only changes when you review and apply a proposal.
+That lets you ask:
 
-## 5. Verify completion instead of pretending
+- what am I blocked on?
+- what should I study next?
+- what topic connects these two ideas?
+- what notes do I already have about this?
 
-Learning state should not just be vibes.
+The MCP server is read-only, so external assistants can see context without silently changing your graph.
 
-Clew supports closure tests so topics can be verified instead of merely clicked complete. If a workspace needs a lighter mode, closure tests can be disabled and topics can be marked finished manually.
+## 6. Progress Is Not Just A Badge
 
-That lets the product support both:
+Clew supports closure quizzes so completion can mean more than "I clicked done".
 
-- stricter study loops
-- lighter self-directed workflows
+For lighter workflows, strict closure can be disabled and topics can be marked finished manually. The point is not to force school behavior. The point is that progress stays attached to the path.
 
-## 6. Move fast without losing structure
+## 7. The Interface Feels Like A Workspace
 
-Clew is fast enough to feel generative, but structured enough not to collapse into “just another AI sandbox”.
+0.2.0 adds the surface Clew needed:
 
-You can:
+- dark and light themes
+- a cleaner shell
+- better graph controls
+- launch loader and brand assets
+- smoother large-graph reading
 
-- add a few more topics around a frontier
-- branch toward a new target
-- expand from the currently selected topic
-- inspect the result before committing it
-
-That is the difference between a tool that feels powerful for five minutes and one that stays useful for weeks.
+The product finally looks closer to what it is: a serious personal map for learning, not a prototype with a graph widget.

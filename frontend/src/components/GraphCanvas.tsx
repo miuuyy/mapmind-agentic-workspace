@@ -45,7 +45,344 @@ import { buildTopicAnchorPoint, screenToCanvasPoint, zoomViewportAroundClientPoi
 
 export type { TopicAnchorPoint } from "./graphCanvasCore";
 
+type ActivePhysicsFrame = {
+  anchors: Map<string, NodeAnchor>;
+  currentEdges: Edge[];
+  currentNodes: GraphNode[];
+  draggedNodeId: string | null;
+  frameCount: number;
+  graphCacheKey: string;
+  height: number;
+  idleAnimationsDisabled: boolean;
+  litFrames: Map<string, number>;
+  physicsEnabled: boolean;
+  pinnedPositions: ManualNodePositions;
+  positions: Map<string, NodePosition>;
+  width: number;
+  zones: Zone[];
+};
 
+function freezeIdlePositions(
+  currentNodes: GraphNode[],
+  positions: Map<string, NodePosition>,
+  graphCacheKey: string,
+): void {
+  for (const node of currentNodes) {
+    const position = positions.get(node.id);
+    if (!position) continue;
+    position.vx = 0;
+    position.vy = 0;
+    positionCache.set(cacheEntryKey(graphCacheKey, node.id), { x: position.x, y: position.y });
+  }
+}
+
+function advanceActivePhysicsFrame({
+  anchors,
+  currentEdges,
+  currentNodes,
+  draggedNodeId,
+  frameCount,
+  graphCacheKey,
+  height,
+  idleAnimationsDisabled,
+  litFrames,
+  physicsEnabled,
+  pinnedPositions,
+  positions,
+  width,
+  zones,
+}: ActivePhysicsFrame): void {
+  const repulsion = 8500;
+  const spring = 0.0046;
+  const centerPull = 0.00008;
+  const levelPull = 0.004;
+  const siblingFanStrength = 0.0015;
+  const startupProgress = Math.min(1, frameCount / 80);
+  const startupEase = startupProgress * startupProgress;
+  const damping = idleAnimationsDisabled ? 0.76 : 0.91;
+  const forceScale = 0.15 + 0.85 * startupEase;
+  const driftTime = frameCount * 0.012;
+  const velocityEpsilon = idleAnimationsDisabled ? 0.018 : 0.003;
+
+  if (physicsEnabled) {
+    const nodeZoneId = new Map<string, string>();
+    const zoneSizeById = new Map<string, number>();
+    for (const zone of zones) {
+      zoneSizeById.set(zone.id, zone.topic_ids.length);
+      for (const topicId of zone.topic_ids) nodeZoneId.set(topicId, zone.id);
+    }
+
+    for (let i = 0; i < currentNodes.length; i += 1) {
+      const aNode = currentNodes[i];
+      const a = positions.get(aNode.id);
+      if (!a) continue;
+      const aPinned = pinnedPositions[aNode.id];
+      if (aNode.id === draggedNodeId) {
+        a.vx = 0;
+        a.vy = 0;
+        continue;
+      }
+      const aAnchor = anchors.get(aNode.id);
+
+      for (let j = i + 1; j < currentNodes.length; j += 1) {
+        const bNode = currentNodes[j];
+        const b = positions.get(bNode.id);
+        if (!b) continue;
+        const bPinned = pinnedPositions[bNode.id];
+        if (bNode.id === draggedNodeId) {
+          b.vx = 0;
+          b.vy = 0;
+          continue;
+        }
+        if (aPinned && bPinned) continue;
+        const bAnchor = anchors.get(bNode.id);
+        const aZone = nodeZoneId.get(aNode.id);
+        const bZone = nodeZoneId.get(bNode.id);
+        const sameZone = aZone && bZone && aZone === bZone;
+        const zoneSize = sameZone ? (zoneSizeById.get(aZone) ?? 1) : 1;
+        const densityBoost = sameZone ? 1 + Math.sqrt(Math.max(0, zoneSize - 4)) * 0.4 : 1;
+        const collisionMinDist = Math.max(160, (labelSpreadRadius(aNode) + labelSpreadRadius(bNode)) * 0.95) * densityBoost;
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const rawD2 = dx * dx + dy * dy;
+        const d2 = Math.max(rawD2, collisionMinDist * collisionMinDist);
+        const dist = Math.sqrt(rawD2) || 1;
+        const branchMultiplier = aAnchor?.primaryRootId !== bAnchor?.primaryRootId ? 1.2 : 1;
+        const sameZoneBoost = sameZone && zoneSize > 6 ? 1 + (zoneSize - 6) * 0.08 : 1;
+        const force = (repulsion * branchMultiplier * sameZoneBoost * forceScale) / d2;
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+        if (!aPinned) {
+          a.vx += fx;
+          a.vy += fy;
+        }
+        if (!bPinned) {
+          b.vx -= fx;
+          b.vy -= fy;
+        }
+      }
+    }
+
+    for (const edge of currentEdges) {
+      const from = positions.get(edge.source_topic_id);
+      const to = positions.get(edge.target_topic_id);
+      if (!from || !to) continue;
+      if (edge.source_topic_id === draggedNodeId || edge.target_topic_id === draggedNodeId) continue;
+      const sourcePinned = pinnedPositions[edge.source_topic_id];
+      const targetPinned = pinnedPositions[edge.target_topic_id];
+      if (sourcePinned && targetPinned) continue;
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const sourceLevel = currentNodes.find((node) => node.id === edge.source_topic_id)?.level ?? 0;
+      const targetLevel = currentNodes.find((node) => node.id === edge.target_topic_id)?.level ?? 0;
+      const levelGap = Math.max(1, Math.abs(targetLevel - sourceLevel));
+      const target = 260 + levelGap * 48;
+      const sourceZone = zones.find((zone) => zone.topic_ids.includes(edge.source_topic_id))?.id;
+      const targetZone = zones.find((zone) => zone.topic_ids.includes(edge.target_topic_id))?.id;
+      const crossZone = sourceZone && targetZone && sourceZone !== targetZone;
+      let restLength = target;
+      let edgeScale = 1;
+      if (crossZone) {
+        const srcAnchor = anchors.get(edge.source_topic_id);
+        const tgtAnchor = anchors.get(edge.target_topic_id);
+        if (srcAnchor && tgtAnchor) {
+          restLength = Math.max(target, Math.sqrt((srcAnchor.x - tgtAnchor.x) ** 2 + (srcAnchor.y - tgtAnchor.y) ** 2));
+        }
+        edgeScale = 0.35;
+      }
+      const k = spring * (dist - restLength) * edgeScale;
+      const fx = (dx / dist) * k;
+      const fy = (dy / dist) * k;
+      if (!sourcePinned) {
+        from.vx += fx;
+        from.vy += fy;
+      }
+      if (!targetPinned) {
+        to.vx -= fx;
+        to.vy -= fy;
+      }
+    }
+
+    const outgoingByParent = new Map<string, string[]>();
+    for (const edge of currentEdges) {
+      outgoingByParent.set(edge.source_topic_id, [...(outgoingByParent.get(edge.source_topic_id) ?? []), edge.target_topic_id]);
+    }
+
+    for (const [parentId, childIds] of outgoingByParent) {
+      if (childIds.length < 2) continue;
+      const parent = positions.get(parentId);
+      if (!parent) continue;
+      const orderedChildren = childIds
+        .map((childId) => {
+          const child = positions.get(childId);
+          if (!child) return null;
+          const stableAngle = anchors.get(childId)?.angle ?? Math.atan2(child.y - parent.y, child.x - parent.x);
+          return { id: childId, child, stableAngle };
+        })
+        .filter((entry): entry is { id: string; child: NodePosition; stableAngle: number } => Boolean(entry))
+        .sort((left, right) => left.stableAngle - right.stableAngle);
+      if (orderedChildren.length < 2) continue;
+
+      const centerAngle = averageAngles(orderedChildren.map((entry) => entry.stableAngle));
+      const totalSpread = clamp(0.56 + (orderedChildren.length - 2) * 0.18, 0.56, 1.28);
+      const stepAngle = orderedChildren.length === 1 ? 0 : totalSpread / (orderedChildren.length - 1);
+
+      orderedChildren.forEach((entry, index) => {
+        if (entry.id === draggedNodeId) {
+          entry.child.vx = 0;
+          entry.child.vy = 0;
+          return;
+        }
+        if (pinnedPositions[entry.id]) return;
+
+        const dx = entry.child.x - parent.x;
+        const dy = entry.child.y - parent.y;
+        const dist = Math.max(1, Math.hypot(dx, dy));
+        const currentAngle = Math.atan2(dy, dx);
+        const targetAngle = centerAngle + (index - (orderedChildren.length - 1) / 2) * stepAngle;
+        const angleDelta = normalizeAngle(targetAngle - currentAngle);
+        const tangentialX = -dy / dist;
+        const tangentialY = dx / dist;
+        const angularForce = angleDelta * siblingFanStrength * forceScale * Math.min(dist, 260);
+
+        entry.child.vx += tangentialX * angularForce;
+        entry.child.vy += tangentialY * angularForce;
+      });
+    }
+
+    if (zones.length > 1) {
+      const zoneCentroids = new Map<string, { x: number; y: number; count: number }>();
+      for (const zone of zones) {
+        let sx = 0;
+        let sy = 0;
+        let count = 0;
+        for (const topicId of zone.topic_ids) {
+          const position = positions.get(topicId);
+          if (!position) continue;
+          sx += position.x;
+          sy += position.y;
+          count += 1;
+        }
+        if (count > 0) zoneCentroids.set(zone.id, { x: sx / count, y: sy / count, count });
+      }
+      const zoneIds = [...zoneCentroids.keys()];
+      for (let i = 0; i < zoneIds.length; i += 1) {
+        for (let j = i + 1; j < zoneIds.length; j += 1) {
+          const ca = zoneCentroids.get(zoneIds[i]);
+          const cb = zoneCentroids.get(zoneIds[j]);
+          if (!ca || !cb) continue;
+          const dx = ca.x - cb.x;
+          const dy = ca.y - cb.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const minZoneDist = 100 + Math.sqrt(ca.count + cb.count) * 40;
+          const effectiveDist = Math.max(dist, 1);
+          const zoneRepulsion =
+            effectiveDist < minZoneDist
+              ? 120000 / (effectiveDist * effectiveDist + 1)
+              : 50000 / (effectiveDist * effectiveDist + 1);
+          const fx = (dx / dist) * zoneRepulsion;
+          const fy = (dy / dist) * zoneRepulsion;
+          const za = zones.find((zone) => zone.id === zoneIds[i]);
+          const zb = zones.find((zone) => zone.id === zoneIds[j]);
+          if (!za || !zb) continue;
+          for (const topicId of za.topic_ids) {
+            const position = positions.get(topicId);
+            if (!position || pinnedPositions[topicId]) continue;
+            position.vx += fx / ca.count;
+            position.vy += fy / ca.count;
+          }
+          for (const topicId of zb.topic_ids) {
+            const position = positions.get(topicId);
+            if (!position || pinnedPositions[topicId]) continue;
+            position.vx -= fx / cb.count;
+            position.vy -= fy / cb.count;
+          }
+        }
+      }
+      for (const zone of zones) {
+        const centroid = zoneCentroids.get(zone.id);
+        if (!centroid || centroid.count < 2) continue;
+        const cohesionStrength = 0.012 / Math.max(1, Math.sqrt(centroid.count / 4));
+        for (const topicId of zone.topic_ids) {
+          const position = positions.get(topicId);
+          if (!position || pinnedPositions[topicId]) continue;
+          position.vx += (centroid.x - position.x) * cohesionStrength;
+          position.vy += (centroid.y - position.y) * cohesionStrength;
+        }
+      }
+    }
+  }
+
+  for (const node of currentNodes) {
+    const position = positions.get(node.id);
+    if (!position) continue;
+    if (node.id === draggedNodeId) {
+      position.vx = 0;
+      position.vy = 0;
+      continue;
+    }
+    const pinned = pinnedPositions[node.id];
+    const stable = anchors.get(node.id) ?? { x: width / 2, y: height / 2, angle: -Math.PI / 2, primaryRootId: node.id, primaryBranchId: node.id };
+    const radialScale = currentNodes.length > 0 ? node.level / Math.max(...currentNodes.map((item) => item.level), 1) : 0;
+    const seed = hashString(node.id);
+    const phase = ((seed % 8192) / 8192) * Math.PI * 2;
+    const litFrame = litFrames.get(node.id);
+    const age = litFrame === undefined ? 0 : Math.max(0, frameCount - litFrame);
+    const ramp = Math.min(1, age / 32);
+    if (pinned) {
+      position.x = pinned.x;
+      position.y = pinned.y;
+      position.vx = 0;
+      position.vy = 0;
+      continue;
+    }
+    position.vx += (stable.x - position.x) * levelPull;
+    position.vy += (stable.y - position.y) * levelPull;
+    position.vx += (width / 2 - position.x) * centerPull * (1 - radialScale * 0.4);
+    position.vy += (height / 2 - position.y) * centerPull * (1 - radialScale * 0.4);
+    if (!idleAnimationsDisabled) {
+      position.vx += Math.sin(driftTime + phase) * 0.0055 * ramp;
+      position.vy += Math.cos(driftTime * 0.76 + phase * 1.17) * 0.0055 * ramp;
+    }
+  }
+
+  for (const node of currentNodes) {
+    const position = positions.get(node.id);
+    if (!position) continue;
+    if (node.id === draggedNodeId) {
+      position.vx = 0;
+      position.vy = 0;
+      positionCache.set(cacheEntryKey(graphCacheKey, node.id), { x: position.x, y: position.y });
+      continue;
+    }
+    const pinned = pinnedPositions[node.id];
+    const litFrame = litFrames.get(node.id);
+    const spawnAge = litFrame === undefined ? 999 : Math.max(0, frameCount - litFrame);
+    const spawnEase = Math.min(1, spawnAge / 60);
+    const nodeDamping = pinned
+      ? (idleAnimationsDisabled ? 0.46 : 0.58)
+      : 0.55 + (damping - 0.55) * spawnEase;
+    position.vx *= nodeDamping;
+    position.vy *= nodeDamping;
+    if (Math.abs(position.vx) < velocityEpsilon) position.vx = 0;
+    if (Math.abs(position.vy) < velocityEpsilon) position.vy = 0;
+    position.x += position.vx;
+    position.y += position.vy;
+    if (pinned) {
+      position.x = pinned.x;
+      position.y = pinned.y;
+      position.vx = 0;
+      position.vy = 0;
+      positionCache.set(cacheEntryKey(graphCacheKey, node.id), { x: position.x, y: position.y });
+      continue;
+    }
+    const softBound = Math.max(width, height) * 1.5;
+    position.x = Math.max(-softBound, Math.min(softBound, position.x));
+    position.y = Math.max(-softBound, Math.min(softBound, position.y));
+    positionCache.set(cacheEntryKey(graphCacheKey, node.id), { x: position.x, y: position.y });
+  }
+}
 
 function GraphCanvasComponent({
   topics,
@@ -734,295 +1071,25 @@ function GraphCanvasComponent({
         } else if (!idleMotionState.idleFrozen) {
           idleFrozenFrameRef.current = null;
         }
-        const shouldFreezeIdleMotion = idleFrozenRef.current;
-        if (shouldFreezeIdleMotion) {
-          for (const node of currentNodes) {
-            const position = positions.get(node.id);
-            if (!position) continue;
-            position.vx = 0;
-            position.vy = 0;
-            positionCache.set(cacheEntryKey(graphCacheKey, node.id), { x: position.x, y: position.y });
-          }
+        if (idleFrozenRef.current) {
+          freezeIdlePositions(currentNodes, positions, graphCacheKey);
         } else {
-        const repulsion = 8500;
-        const spring = 0.0046;
-        const centerPull = 0.00008;
-        const levelPull = 0.004;
-        const siblingFanStrength = 0.0015;
-        // Ramp forces gradually at startup to avoid bounce.
-        const startupProgress = Math.min(1, frameCount / 80);
-        const startupEase = startupProgress * startupProgress; // quadratic ease-in
-        const damping = idleAnimationsDisabled ? 0.76 : 0.91;
-        const forceScale = 0.15 + 0.85 * startupEase; // forces ramp up gradually
-        const driftTime = frameCount * 0.012;
-        const velocityEpsilon = idleAnimationsDisabled ? 0.018 : 0.003;
-
-        if (!disablePhysicsRef.current) {
-          // Precompute zone membership for density-aware repulsion.
-          const nodeZoneId = new Map<string, string>();
-        const zoneSizeById = new Map<string, number>();
-        for (const z of zonesDataRef.current) {
-          zoneSizeById.set(z.id, z.topic_ids.length);
-          for (const tid of z.topic_ids) nodeZoneId.set(tid, z.id);
-        }
-
-        for (let i = 0; i < currentNodes.length; i += 1) {
-          const aNode = currentNodes[i];
-          const a = positions.get(aNode.id);
-          if (!a) continue;
-          const aPinned = pinnedPositions[aNode.id];
-          if (aNode.id === draggedNodeId) {
-            a.vx = 0;
-            a.vy = 0;
-            continue;
-          }
-          const aAnchor = anchors.get(aNode.id);
-
-          for (let j = i + 1; j < currentNodes.length; j += 1) {
-            const bNode = currentNodes[j];
-            const b = positions.get(bNode.id);
-            if (!b) continue;
-            const bPinned = pinnedPositions[bNode.id];
-            if (bNode.id === draggedNodeId) {
-              b.vx = 0;
-              b.vy = 0;
-              continue;
-            }
-            if (aPinned && bPinned) continue;
-            const bAnchor = anchors.get(bNode.id);
-            const aZone = nodeZoneId.get(aNode.id);
-            const bZone = nodeZoneId.get(bNode.id);
-            const sameZone = aZone && bZone && aZone === bZone;
-            const zoneSize = sameZone ? (zoneSizeById.get(aZone) ?? 1) : 1;
-            const densityBoost = sameZone ? 1 + Math.sqrt(Math.max(0, zoneSize - 4)) * 0.4 : 1;
-            const collisionMinDist = Math.max(160, (labelSpreadRadius(aNode) + labelSpreadRadius(bNode)) * 0.95) * densityBoost;
-            const dx = a.x - b.x;
-            const dy = a.y - b.y;
-            const rawD2 = dx * dx + dy * dy;
-            const d2 = Math.max(rawD2, collisionMinDist * collisionMinDist);
-            const dist = Math.sqrt(rawD2) || 1;
-            const branchMultiplier = aAnchor?.primaryRootId !== bAnchor?.primaryRootId ? 1.2 : 1;
-            const sameZoneBoost = sameZone && zoneSize > 6 ? 1 + (zoneSize - 6) * 0.08 : 1;
-            const force = (repulsion * branchMultiplier * sameZoneBoost * forceScale) / d2;
-            const fx = (dx / dist) * force;
-            const fy = (dy / dist) * force;
-            if (!aPinned) {
-              a.vx += fx;
-              a.vy += fy;
-            }
-            if (!bPinned) {
-              b.vx -= fx;
-              b.vy -= fy;
-            }
-          }
-        }
-
-        for (const edge of currentEdges) {
-          const from = positions.get(edge.source_topic_id);
-          const to = positions.get(edge.target_topic_id);
-          if (!from || !to) continue;
-          if (edge.source_topic_id === draggedNodeId || edge.target_topic_id === draggedNodeId) continue;
-          const sourcePinned = pinnedPositions[edge.source_topic_id];
-          const targetPinned = pinnedPositions[edge.target_topic_id];
-          if (sourcePinned && targetPinned) continue;
-          const dx = to.x - from.x;
-          const dy = to.y - from.y;
-          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-          const sourceLevel = currentNodes.find((node) => node.id === edge.source_topic_id)?.level ?? 0;
-          const targetLevel = currentNodes.find((node) => node.id === edge.target_topic_id)?.level ?? 0;
-          const levelGap = Math.max(1, Math.abs(targetLevel - sourceLevel));
-          const target = 260 + levelGap * 48;
-          const sourceZone = zonesDataRef.current.find((z) => z.topic_ids.includes(edge.source_topic_id))?.id;
-          const targetZone = zonesDataRef.current.find((z) => z.topic_ids.includes(edge.target_topic_id))?.id;
-          const crossZone = sourceZone && targetZone && sourceZone !== targetZone;
-          let restLength = target;
-          let edgeScale = 1;
-          if (crossZone) {
-            const srcAnchor = anchors.get(edge.source_topic_id);
-            const tgtAnchor = anchors.get(edge.target_topic_id);
-            if (srcAnchor && tgtAnchor) {
-              restLength = Math.max(target, Math.sqrt((srcAnchor.x - tgtAnchor.x) ** 2 + (srcAnchor.y - tgtAnchor.y) ** 2));
-            }
-            edgeScale = 0.35;
-          }
-          const k = spring * (dist - restLength) * edgeScale;
-          const fx = (dx / dist) * k;
-          const fy = (dy / dist) * k;
-          if (!sourcePinned) {
-            from.vx += fx;
-            from.vy += fy;
-          }
-          if (!targetPinned) {
-            to.vx -= fx;
-            to.vy -= fy;
-          }
-        }
-
-        const outgoingByParent = new Map<string, string[]>();
-        for (const edge of currentEdges) {
-          outgoingByParent.set(edge.source_topic_id, [...(outgoingByParent.get(edge.source_topic_id) ?? []), edge.target_topic_id]);
-        }
-
-        for (const [parentId, childIds] of outgoingByParent) {
-          if (childIds.length < 2) continue;
-          const parent = positions.get(parentId);
-          if (!parent) continue;
-          const orderedChildren = childIds
-            .map((childId) => {
-              const child = positions.get(childId);
-              if (!child) return null;
-              const stableAngle = anchors.get(childId)?.angle ?? Math.atan2(child.y - parent.y, child.x - parent.x);
-              return { id: childId, child, stableAngle };
-            })
-            .filter((entry): entry is { id: string; child: NodePosition; stableAngle: number } => Boolean(entry))
-            .sort((left, right) => left.stableAngle - right.stableAngle);
-          if (orderedChildren.length < 2) continue;
-
-          const centerAngle = averageAngles(orderedChildren.map((entry) => entry.stableAngle));
-          const totalSpread = clamp(0.56 + (orderedChildren.length - 2) * 0.18, 0.56, 1.28);
-          const stepAngle = orderedChildren.length === 1 ? 0 : totalSpread / (orderedChildren.length - 1);
-
-          orderedChildren.forEach((entry, index) => {
-            if (entry.id === draggedNodeId) {
-              entry.child.vx = 0;
-              entry.child.vy = 0;
-              return;
-            }
-            if (pinnedPositions[entry.id]) return;
-
-            const dx = entry.child.x - parent.x;
-            const dy = entry.child.y - parent.y;
-            const dist = Math.max(1, Math.hypot(dx, dy));
-            const currentAngle = Math.atan2(dy, dx);
-            const targetAngle = centerAngle + (index - (orderedChildren.length - 1) / 2) * stepAngle;
-            const angleDelta = normalizeAngle(targetAngle - currentAngle);
-            const tangentialX = -dy / dist;
-            const tangentialY = dx / dist;
-            const angularForce = angleDelta * siblingFanStrength * forceScale * Math.min(dist, 260);
-
-            entry.child.vx += tangentialX * angularForce;
-            entry.child.vy += tangentialY * angularForce;
+          advanceActivePhysicsFrame({
+            anchors,
+            currentEdges,
+            currentNodes,
+            draggedNodeId,
+            frameCount,
+            graphCacheKey,
+            height,
+            idleAnimationsDisabled,
+            litFrames: litFrameRef.current,
+            physicsEnabled: !disablePhysicsRef.current,
+            pinnedPositions,
+            positions,
+            width,
+            zones: zonesDataRef.current,
           });
-        }
-
-        const zoneData = zonesDataRef.current;
-        if (zoneData.length > 1) {
-          const zoneCentroids = new Map<string, { x: number; y: number; count: number }>();
-          for (const zone of zoneData) {
-            let sx = 0, sy = 0, count = 0;
-            for (const tid of zone.topic_ids) {
-              const p = positions.get(tid);
-              if (p) { sx += p.x; sy += p.y; count++; }
-            }
-            if (count > 0) zoneCentroids.set(zone.id, { x: sx / count, y: sy / count, count });
-          }
-          const zoneIds = [...zoneCentroids.keys()];
-          for (let i = 0; i < zoneIds.length; i++) {
-            for (let j = i + 1; j < zoneIds.length; j++) {
-              const ca = zoneCentroids.get(zoneIds[i])!;
-              const cb = zoneCentroids.get(zoneIds[j])!;
-              const dx = ca.x - cb.x;
-              const dy = ca.y - cb.y;
-              const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-              const minZoneDist = 100 + Math.sqrt(ca.count + cb.count) * 40;
-              const effectiveDist = Math.max(dist, 1);
-              const zoneRepulsion = effectiveDist < minZoneDist ? 120000 / (effectiveDist * effectiveDist + 1) : 50000 / (effectiveDist * effectiveDist + 1);
-              const fx = (dx / dist) * zoneRepulsion;
-              const fy = (dy / dist) * zoneRepulsion;
-              const za = zoneData.find((z) => z.id === zoneIds[i])!;
-              const zb = zoneData.find((z) => z.id === zoneIds[j])!;
-              for (const tid of za.topic_ids) {
-                const p = positions.get(tid);
-                if (p && !pinnedPositions[tid]) { p.vx += fx / ca.count; p.vy += fy / ca.count; }
-              }
-              for (const tid of zb.topic_ids) {
-                const p = positions.get(tid);
-                if (p && !pinnedPositions[tid]) { p.vx -= fx / cb.count; p.vy -= fy / cb.count; }
-              }
-            }
-          }
-          for (const zone of zoneData) {
-            const c = zoneCentroids.get(zone.id);
-            if (!c || c.count < 2) continue;
-            const cohesionStrength = 0.012 / Math.max(1, Math.sqrt(c.count / 4));
-            for (const tid of zone.topic_ids) {
-              const p = positions.get(tid);
-              if (!p || pinnedPositions[tid]) continue;
-              p.vx += (c.x - p.x) * cohesionStrength;
-              p.vy += (c.y - p.y) * cohesionStrength;
-            }
-          }
-        }
-        }
-
-        for (const node of currentNodes) {
-          const position = positions.get(node.id);
-          if (!position) continue;
-          if (node.id === draggedNodeId) {
-            position.vx = 0;
-            position.vy = 0;
-            continue;
-          }
-          const pinned = pinnedPositions[node.id];
-          const stable = anchors.get(node.id) ?? { x: width / 2, y: height / 2, angle: -Math.PI / 2, primaryRootId: node.id, primaryBranchId: node.id };
-          const radialScale = currentNodes.length > 0 ? node.level / Math.max(...currentNodes.map((item) => item.level), 1) : 0;
-          const seed = hashString(node.id);
-          const phase = ((seed % 8192) / 8192) * Math.PI * 2;
-          const litFrame = litFrameRef.current.get(node.id);
-          const age = litFrame === undefined ? 0 : Math.max(0, frameCount - litFrame);
-          const ramp = Math.min(1, age / 32);
-          if (pinned) {
-            position.x = pinned.x;
-            position.y = pinned.y;
-            position.vx = 0;
-            position.vy = 0;
-            continue;
-          }
-            position.vx += (stable.x - position.x) * levelPull;
-            position.vy += (stable.y - position.y) * levelPull;
-            position.vx += (width / 2 - position.x) * centerPull * (1 - radialScale * 0.4);
-            position.vy += (height / 2 - position.y) * centerPull * (1 - radialScale * 0.4);
-            if (!idleAnimationsDisabled) {
-              position.vx += Math.sin(driftTime + phase) * 0.0055 * ramp;
-              position.vy += Math.cos(driftTime * 0.76 + phase * 1.17) * 0.0055 * ramp;
-            }
-          }
-
-        for (const node of currentNodes) {
-          const position = positions.get(node.id);
-          if (!position) continue;
-          if (node.id === draggedNodeId) {
-            position.vx = 0;
-            position.vy = 0;
-            positionCache.set(cacheEntryKey(graphCacheKey, node.id), { x: position.x, y: position.y });
-            continue;
-          }
-          const pinned = pinnedPositions[node.id];
-          const litFrame = litFrameRef.current.get(node.id);
-          const spawnAge = litFrame === undefined ? 999 : Math.max(0, frameCount - litFrame);
-          const spawnEase = Math.min(1, spawnAge / 60);
-          const nodeDamping = pinned
-            ? (idleAnimationsDisabled ? 0.46 : 0.58)
-            : 0.55 + (damping - 0.55) * spawnEase;
-          position.vx *= nodeDamping;
-          position.vy *= nodeDamping;
-          if (Math.abs(position.vx) < velocityEpsilon) position.vx = 0;
-          if (Math.abs(position.vy) < velocityEpsilon) position.vy = 0;
-          position.x += position.vx;
-          position.y += position.vy;
-          if (pinned) {
-            position.x = pinned.x;
-            position.y = pinned.y;
-            position.vx = 0;
-            position.vy = 0;
-            positionCache.set(cacheEntryKey(graphCacheKey, node.id), { x: position.x, y: position.y });
-            continue;
-          }
-          const softBound = Math.max(width, height) * 1.5;
-          position.x = Math.max(-softBound, Math.min(softBound, position.x));
-          position.y = Math.max(-softBound, Math.min(softBound, position.y));
-          positionCache.set(cacheEntryKey(graphCacheKey, node.id), { x: position.x, y: position.y });
-        }
         }
       }
 

@@ -1,34 +1,66 @@
 # Features
 
-Clew is compact as a codebase, but broad enough as a product to cover a real study loop.
+Clew is a personal adaptive roadmap builder for serious learning.
 
-## Product surface
+The center is simple: **a thread through anything you're learning**. Everything else exists to make that thread easier to generate, inspect, trust, and keep.
 
-- `Graph-first workspace`: multiple graphs, visible dependencies, zones, manual layout, topic descriptions, and a working surface that stays editable instead of turning into a static roadmap.
-- `Resources and artifacts on the graph`: attach links, source material, and your own artifacts directly to topics so context stays where it belongs.
-- `AI proposals instead of silent edits`: ingest rough material, expand toward a target, review changes before apply, and roll back through snapshots.
-- `Grounded requests when needed`: enable Web mode for requests that need external sources, references, or current links instead of relying only on the model context.
-- `Study loop attached to structure`: topic sessions, assistant help, closure quizzes, inline quizzes, and manual completion when quiz gating is not wanted.
-- `Import, export, and reuse`: move graph packs in and out of the local edition, keep progress when you want it, or export a clean graph without progress.
-- `Library surface on hosted`: import ready-made graphs, publish your own versions, and use the hosted product as both workspace and discovery layer.
-- `Personalization`: Gemini or OpenAI, custom provider seam, role/persona rules, thinking presets, memory presets, and closure thresholds.
-- `Long-term value`: keep the actual path you studied, the resources that mattered, the artifacts you produced, and the structural history of how the graph evolved.
+## Core Product
 
-## Hosted vs local
+- `Personal adaptive roadmaps`: build a graph around your actual goal instead of following a public static checklist.
+- `AI graph generation`: paste messy topics, describe a target, or import notes; the model can draft a real prerequisite structure with broad topic counts.
+- `Reviewable proposals`: AI does not silently mutate the graph. You inspect the proposal, apply it, reject it, and roll back through snapshots when needed.
+- `Graph-first workspace`: topics, dependencies, zones, resources, artifacts, layout, and progress live on the main surface.
+- `Path reading`: click a topic and see what surrounds it: foundations, blockers, frontier, related branches, and what can wait.
+- `Study closure`: use closure quizzes for stricter learning or mark topics finished manually when the workspace should stay lightweight.
+
+## 0.2.0 Interface
+
+- `Midnight and Paper themes`: a dark graph mood and a brighter light workspace.
+- `New shell`: clearer navigation, cleaner dialog structure, and a more coherent workspace surface.
+- `Better graph feel`: manual layout editing, saved positions, smoother idle motion, stable curved edges, zone styling, and denser graph readability.
+- `New brand layer`: Clew name, mark, favicon set, launch loader, and a cleaner product language.
+
+## AI Control
+
+- `Provider choice`: Gemini, OpenAI, and OpenAI-compatible endpoints.
+- `Model and thinking controls`: tune planner, orchestrator, assistant, and quiz output budgets.
+- `Memory controls`: decide how much history, graph context, progress, quiz state, frontier, and selected-topic context the agent sees.
+- `Grounded requests`: enable web grounding when the request needs external source context.
+- `Persona rules`: shape the assistant as part of the workspace instead of treating behavior as a hidden constant.
+
+## Obsidian Bridge
+
+- `Import from Obsidian`: choose a vault folder, convert Markdown notes into topics, infer links, create zones from folders, preview validation, and import.
+- `Export to Obsidian`: write a graph as an Obsidian-ready folder with topic notes, resources, artifacts, zone folders, and graph metadata.
+- `Local graph packages`: move Clew graphs in and out of the local edition with optional progress.
+
+## MCP
+
+- `Clew Study Assist`: a read-only MCP server for Claude Desktop, Claude Code, Cursor, and other MCP clients.
+- `Graph-aware assistant context`: external tools can list graphs, inspect the current learning context, search notes, and open a topic with neighbors and blockers.
+- `No silent writes`: MCP is read-only. Graph edits still go through the Clew proposal/review/apply flow.
+
+## Local Edition
+
+- `SQLite workspace`: graphs, snapshots, chat state, quiz state, and config are local.
+- `Snapshots and rollback`: accepted graph changes remain recoverable.
+- `Debug logs`: optional local logging for frontend, API, and backend errors.
+- `.env.example`: faster first install with explicit provider setup.
+
+## Hosted vs Local
 
 ### Hosted
 
-- fastest way to try the product
-- less setup friction
-- shared library surface
+- fastest way to try Clew
+- cleaner onboarding
+- easiest path for non-technical users
 
 ### Local
 
-- local control
-- provider key ownership
-- import/export workflow
-- easier developer experimentation
+- full provider ownership
+- local state
+- MCP server
+- Obsidian import/export
+- easier hacking and inspection
 
-Everything is arranged around one idea:
-
-**a learning graph should be editable, inspectable, and AI-assisted without losing user control**
+Both surfaces point at the same product truth: **AI helps create the path, but the graph stays visible, editable, and yours.**

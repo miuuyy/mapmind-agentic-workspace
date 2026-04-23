@@ -982,7 +982,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
           </button>
           <a
             className="sidebarAccountTrigger sidebarAccountLink"
-            href="https://mapmind.space/how-to-use"
+            href="https://clew.my/how-to-use"
             target="_blank"
             rel="noreferrer"
           >
@@ -1519,7 +1519,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                 <button className={`lightDockButton ${isSettingsOpen ? "lightDockButtonActive" : ""}`} onClick={openConfigurationSettings} title={copy.shell.configuration} type="button">
                   <GearSix size={28} weight={getDockIconWeight(isSettingsOpen)} />
                 </button>
-                <a className="lightDockButton lightDockButtonLink" href="https://mapmind.space/how-to-use" rel="noreferrer" target="_blank" title={copy.sidebar.documentation}>
+                <a className="lightDockButton lightDockButtonLink" href="https://clew.my/how-to-use" rel="noreferrer" target="_blank" title={copy.sidebar.documentation}>
                   <BookBookmark size={28} weight={getDockIconWeight(false)} />
                 </a>
                 {debugModeEnabled ? (

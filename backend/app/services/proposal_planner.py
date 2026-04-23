@@ -267,7 +267,6 @@ class ProposalPlanner:
                         "upsert_topic",
                         "upsert_edge",
                         "upsert_zone",
-                        "set_mastery",
                     ],
                 },
             },

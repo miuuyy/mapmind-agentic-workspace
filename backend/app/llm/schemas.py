@@ -129,7 +129,7 @@ class QuizQuestionSetDraft(BaseModel):
 def planner_response_json_schema() -> dict[str, Any]:
     state_enum = ["not_started", "learning", "shaky", "solid", "mastered", "needs_review"]
     relation_enum = ["requires", "supports", "bridges", "extends", "reviews"]
-    op_enum = ["upsert_topic", "upsert_edge", "upsert_zone", "set_mastery"]
+    op_enum = ["upsert_topic", "upsert_edge", "upsert_zone"]
     return {
         "type": "object",
         "properties": {
@@ -159,7 +159,7 @@ def planner_response_json_schema() -> dict[str, Any]:
                     "properties": {
                         "op_id": {"type": "string"},
                         "op": {"type": "string", "enum": op_enum},
-                        "entity_kind": {"type": "string", "enum": ["topic", "edge", "zone", "mastery"]},
+                        "entity_kind": {"type": "string", "enum": ["topic", "edge", "zone"]},
                         "rationale": {"type": "string"},
                         "topic": {
                             "type": "object",

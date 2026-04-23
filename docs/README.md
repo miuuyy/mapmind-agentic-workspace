@@ -11,8 +11,10 @@ These docs are for people who want to run, inspect, modify, or extend the local 
 3. [Agentic Loop](AGENTIC_LOOP.md)
 4. [Provider Guide](PROVIDER_GUIDE.md)
 5. [Usage Guide](USAGE_GUIDE.md)
-6. [MCP Setup](MCP_SETUP.md)
-7. [Architecture Decision Records](adr/README.md)
+6. [Obsidian Bridge](OBSIDIAN.md)
+7. [MCP Setup](MCP_SETUP.md)
+8. [0.2.0 Release Notes](RELEASE_0_2_0.md)
+9. [Architecture Decision Records](adr/README.md)
 
 ## What each file is for
 
@@ -21,7 +23,9 @@ These docs are for people who want to run, inspect, modify, or extend the local 
 - [Agentic Loop](AGENTIC_LOOP.md): the decision and apply loop behind chat, proposals, quizzes, and rollback
 - [Provider Guide](PROVIDER_GUIDE.md): built-in providers, model config, and how to add another provider cleanly
 - [Usage Guide](USAGE_GUIDE.md): source-material guidance for generating high-quality ingest input
+- [Obsidian Bridge](OBSIDIAN.md): import an Obsidian vault into Clew or export a graph back into Markdown
 - [MCP Setup](MCP_SETUP.md): connect Clew Study Assist to Claude Desktop, Claude Code, or Cursor via the built-in MCP server
+- [0.2.0 Release Notes](RELEASE_0_2_0.md): product and code changes added in the 0.2.0 branch
 - [ADR index](adr/README.md): long-lived decisions that protect the product from drifting into weaker shapes
 
 ## What is intentionally not here

@@ -39,7 +39,6 @@ your workspace.
 2. **Tell your AI client where to find it.** Pick the section below that
    matches your client, replace `/absolute/path/to/clew` with the
    absolute path to your clone, and paste.
-   absolute path to your clone, and paste.
 
 ## Claude Desktop
 

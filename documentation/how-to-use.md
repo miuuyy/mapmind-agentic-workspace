@@ -1,122 +1,115 @@
-# How to use
+# How To Use
 
-Clew works best when you treat it like a learning workspace, not like a passive viewer.
+Use Clew when the thing you want to learn is bigger than a tutorial.
 
-## 1. Start with a graph
+The product works best when you treat it as a living roadmap: generate structure, inspect it, study through it, and keep reshaping it as your goal becomes clearer.
 
-You can begin from:
+## 1. Start With A Target
 
-- the starter graph
-- a brand new graph
-- a graph generated from messy topics
-- a graph imported from disk
+A good target is concrete enough to shape the graph:
 
-The point is not to get the perfect graph in one shot. The point is to create a useful structure that you can refine over time.
+- "learn enough math for machine learning"
+- "prepare for computer networking"
+- "understand transformers from first principles"
+- "turn my Obsidian cybersecurity notes into a study path"
+- "build a first-year computer engineering foundation"
 
-## 2. Pick a direction
+You do not need the full curriculum. Clew is built because most people do not have the curriculum.
 
-Clew gets stronger once you use it around a concrete target.
+## 2. Create Or Import A Graph
 
-That target can be:
+You can start from:
 
-- an exam domain
-- a research area
-- a technical concept
-- a course
-- a personal study project
+- a starter graph
+- a blank graph
+- a messy topic dump
+- a Clew graph package
+- an Obsidian vault
 
-You do not need a finished curriculum in advance. A direction is enough to start.
+For Obsidian, choose a vault folder and preview what Clew found before importing. The import can use folder paths as zones, Markdown links as graph edges, and note bodies as artifacts.
 
-## 3. Read the current path
+## 3. Ask AI To Build The Next Structure
 
-Before expanding anything, inspect the graph.
+Use the assistant for structural requests:
+
+- expand this graph toward my target
+- add missing foundations before this topic
+- ingest these source topics
+- audit what is too shallow
+- connect this branch back to the main path
+
+Good models can produce a lot of structure in one pass. That is the point. The product is useful because AI makes graph creation cheap enough to do repeatedly.
+
+## 4. Review Before Apply
+
+When Clew returns a proposal, read it.
 
 Look for:
 
-- root topics
-- missing foundations
-- frontier topics
-- obvious branches
+- topics that are too broad
+- missing prerequisites
+- weak edges
+- useless zones
+- branches that do not serve your target
 
-You are allowed to branch whenever you want. The point is that now you can **see** the branch instead of guessing blindly.
+Apply good proposals. Reject weak ones. Ask for a tighter pass. The graph changes only when you accept the proposal.
 
-## 4. Use the assistant in context
+## 5. Study Through The Graph
 
-Ask the assistant when you want to:
+Click a topic and read the neighborhood.
 
-- expand toward a target
-- clarify a topic
-- understand what is missing
-- explore how two areas of the graph relate
+Pay attention to:
 
-The important difference is that the assistant is operating inside the workspace context instead of starting from a blank chat.
+- incoming prerequisites
+- outgoing unlocks
+- blockers
+- resources
+- artifacts
+- closure status
 
-## 5. Review proposals before applying
+This is where Clew becomes different from a static roadmap. You are not just viewing the path. You are operating on it.
 
-When the assistant proposes graph changes, stop and inspect them.
+## 6. Close Topics Honestly
 
-That review step is not optional product theater. It is one of the strongest guarantees in the system:
+If closure tests are enabled, use the quiz flow to close a topic.
 
-- AI suggests
-- you decide
+If you want a lighter workflow, disable closure tests and mark topics finished manually.
 
-If the proposal is good, apply it. If it is weak, reject it and ask for something better.
+Either way, progress belongs on the graph. That way the next AI request can see what you actually studied.
 
-## 6. Study a topic, then close it
+## 7. Keep Your Notes Connected
 
-Once a topic is actually learned, use the closure flow.
+Attach useful resources and artifacts directly to topics.
 
-Depending on workspace settings, that means either:
+If Obsidian is your long-term note home, export the graph as an Obsidian folder when you want the path outside Clew.
 
-- taking a closure quiz
-- or marking the topic as finished manually
+If an external assistant is helping you study, connect Clew Study Assist through MCP so it can read your current graph context without copy-paste.
 
-The point is to keep progress attached to the graph, not trapped in a separate mental checklist.
+## 8. Tune The Workspace
 
-## 7. Attach what actually mattered
+Clew lets you tune:
 
-As you study, attach:
+- provider and model
+- thinking budget
+- memory profile
+- grounding
+- persona rules
+- theme
+- graph layout
+- closure thresholds
 
-- useful resources
-- your own artifacts
-- notes that are truly tied to the topic
+Those are not random settings. They decide how much context the model sees and how strict the workspace should feel.
 
-That turns the graph into more than a dependency diagram. It becomes a record of the path you took.
+## A Good Default Loop
 
-## 8. Keep shaping the workspace
-
-Clew is designed to be adjusted.
-
-You can:
-
-- rename things
-- move nodes
-- refine structure
-- expand in smaller steps
-- change role, provider, model, memory, and thinking settings
-
-That flexibility is part of the value, not a side feature.
-
-## 9. Roll back when needed
-
-If a proposal pushed the graph in the wrong direction, use snapshots and rollback.
-
-This is one of the strongest guarantees in the product:
-
-- you can move fast
-- without treating every apply as irreversible
-
-## Practical default workflow
-
-For most people, the cleanest routine is:
-
-1. create or open a graph
-2. choose a target
-3. inspect the current frontier
-4. ask for a focused expansion
+1. choose a real target
+2. generate or import an initial graph
+3. inspect the path around a few topics
+4. ask AI for a focused expansion
 5. review and apply
-6. study a few topics
-7. close what is actually done
-8. attach the resources and artifacts that mattered
+6. study one frontier topic
+7. close it
+8. attach what mattered
+9. repeat
 
-Repeat that loop long enough and the graph stops being a planning toy. It becomes your real learning workspace.
+After a few loops, the graph stops being a plan you made once. It becomes the thread you are actually following.

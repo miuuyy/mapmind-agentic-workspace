@@ -1,26 +1,40 @@
 # Agent
 
-Clew uses a **narrow learning agent**, not a pseudo-general assistant that claims to automate everything.
+Clew uses AI as a structural partner for learning, not as a fake autonomous operator.
 
-## The shortest definition
+The model matters. Without it, building and maintaining a useful personal roadmap would take too much manual work. With it, you can ask for a large graph expansion, import messy notes, or audit missing foundations in minutes.
 
-Clew is a graph-first learning workspace with an AI agent layer operating inside a persistent study state.
+## What The Agent Sees
 
-The agent does not act on an empty prompt. It acts on a workspace that already contains:
+The assistant can work from:
 
 - graph structure
 - selected topic context
+- prerequisite and frontier context
 - progress and closure state
 - recent chat history
-- role and persona rules
 - provider and model settings
-- language and memory preferences
+- memory settings
+- persona rules
+- grounding preference
 
-## Why it is fair to call it agentic
+That context is the difference between a generic study chatbot and an assistant inside your learning workspace.
 
-This is more than “LLM answers user”.
+## What It Can Do
 
-The system has:
+The agent can:
+
+- answer in context
+- generate inline quizzes
+- propose graph ingest from source material
+- propose graph expansion toward a goal
+- help audit what is missing or too broad
+
+When the action changes the graph, the result is a proposal. You review it before it becomes state.
+
+## Why This Is Agentic Enough
+
+Clew has:
 
 - persistent world state
 - dynamic context assembly
@@ -29,42 +43,30 @@ The system has:
 - human review before graph mutation
 - rollback after accepted changes
 
-That is enough to describe Clew honestly as an **agentic learning loop** without pretending it is a broad autonomous agent platform.
+That is a real learning loop. It does not need to pretend to be a broad autonomous agent platform.
 
-## What the agent can do
+## The Boundary
 
-At a high level, the agent can:
+The right boundary is simple:
 
-- answer in context
-- generate an inline quiz
-- propose a graph ingest
-- propose a graph expansion
+- AI drafts structure
+- deterministic code validates contracts and policy
+- the user accepts or rejects graph changes
+- snapshots preserve recovery
 
-When the action affects the graph, the system returns a typed proposal instead of silently rewriting the workspace.
+That keeps the product powerful without making the graph feel opaque.
 
-## Why the scope is intentionally narrow
+## Behavior Controls
 
-A lot of “agents” in 2026 are broad in ambition and weak in truth.
+Clew lets you tune the assistant through:
 
-Clew takes the opposite stance:
-
-- one domain
-- one strong surface
-- one persistent state model
-
-That narrower scope is exactly why the product can be useful. It is built to help a learner build, inspect, and evolve a structured path, not to cosplay as a universal autonomous system.
-
-## Memory and behavior
-
-The assistant does not have one fixed memory mode.
-
-Clew lets the workspace shape the agent through:
-
-- chat history depth
-- graph-context inclusion
-- quiz-context inclusion
-- frontier and progress inclusion
+- model selection
+- thinking budget
+- memory profile
+- graph context inclusion
+- progress context inclusion
+- quiz context inclusion
+- selected-topic context inclusion
 - persona rules
-- provider and model choice
 
-That makes behavior part of the workspace, not a hidden constant.
+Behavior is part of the workspace, not a hidden constant.

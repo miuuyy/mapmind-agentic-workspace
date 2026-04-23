@@ -213,7 +213,7 @@ export type GraphChatResponse = {
 };
 
 export type GraphChatStreamEvent =
-  | { type: "assistant_message"; message: ChatMessage; messages?: ChatMessage[] }
+  | { type: "assistant_message"; message?: ChatMessage; messages?: ChatMessage[] }
   | { type: "planning_status"; message_id: string; label: string }
   | { type: "proposal_ready"; message_id: string; message?: ChatMessage; messages?: ChatMessage[] }
   | { type: "planning_error"; message_id: string; detail: string }

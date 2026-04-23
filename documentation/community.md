@@ -39,6 +39,7 @@ That feedback is useful because the product is still being shaped in public.
 For feedback, collaboration, or thoughtful product conversation:
 
 - Email: [johnymaarrete@gmail.com](mailto:johnymaarrete@gmail.com)
+- Website: [clew.my](https://clew.my)
 - LinkedIn: [aleksandr-vechenkov-037b00377](https://www.linkedin.com/in/aleksandr-vechenkov-037b00377/)
 - Repository: [github.com/miuuyy/mapmind-agentic-workspace](https://github.com/miuuyy/mapmind-agentic-workspace)
 

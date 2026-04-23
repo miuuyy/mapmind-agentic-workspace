@@ -1,95 +1,95 @@
-# How it works
+# How It Works
 
-Clew works by combining a persistent graph workspace with a constrained AI loop.
+Clew works by keeping learning structure as persistent state and letting AI operate inside that state.
 
-## 1. The graph is the world state
+## 1. The Graph Is The State
 
-The graph is not generated for one screenshot and then forgotten.
+The graph is not a generated screenshot.
 
-It is a persistent state containing:
+It stores:
 
 - topics
-- edges
-- regions
-- topic resources
-- topic artifacts
-- progress state
-- quiz state
+- prerequisite edges
+- zones
+- resources
+- artifacts
+- progress
+- quiz history
 - snapshots
 
-That persistent state is what gives the assistant real context.
+That is why a topic can have a real neighborhood, and why the assistant can answer from the path you are actually building.
 
-## 2. The assistant does not operate on a blank prompt
+## 2. AI Gets Context, Not A Blank Chat
 
-When you ask for help, the model can receive a context pack built from the workspace:
+When you ask for help, Clew can assemble context from:
 
-- current graph
-- selected topic
-- learning progress
-- closure state
+- the current graph
+- the selected topic
+- nearby prerequisites and unlocks
+- progress and closure state
 - recent chat history
-- configured role
-- configured language
-- memory preset
-- provider and model settings
+- provider/model settings
+- memory and persona settings
+- grounding preference
 
-This is why the assistant feels different from a generic chat tab. It is grounded in the path you are actually on.
+This is why Clew needs AI but does not collapse into chat. The model is working with a structured workspace.
 
-## 3. The system chooses between different action shapes
+## 3. Requests Become Action Shapes
 
-Depending on the request, the assistant may:
+The assistant can choose a small set of product actions:
 
-- answer directly
-- create an inline quiz
-- generate a graph proposal from source material
-- generate a graph expansion toward a target
+- answer in context
+- generate an inline quiz
+- propose topic ingest
+- propose graph expansion
 
-These are not all the same output type. The system uses typed boundaries so the model is not just returning free-form prose in every situation.
+The narrow action space is intentional. It keeps the model useful without pretending to be a general autonomous worker.
 
-## 4. Graph mutation is proposal-based
+## 4. Graph Changes Are Proposals
 
-This is one of the strongest design choices in the product.
+AI-generated graph changes come back as proposals.
 
-The assistant does not silently edit the graph. It returns a proposal. That proposal can then be:
+A proposal contains:
 
-- reviewed
-- applied
-- rejected
+- topic operations
+- edge operations
+- zone operations
+- assumptions
+- warnings
+- apply preview
 
-If applied, it becomes part of the graph history.
+You decide whether it lands. Clew does not silently rewrite the graph.
 
-## 5. Accepted changes are snapshot-based
+## 5. Accepted Changes Are Recoverable
 
-Every meaningful graph change can produce a snapshot.
+Applied graph changes are persisted through the repository layer and snapshot history.
 
-That gives the workspace a practical recovery model:
+That gives you a practical safety loop:
 
-- move fast
+- generate structure quickly
 - inspect the result
-- roll back if needed
+- roll back if the shape was wrong
 
-Without that, AI-assisted editing would be much harder to trust.
+Without rollback, AI-assisted graph editing would be too fragile to trust.
 
-## 6. Topic closure can be verified
+## 6. Obsidian And MCP Are Bridges
 
-Completion is not only visual.
+Obsidian import/export moves learning structure between Clew and a Markdown vault.
 
-Clew supports closure tests so topics can be marked complete through actual verification. If a workspace does not need that strictness, the quiz flow can be disabled and the user can mark a topic as finished directly.
+MCP exposes the local graph as read-only context for external assistants.
 
-That makes the system usable across both:
+Both integrations follow the same product rule: they support the graph, they do not replace it.
 
-- stricter study environments
-- lighter exploratory learning
+## 7. Local Control Stays Explicit
 
-## 7. The provider layer is modular
+The local edition uses:
 
-The local edition ships with:
+- SQLite for workspace state
+- your provider keys
+- Gemini or OpenAI/OpenAI-compatible providers
+- local debug logs when enabled
+- local graph packages
 
-- Gemini
-- OpenAI
+In one sentence:
 
-The provider boundary is explicit, so developers can add their own providers later.
-
-## In one sentence
-
-Clew works by keeping a graph as the persistent learning state, building dynamic context from that state, letting AI produce typed actions instead of silent edits, and keeping accepted changes reviewable and reversible.
+**Clew uses AI to draft the path, the graph to make the path visible, and review/snapshots to keep the path trustworthy.**

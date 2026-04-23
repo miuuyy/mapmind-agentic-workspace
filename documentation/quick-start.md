@@ -1,36 +1,32 @@
-# Quick start
+# Quick Start
 
-If Obsidian is where you collect notes, **Clew is where you operate on a learning graph**.
+Clew is for the moment when you know what you want to learn, but the path is too tangled to hold in your head.
 
-Clew is a graph-first workspace for structured study, with an AI agent layer that can expand, audit, and reshape your path without silently rewriting your state.
+The shortest version:
+
+**Clew is roadmap.sh, but personalized and adaptive.**
+
+It gives you a clear path to anything you want to learn, with AI doing the heavy structural work and you staying in control of what becomes part of the graph.
 
 ![Clew walkthrough](/docs-assets/walkthrough.gif)
 
-## Two entry paths
+## Start On The Website
 
-You can approach Clew in two ways:
+Go to [clew.my](https://clew.my), open the app, and start with a graph.
 
-- use the **hosted site** if you want to try it immediately
-- run the **local edition** if you want full control over providers, data, and graph packs
+You can:
 
-## Hosted route
+- inspect a starter graph
+- create a fresh subject graph
+- paste a rough topic dump
+- import an Obsidian vault
+- ask AI to expand toward a target
 
-Go to [mapmind.space](https://mapmind.space), sign in, and open the app.
+The first screen is the graph because the graph is the product. Chat supports it. Settings support it. Import and export support it. The graph is where the path becomes visible.
 
-The hosted route is the fastest way to understand the product shape:
+## Run It Locally
 
-- open the starter graph
-- inspect a few topics
-- ask the assistant to expand a target
-- review the proposal
-- apply it or reject it
-
-The hosted product also includes a library surface for shared graphs and discovery.
-It is also the easier route if you want to use Clew on a phone or tablet instead of staying at a desktop-only local setup.
-
-## Local route
-
-Clone the repository, copy the environment example, and run the development script.
+Use the local edition if you want your own provider keys, local SQLite state, MCP, and graph files.
 
 ```bash
 git clone https://github.com/miuuyy/mapmind-agentic-workspace.git
@@ -49,46 +45,44 @@ You only need one provider key:
 - `KG_GEMINI_API_KEY`
 - or `KG_OPENAI_API_KEY`
 
-## What you see first
+## The First Good Session
 
-The first thing you see is a graph.
+Do this once and you will understand the product:
 
-That is intentional. The graph is not a decoration and not a background effect. It is the working surface of the product.
-
-By default, the local edition starts with a starter graph so you can inspect:
-
-- topic structure
-- prerequisite flow
-- visual zones
-- closure behavior
-- the assistant panel
-
-You can keep it, modify it, delete it, export it, or use it as a template for your own graphs.
-
-## The shortest useful first session
-
-If you want the fastest honest tour of Clew, do this:
-
-1. open the starter graph
-2. inspect a few topics and their attached resources
-3. ask the assistant to expand toward a target
+1. open a graph
+2. click a topic and look at the path around it
+3. ask the assistant to expand toward a real target
 4. review the proposal before applying it
-5. apply it, study a topic, and try a closure quiz
+5. apply it only if the structure makes sense
+6. study one topic
+7. close it with a quiz or mark it finished
 
-That single loop shows what makes the product different:
+That loop shows the core idea:
 
-- graph as state
-- AI as proposer
-- user as reviewer
-- progress as visible structure
+- AI makes the graph possible at useful scale
+- the graph makes the subject legible
+- review keeps the workspace yours
+- progress stays attached to the structure
 
-## What to do next
+## Use Your Own Material
 
-After that first run, the best next steps are usually:
+Clew is strongest when it is not starting from nothing.
 
-- create a graph from your own goal
-- ingest your own messy topic list
-- import a graph pack from disk
-- customize the graph until it matches how you actually think
+Good inputs:
 
-Clew is intentionally flexible here. It is a generative graph workspace, not a fixed curriculum player.
+- a school syllabus
+- an ML prerequisite list
+- a course outline
+- an Obsidian vault
+- a messy list of things you know you need
+- a target like "learn enough linear algebra for embeddings"
+
+You do not need to prepare a perfect curriculum. Clew exists because perfect curriculum design is the expensive part.
+
+## What To Try Next
+
+- Import an Obsidian vault and see whether your notes form a real graph.
+- Export a graph back to Obsidian as a markdown vault.
+- Connect Clew Study Assist through MCP so Claude, Claude Code, or Cursor can read your current learning context.
+- Switch between Midnight and Paper themes depending on whether you want the dark graph mood or a brighter daylight workspace.
+- Tune memory, model, thinking budget, and persona rules when you want the AI to behave differently.

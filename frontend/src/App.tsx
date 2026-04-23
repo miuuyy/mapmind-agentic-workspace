@@ -14,18 +14,12 @@ import {
   ASSISTANT_MAX_WIDTH,
   ASSISTANT_MIN_WIDTH,
   type AuthSessionPayload,
-  type GraphChatState,
   type WorkspaceSurfacePayload,
 } from "./lib/appContracts";
-import {
-  COMPACT_TOP_OVERLAY_THRESHOLD,
-  activeChatSessionStorageKey,
-  readStoredActiveChatSession,
-} from "./lib/appStatePersistence";
+import { COMPACT_TOP_OVERLAY_THRESHOLD } from "./lib/appStatePersistence";
 import {
   apiFetch,
   computePopoverPosition,
-  makeMessageId,
   type ManualLayoutPositions,
   readErrorMessage,
   readManualLayoutPositions,
@@ -36,14 +30,13 @@ import {
   type PopoverPosition,
 } from "./lib/appUiHelpers";
 import { canPlaceFloatingRect, toFloatingRect, type FloatingRect } from "./lib/floatingDesktopLayout";
-import { fetchChatSessions, markChatProposalApplied, reconcileThreadMessages } from "./lib/chatRequests";
+import { markChatProposalApplied } from "./lib/chatRequests";
 import {
   buildFallbackAssessment,
   computeClosureStatus,
   computeFocusData,
   computeGraphSummary,
   firstProposedTopicId,
-  recentMessagesForContext,
   templatePrompt,
 } from "./lib/graph";
 import { supportsObsidianDirectoryExport, writeObsidianExportPackageToDirectory } from "./lib/obsidianExport";
@@ -53,18 +46,15 @@ import {
   type ObsidianVaultEntry,
 } from "./lib/obsidianImport";
 import { useChatModelSelection } from "./hooks/useChatModelSelection";
+import { useGraphChatController } from "./hooks/useGraphChatController";
 import { useWorkspaceSettings } from "./hooks/useWorkspaceSettings";
 import { useWorkspaceChromeState } from "./hooks/useWorkspaceChromeState";
 import { useTopicPopover } from "./hooks/useTopicPopover";
 import { useModalAccessibility } from "./lib/useModalAccessibility";
 import type {
-  ChatMessage,
-  ChatSessionSummary,
   CreateGraphRequest,
   GraphEnvelope,
   GraphAssessment,
-  GraphChatStreamEvent,
-  GraphChatThread,
   GraphExportFormat,
   GraphExportPackagePayload,
   ObsidianExportOptions,
@@ -156,14 +146,6 @@ export default function App(): React.JSX.Element {
       return null;
     }
   });
-  const [chatByGraph, setChatByGraph] = useState<Record<string, GraphChatState>>({});
-  const [chatLoading, setChatLoading] = useState(false);
-  const [chatThreadLoading, setChatThreadLoading] = useState(false);
-  const [chatError, setChatError] = useState<string | null>(null);
-  const [chatSessionsError, setChatSessionsError] = useState<string | null>(null);
-  const [chatSessions, setChatSessions] = useState<ChatSessionSummary[]>([]);
-  const [chatSessionsBootstrapped, setChatSessionsBootstrapped] = useState(false);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [applyLoadingMessageId, setApplyLoadingMessageId] = useState<string | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
   const [assistantResizing, setAssistantResizing] = useState(false);
@@ -410,28 +392,6 @@ export default function App(): React.JSX.Element {
     handleSelectedTopicAnchorChange,
     handleSelectTopic,
   } = useTopicPopover({ activeGraph, isMobileViewport, graphShellRef });
-  const currentChatState = useMemo<GraphChatState>(
-    () => {
-      if (!activeGraph) return { input: "", messages: [] };
-      const stateKey = `${activeGraph.graph_id}:${activeSessionId ?? "general"}`;
-      return chatByGraph[stateKey] ?? { input: "", messages: [] };
-    },
-    [activeGraph, chatByGraph, activeSessionId],
-  );
-
-  useEffect(() => {
-    if (!activeGraph?.graph_id) return;
-    try {
-      if (activeSessionId) {
-        localStorage.setItem(activeChatSessionStorageKey(activeGraph.graph_id), activeSessionId);
-      } else {
-        localStorage.removeItem(activeChatSessionStorageKey(activeGraph.graph_id));
-      }
-    } catch {
-      // Ignore localStorage write failures.
-    }
-  }, [activeGraph?.graph_id, activeSessionId]);
-
   useEffect(() => {
     setQuizSuccess(null);
   }, [selectedTopicId]);
@@ -542,20 +502,30 @@ export default function App(): React.JSX.Element {
     currentConfig,
     activeGraph?.graph_id ?? null,
   );
-
-  const formatPlanningError = useCallback((detail: string): string => {
-    const normalized = detail.trim();
-    if (!normalized) return normalized;
-    const isProposalFailure = normalized.toLowerCase().includes("proposal generation failed");
-    if (!isProposalFailure) {
-      return normalized;
-    }
-    const hint = copy.sessions.largeGraphModelHint;
-    if (normalized.includes(hint)) {
-      return normalized;
-    }
-    return `${normalized}\n${hint}`;
-  }, [copy.sessions]);
+  const {
+    activeSessionId,
+    setActiveSessionId,
+    chatSessions,
+    currentChatState,
+    chatLoading,
+    chatThreadLoading,
+    chatError,
+    chatSessionsError,
+    updateCurrentChatState,
+    clearChatStateForGraph,
+    loadSessions,
+    sendChat,
+  } = useGraphChatController({
+    activeGraph,
+    selectedTopicId,
+    selectedChatModel,
+    defaultModel: currentConfig?.default_model ?? null,
+    memoryHistoryMessageLimit: currentConfig?.memory_history_message_limit ?? 50,
+    composerUseGrounding,
+    largeGraphModelHint: copy.sessions.largeGraphModelHint,
+    loadChatError: copy.errors.loadChat,
+    loadChatSessionsError: copy.errors.loadChatSessions,
+  });
 
   useEffect(() => {
     if (!isSettingsOpen) return;
@@ -587,49 +557,6 @@ export default function App(): React.JSX.Element {
   useEffect(() => {
     setQuizPassCountDraft((current) => Math.min(current, quizQuestionCountDraft));
   }, [quizQuestionCountDraft]);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function loadChatThread(graphId: string): Promise<void> {
-      setChatThreadLoading(true);
-      setChatError(null);
-      try {
-        const sessionParam = activeSessionId ? `?session_id=${activeSessionId}` : "";
-        const response = await apiFetch(`${API_BASE}/api/v1/graphs/${graphId}/chat${sessionParam}`);
-        if (!response.ok) {
-          if (response.status === 404 && activeSessionId) {
-            setActiveSessionId(null);
-            return;
-          }
-          throw new Error(`chat thread failed with ${response.status}`);
-        }
-        const payload = (await response.json()) as GraphChatThread;
-        if (cancelled) return;
-        setChatByGraph((current) => {
-          const stateKey = `${graphId}:${activeSessionId ?? "general"}`;
-          const existing = current[stateKey] ?? { input: "", messages: [] };
-          return {
-            ...current,
-            [stateKey]: {
-              input: existing.input,
-              messages: reconcileThreadMessages(payload.messages, existing.messages),
-            },
-          };
-        });
-      } catch (loadError) {
-        if (cancelled) return;
-        setChatError(loadError instanceof Error ? loadError.message : copy.errors.loadChat);
-      } finally {
-        if (!cancelled) setChatThreadLoading(false);
-      }
-    }
-
-    if (!activeGraph?.graph_id) return;
-    void loadChatThread(activeGraph.graph_id);
-    return () => {
-      cancelled = true;
-    };
-  }, [activeGraph?.graph_id, activeSessionId]);
 
   const focusData = useMemo(() => computeFocusData(activeGraph, selectedTopicId), [activeGraph, selectedTopicId]);
   const graphSummary = useMemo(() => computeGraphSummary(activeGraph), [activeGraph]);
@@ -737,58 +664,6 @@ export default function App(): React.JSX.Element {
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
   }
-
-  function updateCurrentChatState(updater: (current: GraphChatState) => GraphChatState): void {
-    if (!activeGraph) return;
-    const stateKey = `${activeGraph.graph_id}:${activeSessionId ?? "general"}`;
-    setChatByGraph((current) => {
-      const graphState = current[stateKey] ?? { input: "", messages: [] };
-      return {
-        ...current,
-        [stateKey]: updater(graphState),
-      };
-    });
-  }
-
-  function clearChatStateForGraph(graphId: string | null | undefined): void {
-    if (!graphId) return;
-    setChatByGraph((current) => {
-      const next = { ...current };
-      for (const key of Object.keys(next)) {
-        if (key.startsWith(`${graphId}:`)) delete next[key];
-      }
-      return next;
-    });
-  }
-
-  async function loadSessions(): Promise<void> {
-    if (!activeGraph) {
-      setChatSessionsBootstrapped(true);
-      return;
-    }
-    setChatSessionsError(null);
-    try {
-      const sessions = await fetchChatSessions(
-        apiFetch,
-        `${API_BASE}/api/v1/graphs/${activeGraph.graph_id}/chat/sessions`,
-        copy.errors.loadChatSessions,
-      );
-      setChatSessions(sessions);
-    } catch (loadError) {
-      setChatSessionsError(loadError instanceof Error ? loadError.message : copy.errors.loadChatSessions);
-    } finally {
-      setChatSessionsBootstrapped(true);
-    }
-  }
-
-  // Restore the last active chat session for the selected graph across reloads.
-  useEffect(() => {
-    setChatSessions([]);
-    setChatSessionsError(null);
-    if (!activeGraph) return;
-    setActiveSessionId(readStoredActiveChatSession(activeGraph.graph_id));
-    void loadSessions();
-  }, [activeGraph?.graph_id]);
 
   async function fetchWorkspace(): Promise<WorkspaceEnvelope> {
     const response = await apiFetch(`${API_BASE}/api/v1/workspace/current`);
@@ -1120,133 +995,6 @@ export default function App(): React.JSX.Element {
     setError(null);
     setGraphLayoutDraft(activeGraphManualLayout);
     setGraphLayoutEditing(true);
-  }
-
-  async function sendChat(
-    overridePrompt?: string,
-    options?: { hiddenUserMessage?: boolean; baseMessages?: ChatMessage[] },
-  ): Promise<void> {
-    if (!activeGraph) return;
-    const prompt = (overridePrompt ?? currentChatState.input).trim();
-    if (!prompt) return;
-    const hiddenUserMessage = options?.hiddenUserMessage ?? false;
-    const baseMessages = options?.baseMessages ?? currentChatState.messages;
-
-    const userMessage: ChatMessage = {
-      id: makeMessageId(),
-      role: "user",
-      content: prompt,
-      hidden: hiddenUserMessage,
-      created_at: new Date().toISOString(),
-    };
-    const nextMessages = [...baseMessages, userMessage];
-    updateCurrentChatState(() => ({ input: "", messages: nextMessages }));
-    setChatLoading(true);
-    setChatError(null);
-
-    try {
-      const response = await apiFetch(`${API_BASE}/api/v1/graphs/${activeGraph.graph_id}/chat/stream`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt,
-          messages: recentMessagesForContext(nextMessages, currentConfig?.memory_history_message_limit ?? 50).map((message) => ({
-            role: message.role,
-            content: message.content,
-            hidden: message.hidden ?? false,
-            created_at: message.created_at,
-          })),
-          hidden_user_message: hiddenUserMessage,
-          selected_topic_id: activeSessionId
-            ? chatSessions.find((s) => s.session_id === activeSessionId)?.topic_id ?? selectedTopicId
-            : selectedTopicId,
-          session_id: activeSessionId,
-          model: selectedChatModel ?? data?.workspace.config.default_model ?? null,
-          use_grounding: composerUseGrounding,
-        }),
-      });
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
-        throw new Error(payload?.detail ?? `chat failed with ${response.status}`);
-      }
-      if (!response.body) throw new Error("chat stream unavailable");
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-          const event = JSON.parse(trimmed) as GraphChatStreamEvent;
-          if (event.type === "assistant_message") {
-            const terminalAssistantMessage =
-              event.message ?? (event.messages && event.messages.length > 0 ? event.messages[event.messages.length - 1] : null);
-            updateCurrentChatState((current) => ({
-              ...current,
-              messages: [...current.messages, event.message],
-            }));
-            if (terminalAssistantMessage?.action === "answer") {
-              setChatLoading(false);
-            }
-            continue;
-          }
-          if (event.type === "planning_status") {
-            updateCurrentChatState((current) => ({
-              ...current,
-              messages: current.messages.map((message) =>
-                message.id === event.message_id
-                  ? { ...message, planning_status: event.label, planning_error: null }
-                  : message,
-              ),
-            }));
-            continue;
-          }
-          if (event.type === "proposal_ready") {
-            setChatLoading(false);
-            updateCurrentChatState((current) => ({
-              ...current,
-              messages: current.messages.map((message) =>
-                message.id === event.message_id
-                  ? { ...(event.message ?? message), planning_status: null, planning_error: null }
-                  : message,
-              ),
-            }));
-            continue;
-          }
-          if (event.type === "planning_error") {
-            setChatLoading(false);
-            updateCurrentChatState((current) => ({
-              ...current,
-              messages: current.messages.map((message) =>
-                message.id === event.message_id
-                  ? { ...message, planning_status: null, planning_error: formatPlanningError(event.detail) }
-                  : message,
-              ),
-            }));
-            continue;
-          }
-          if (event.type === "error") {
-            throw new Error(event.detail);
-          }
-        }
-      }
-    } catch (chatLoadError) {
-      setChatError(chatLoadError instanceof Error ? chatLoadError.message : "chat failed");
-      updateCurrentChatState((current) => ({
-        ...current,
-        input: prompt,
-        messages: current.messages.filter((message) => message.id !== userMessage.id),
-      }));
-    } finally {
-      setChatLoading(false);
-      void loadSessions();
-    }
   }
 
   async function applyProposalFromMessage(messageId: string, proposal: ProposalGenerateResponse): Promise<void> {
