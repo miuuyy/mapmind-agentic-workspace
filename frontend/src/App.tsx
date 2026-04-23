@@ -16,13 +16,9 @@ import {
   APP_FAVICON_LIGHT_SRC,
   ASSISTANT_MAX_WIDTH,
   ASSISTANT_MIN_WIDTH,
-  MEMORY_MODE_OPTIONS,
-  THINKING_MODE_OPTIONS,
   type AuthSessionPayload,
   type GraphChatState,
-  type MemoryMode,
   type ThemeMode,
-  type ThinkingMode,
   type WorkspaceSurfacePayload,
 } from "./lib/appContracts";
 import {
@@ -74,7 +70,9 @@ import {
   type ObsidianVaultEntry,
 } from "./lib/obsidianImport";
 import { useChatModelSelection } from "./hooks/useChatModelSelection";
+import { useWorkspaceSettings } from "./hooks/useWorkspaceSettings";
 import { useTopicPopover } from "./hooks/useTopicPopover";
+import { ensureThemeStylesheet } from "./lib/themeStyles";
 import { useModalAccessibility } from "./lib/useModalAccessibility";
 import type {
   ChatMessage,
@@ -195,33 +193,6 @@ export default function App(): React.JSX.Element {
   const [isSettingsOpen, setSettingsOpen] = useState(() => readStoredBoolean(SETTINGS_OPEN_STORAGE_KEY, false));
   const [isLogsOpen, setLogsOpen] = useState(() => readStoredBoolean(LOGS_OPEN_STORAGE_KEY, false));
   const [configSaving, setConfigSaving] = useState(false);
-  const [providerDraft, setProviderDraft] = useState("gemini");
-  const [modelDraft, setModelDraft] = useState("gemini-2.5-pro");
-  const [modelPresetDraft, setModelPresetDraft] = useState("gemini-2.5-pro");
-  const [geminiApiKeyDraft, setGeminiApiKeyDraft] = useState("");
-  const [openaiApiKeyDraft, setOpenaiApiKeyDraft] = useState("");
-  const [openaiBaseUrlDraft, setOpenaiBaseUrlDraft] = useState("https://api.openai.com/v1");
-  const [showOpenAIEndpointDraft, setShowOpenAIEndpointDraft] = useState(false);
-  const [personaDraft, setPersonaDraft] = useState("");
-  const [thinkingModeDraft, setThinkingModeDraft] = useState<ThinkingMode>("default");
-  const [memoryModeDraft, setMemoryModeDraft] = useState<MemoryMode>("balanced");
-  const [plannerMaxTokensDraft, setPlannerMaxTokensDraft] = useState(200000);
-  const [plannerThinkingBudgetDraft, setPlannerThinkingBudgetDraft] = useState(12288);
-  const [orchestratorMaxTokensDraft, setOrchestratorMaxTokensDraft] = useState(16384);
-  const [quizMaxTokensDraft, setQuizMaxTokensDraft] = useState(4096);
-  const [assistantMaxTokensDraft, setAssistantMaxTokensDraft] = useState(800);
-  const [assistantNicknameDraft, setAssistantNicknameDraft] = useState("");
-  const [disableIdleAnimationsDraft, setDisableIdleAnimationsDraft] = useState(false);
-  const [enableClosureTestsDraft, setEnableClosureTestsDraft] = useState(true);
-  const [debugModeEnabledDraft, setDebugModeEnabledDraft] = useState(false);
-  const [memoryHistoryLimitDraft, setMemoryHistoryLimitDraft] = useState(32);
-  const [memoryIncludeGraphContextDraft, setMemoryIncludeGraphContextDraft] = useState(true);
-  const [memoryIncludeProgressContextDraft, setMemoryIncludeProgressContextDraft] = useState(true);
-  const [memoryIncludeQuizContextDraft, setMemoryIncludeQuizContextDraft] = useState(true);
-  const [memoryIncludeFrontierContextDraft, setMemoryIncludeFrontierContextDraft] = useState(true);
-  const [memoryIncludeSelectedTopicContextDraft, setMemoryIncludeSelectedTopicContextDraft] = useState(true);
-  const [quizQuestionCountDraft, setQuizQuestionCountDraft] = useState(12);
-  const [quizPassCountDraft, setQuizPassCountDraft] = useState(9);
   const [quizSession, setQuizSession] = useState<TopicQuizSession | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
   const [quizLoading, setQuizLoading] = useState(false);
@@ -236,8 +207,8 @@ export default function App(): React.JSX.Element {
   const [composerUseGrounding, setComposerUseGrounding] = useState(true);
   const [viewportCenteredZoom, setViewportCenteredZoom] = useState(readStoredViewportCenteredZoom);
   const [straightEdgeLinesEnabled, setStraightEdgeLinesEnabled] = useState<boolean>(readStoredStraightEdgeLines);
-  const [straightEdgeLinesDraft, setStraightEdgeLinesDraft] = useState<boolean>(readStoredStraightEdgeLines);
-  const [themeModeDraft, setThemeModeDraft] = useState<ThemeMode>(readInitialThemeMode);
+  const initialThemeMode = useMemo<ThemeMode>(readInitialThemeMode, []);
+  const [themeModeDraft, setThemeModeDraft] = useState<ThemeMode>(initialThemeMode);
   const graphShellRef = useRef<HTMLDivElement | null>(null);
   const deleteGraphModalRef = useRef<HTMLDivElement | null>(null);
   const deleteGraphCancelButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -463,6 +434,7 @@ export default function App(): React.JSX.Element {
   usePersistedString(THEME_MODE_STORAGE_KEY, themeModeDraft);
   useEffect(() => {
     document.documentElement.dataset.theme = themeModeDraft;
+    ensureThemeStylesheet(themeModeDraft);
     const faviconHref = themeModeDraft === "light" ? APP_FAVICON_LIGHT_SRC : APP_FAVICON_DARK_SRC;
     const iconLink = document.querySelector('link[rel="icon"]');
     const appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]');
@@ -529,40 +501,99 @@ export default function App(): React.JSX.Element {
     setGraphLayoutDraft(null);
   }, [activeGraph?.graph_id]);
 
-  useEffect(() => {
-    const c = data?.workspace.config;
-    if (!c) return;
-    setProviderDraft(c.ai_provider ?? "gemini");
-    setModelDraft(c.default_model);
-    setModelPresetDraft(c.model_options.includes(c.default_model) ? c.default_model : "__custom__");
-    setGeminiApiKeyDraft(c.gemini_api_key ?? "");
-    setOpenaiApiKeyDraft(c.openai_api_key ?? "");
-    setOpenaiBaseUrlDraft(c.openai_base_url ?? "https://api.openai.com/v1");
-    setShowOpenAIEndpointDraft((c.openai_base_url ?? "https://api.openai.com/v1") !== "https://api.openai.com/v1" || c.openai_base_url_source === "env");
-    setPersonaDraft(c.persona_rules ?? "");
-    setThinkingModeDraft(c.thinking_mode ?? "default");
-    setMemoryModeDraft(c.memory_mode ?? "balanced");
-    setPlannerMaxTokensDraft(c.planner_max_output_tokens);
-    setPlannerThinkingBudgetDraft(c.planner_thinking_budget);
-    setOrchestratorMaxTokensDraft(c.orchestrator_max_output_tokens);
-    setQuizMaxTokensDraft(c.quiz_max_output_tokens);
-    setAssistantMaxTokensDraft(c.assistant_max_output_tokens);
-    setAssistantNicknameDraft(c.assistant_nickname ?? "");
-    setDisableIdleAnimationsDraft(c.disable_idle_animations ?? false);
-    setEnableClosureTestsDraft(c.enable_closure_tests ?? true);
-    setDebugModeEnabledDraft(c.debug_mode_enabled ?? false);
-    setMemoryHistoryLimitDraft(c.memory_history_message_limit ?? 32);
-    setMemoryIncludeGraphContextDraft(c.memory_include_graph_context ?? true);
-    setMemoryIncludeProgressContextDraft(c.memory_include_progress_context ?? true);
-    setMemoryIncludeQuizContextDraft(c.memory_include_quiz_context ?? true);
-    setMemoryIncludeFrontierContextDraft(c.memory_include_frontier_context ?? true);
-    setMemoryIncludeSelectedTopicContextDraft(c.memory_include_selected_topic_context ?? true);
-    setQuizQuestionCountDraft(c.quiz_question_count);
-    setQuizPassCountDraft(requiredCorrectAnswers(c.pass_threshold, c.quiz_question_count));
-  }, [data?.workspace.config]);
+  const currentConfig = data?.workspace.config ?? null;
+  const settingsState = useWorkspaceSettings({
+    config: currentConfig,
+    updateWorkspaceConfig: async (patch) => {
+      setConfigSaving(true);
+      setError(null);
+      try {
+        const response = await apiFetch(`${API_BASE}/api/v1/workspace/config`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(patch),
+        });
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
+          throw new Error(payload?.detail ?? `config update failed with ${response.status}`);
+        }
+        const payload = (await response.json()) as WorkspaceEnvelope;
+        setData(payload);
+        void loadSnapshots();
+        void loadWorkspaceSurface();
+      } catch (updateError) {
+        setError(updateError instanceof Error ? updateError.message : copy.errors.updateConfig);
+      } finally {
+        setConfigSaving(false);
+      }
+    },
+    straightEdgeLinesEnabled,
+    setStraightEdgeLinesEnabled,
+    initialThemeMode,
+  });
+  const {
+    provider: providerDraft,
+    model: modelDraft,
+    modelPreset: modelPresetDraft,
+    geminiApiKey: geminiApiKeyDraft,
+    openaiApiKey: openaiApiKeyDraft,
+    openaiBaseUrl: openaiBaseUrlDraft,
+    showOpenAIEndpoint: showOpenAIEndpointDraft,
+    thinkingMode: thinkingModeDraft,
+    plannerMaxTokens: plannerMaxTokensDraft,
+    plannerThinkingBudget: plannerThinkingBudgetDraft,
+    orchestratorMaxTokens: orchestratorMaxTokensDraft,
+    quizMaxTokens: quizMaxTokensDraft,
+    assistantMaxTokens: assistantMaxTokensDraft,
+    assistantNickname: assistantNicknameDraft,
+    persona: personaDraft,
+    disableIdleAnimations: disableIdleAnimationsDraft,
+    memoryMode: memoryModeDraft,
+    memoryHistoryLimit: memoryHistoryLimitDraft,
+    memoryIncludeGraphContext: memoryIncludeGraphContextDraft,
+    memoryIncludeProgressContext: memoryIncludeProgressContextDraft,
+    memoryIncludeQuizContext: memoryIncludeQuizContextDraft,
+    memoryIncludeFrontierContext: memoryIncludeFrontierContextDraft,
+    memoryIncludeSelectedTopicContext: memoryIncludeSelectedTopicContextDraft,
+    enableClosureTests: enableClosureTestsDraft,
+    debugModeEnabled: debugModeEnabledDraft,
+    straightEdgeLines: straightEdgeLinesDraft,
+    quizQuestionCount: quizQuestionCountDraft,
+    quizPassCount: quizPassCountDraft,
+  } = settingsState.drafts;
+  const {
+    provider: setProviderDraft,
+    model: setModelDraft,
+    modelPreset: setModelPresetDraft,
+    geminiApiKey: setGeminiApiKeyDraft,
+    openaiApiKey: setOpenaiApiKeyDraft,
+    openaiBaseUrl: setOpenaiBaseUrlDraft,
+    showOpenAIEndpoint: setShowOpenAIEndpointDraft,
+    thinkingMode: setThinkingModeDraft,
+    plannerMaxTokens: setPlannerMaxTokensDraft,
+    plannerThinkingBudget: setPlannerThinkingBudgetDraft,
+    orchestratorMaxTokens: setOrchestratorMaxTokensDraft,
+    quizMaxTokens: setQuizMaxTokensDraft,
+    assistantMaxTokens: setAssistantMaxTokensDraft,
+    assistantNickname: setAssistantNicknameDraft,
+    persona: setPersonaDraft,
+    disableIdleAnimations: setDisableIdleAnimationsDraft,
+    memoryMode: setMemoryModeDraft,
+    memoryHistoryLimit: setMemoryHistoryLimitDraft,
+    memoryIncludeGraphContext: setMemoryIncludeGraphContextDraft,
+    memoryIncludeProgressContext: setMemoryIncludeProgressContextDraft,
+    memoryIncludeQuizContext: setMemoryIncludeQuizContextDraft,
+    memoryIncludeFrontierContext: setMemoryIncludeFrontierContextDraft,
+    memoryIncludeSelectedTopicContext: setMemoryIncludeSelectedTopicContextDraft,
+    enableClosureTests: setEnableClosureTestsDraft,
+    debugModeEnabled: setDebugModeEnabledDraft,
+    straightEdgeLines: setStraightEdgeLinesDraft,
+    quizQuestionCount: setQuizQuestionCountDraft,
+    quizPassCount: setQuizPassCountDraft,
+  } = settingsState.setDrafts;
 
   const { chatModelOptions, selectedChatModel, setSelectedChatModel } = useChatModelSelection(
-    data?.workspace.config,
+    currentConfig,
     activeGraph?.graph_id ?? null,
   );
 
@@ -673,17 +704,11 @@ export default function App(): React.JSX.Element {
   );
   const sessionUser = sessionInfo?.user ?? null;
   const onboardingNeedsFirstGraph = !activeGraph && workspaceSurface?.onboarding_state === "needs_first_graph";
-  const currentConfig = data?.workspace.config ?? null;
-  const geminiKeyLockedByEnv = currentConfig?.gemini_api_key_source === "env";
-  const openaiKeyLockedByEnv = currentConfig?.openai_api_key_source === "env";
-  const openaiBaseUrlLockedByEnv = currentConfig?.openai_base_url_source === "env";
+  const { geminiKeyLockedByEnv, openaiKeyLockedByEnv, openaiBaseUrlLockedByEnv } = settingsState.locks;
   const liveDisableIdleAnimations =
     isSettingsOpen
       ? disableIdleAnimationsDraft
       : Boolean(currentConfig?.disable_idle_animations);
-  const currentQuizPassCount = currentConfig
-    ? requiredCorrectAnswers(currentConfig.pass_threshold, currentConfig.quiz_question_count)
-    : 0;
   const closureTestsEnabled = currentConfig?.enable_closure_tests ?? true;
   const debugModeEnabled = currentConfig?.debug_mode_enabled ?? false;
   useEffect(() => {
@@ -692,54 +717,11 @@ export default function App(): React.JSX.Element {
       setLogsOpen(false);
     }
   }, [debugModeEnabled]);
-  const activeThinkingOption = THINKING_MODE_OPTIONS.find((option) => option.id === thinkingModeDraft) ?? THINKING_MODE_OPTIONS[1];
-  const activeMemoryOption = MEMORY_MODE_OPTIONS.find((option) => option.id === memoryModeDraft) ?? MEMORY_MODE_OPTIONS[1];
-  const activeThinkingValues =
-    thinkingModeDraft === "custom"
-      ? `Planner ${plannerMaxTokensDraft.toLocaleString()} · thinking ${plannerThinkingBudgetDraft.toLocaleString()} · orchestrator ${orchestratorMaxTokensDraft.toLocaleString()} · quiz ${quizMaxTokensDraft.toLocaleString()} · assistant ${assistantMaxTokensDraft.toLocaleString()}`
-      : activeThinkingOption.description;
-  const activeMemoryValues =
-    memoryModeDraft === "custom"
-      ? `${memoryHistoryLimitDraft} recent messages · graph ${memoryIncludeGraphContextDraft ? "on" : "off"} · progress ${memoryIncludeProgressContextDraft ? "on" : "off"} · quiz ${memoryIncludeQuizContextDraft ? "on" : "off"} · frontier ${memoryIncludeFrontierContextDraft ? "on" : "off"} · selected topic ${memoryIncludeSelectedTopicContextDraft ? "on" : "off"}`
-      : activeMemoryOption.description;
-  const settingsDirty = Boolean(
-    (currentConfig && (
-      providerDraft !== currentConfig.ai_provider ||
-      modelDraft !== currentConfig.default_model ||
-      (!geminiKeyLockedByEnv && geminiApiKeyDraft !== (currentConfig.gemini_api_key ?? "")) ||
-      (!openaiKeyLockedByEnv && openaiApiKeyDraft !== (currentConfig.openai_api_key ?? "")) ||
-      (!openaiBaseUrlLockedByEnv && openaiBaseUrlDraft !== currentConfig.openai_base_url) ||
-      thinkingModeDraft !== currentConfig.thinking_mode ||
-      memoryModeDraft !== (currentConfig.memory_mode ?? "balanced") ||
-      (
-        thinkingModeDraft === "custom" && (
-          plannerMaxTokensDraft !== currentConfig.planner_max_output_tokens ||
-          plannerThinkingBudgetDraft !== currentConfig.planner_thinking_budget ||
-          orchestratorMaxTokensDraft !== currentConfig.orchestrator_max_output_tokens ||
-          quizMaxTokensDraft !== currentConfig.quiz_max_output_tokens ||
-          assistantMaxTokensDraft !== currentConfig.assistant_max_output_tokens
-        )
-      ) ||
-      (
-        memoryModeDraft === "custom" && (
-          memoryHistoryLimitDraft !== (currentConfig.memory_history_message_limit ?? 32) ||
-          memoryIncludeGraphContextDraft !== (currentConfig.memory_include_graph_context ?? true) ||
-          memoryIncludeProgressContextDraft !== (currentConfig.memory_include_progress_context ?? true) ||
-          memoryIncludeQuizContextDraft !== (currentConfig.memory_include_quiz_context ?? true) ||
-          memoryIncludeFrontierContextDraft !== (currentConfig.memory_include_frontier_context ?? true) ||
-          memoryIncludeSelectedTopicContextDraft !== (currentConfig.memory_include_selected_topic_context ?? true)
-        )
-      ) ||
-      assistantNicknameDraft !== (currentConfig.assistant_nickname ?? "") ||
-      disableIdleAnimationsDraft !== (currentConfig.disable_idle_animations ?? false) ||
-      enableClosureTestsDraft !== (currentConfig.enable_closure_tests ?? true) ||
-      debugModeEnabledDraft !== (currentConfig.debug_mode_enabled ?? false) ||
-      personaDraft !== (currentConfig.persona_rules ?? "") ||
-      quizQuestionCountDraft !== currentConfig.quiz_question_count ||
-      quizPassCountDraft !== currentQuizPassCount
-    )) ||
-    straightEdgeLinesDraft !== straightEdgeLinesEnabled
-  );
+  const activeThinkingOption = settingsState.activeThinkingOption;
+  const activeMemoryOption = settingsState.activeMemoryOption;
+  const activeThinkingValues = settingsState.activeThinkingValues;
+  const activeMemoryValues = settingsState.activeMemoryValues;
+  const settingsDirty = settingsState.settingsDirty;
   const showGraphLoadingState = loading && !activeGraph;
   const showGraphEmptyState = !loading && !activeGraph;
 
@@ -1195,102 +1177,6 @@ export default function App(): React.JSX.Element {
     setError(null);
     setGraphLayoutDraft(activeGraphManualLayout);
     setGraphLayoutEditing(true);
-  }
-
-  async function updateWorkspaceConfig(patch: {
-    ai_provider?: string;
-    default_model?: string;
-    gemini_api_key?: string;
-    openai_api_key?: string;
-    openai_base_url?: string;
-    thinking_mode?: ThinkingMode;
-    memory_mode?: MemoryMode;
-    planner_max_output_tokens?: number;
-    planner_thinking_budget?: number;
-    orchestrator_max_output_tokens?: number;
-    quiz_max_output_tokens?: number;
-    assistant_max_output_tokens?: number;
-    assistant_nickname?: string;
-    disable_idle_animations?: boolean;
-    persona_rules?: string;
-    quiz_question_count?: number;
-    pass_threshold?: number;
-    enable_closure_tests?: boolean;
-    debug_mode_enabled?: boolean;
-    memory_history_message_limit?: number;
-    memory_include_graph_context?: boolean;
-    memory_include_progress_context?: boolean;
-    memory_include_quiz_context?: boolean;
-    memory_include_frontier_context?: boolean;
-    memory_include_selected_topic_context?: boolean;
-  }): Promise<void> {
-    setConfigSaving(true);
-    setError(null);
-    try {
-      const response = await apiFetch(`${API_BASE}/api/v1/workspace/config`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      });
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
-        throw new Error(payload?.detail ?? `config update failed with ${response.status}`);
-      }
-      const payload = (await response.json()) as WorkspaceEnvelope;
-      setData(payload);
-      void loadSnapshots();
-      void loadWorkspaceSurface();
-    } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : copy.errors.updateConfig);
-    } finally {
-      setConfigSaving(false);
-    }
-  }
-
-  function saveSettings(): void {
-    if (!currentConfig) return;
-    const patch: Parameters<typeof updateWorkspaceConfig>[0] = {};
-    if (providerDraft !== currentConfig.ai_provider) patch.ai_provider = providerDraft;
-    if (modelDraft !== currentConfig.default_model) patch.default_model = modelDraft;
-    if (!geminiKeyLockedByEnv && geminiApiKeyDraft !== (currentConfig.gemini_api_key ?? "")) patch.gemini_api_key = geminiApiKeyDraft;
-    if (!openaiKeyLockedByEnv && openaiApiKeyDraft !== (currentConfig.openai_api_key ?? "")) patch.openai_api_key = openaiApiKeyDraft;
-    if (!openaiBaseUrlLockedByEnv && openaiBaseUrlDraft !== currentConfig.openai_base_url) patch.openai_base_url = openaiBaseUrlDraft;
-    if (thinkingModeDraft !== currentConfig.thinking_mode) patch.thinking_mode = thinkingModeDraft;
-    if (memoryModeDraft !== (currentConfig.memory_mode ?? "balanced")) patch.memory_mode = memoryModeDraft;
-    if (thinkingModeDraft === "custom") {
-      if (plannerMaxTokensDraft !== currentConfig.planner_max_output_tokens) patch.planner_max_output_tokens = plannerMaxTokensDraft;
-      if (plannerThinkingBudgetDraft !== currentConfig.planner_thinking_budget) patch.planner_thinking_budget = plannerThinkingBudgetDraft;
-      if (orchestratorMaxTokensDraft !== currentConfig.orchestrator_max_output_tokens) patch.orchestrator_max_output_tokens = orchestratorMaxTokensDraft;
-      if (quizMaxTokensDraft !== currentConfig.quiz_max_output_tokens) patch.quiz_max_output_tokens = quizMaxTokensDraft;
-      if (assistantMaxTokensDraft !== currentConfig.assistant_max_output_tokens) patch.assistant_max_output_tokens = assistantMaxTokensDraft;
-    }
-    if (assistantNicknameDraft !== (currentConfig.assistant_nickname ?? "")) patch.assistant_nickname = assistantNicknameDraft;
-    if (memoryModeDraft === "custom") {
-      if (memoryHistoryLimitDraft !== (currentConfig.memory_history_message_limit ?? 32)) patch.memory_history_message_limit = memoryHistoryLimitDraft;
-      if (memoryIncludeGraphContextDraft !== (currentConfig.memory_include_graph_context ?? true)) patch.memory_include_graph_context = memoryIncludeGraphContextDraft;
-      if (memoryIncludeProgressContextDraft !== (currentConfig.memory_include_progress_context ?? true)) patch.memory_include_progress_context = memoryIncludeProgressContextDraft;
-      if (memoryIncludeQuizContextDraft !== (currentConfig.memory_include_quiz_context ?? true)) patch.memory_include_quiz_context = memoryIncludeQuizContextDraft;
-      if (memoryIncludeFrontierContextDraft !== (currentConfig.memory_include_frontier_context ?? true)) patch.memory_include_frontier_context = memoryIncludeFrontierContextDraft;
-      if (memoryIncludeSelectedTopicContextDraft !== (currentConfig.memory_include_selected_topic_context ?? true)) patch.memory_include_selected_topic_context = memoryIncludeSelectedTopicContextDraft;
-    }
-    if (disableIdleAnimationsDraft !== (currentConfig.disable_idle_animations ?? false)) {
-      patch.disable_idle_animations = disableIdleAnimationsDraft;
-    }
-    if (enableClosureTestsDraft !== (currentConfig.enable_closure_tests ?? true)) {
-      patch.enable_closure_tests = enableClosureTestsDraft;
-    }
-    if (debugModeEnabledDraft !== (currentConfig.debug_mode_enabled ?? false)) {
-      patch.debug_mode_enabled = debugModeEnabledDraft;
-    }
-    if (personaDraft !== (currentConfig.persona_rules ?? "")) patch.persona_rules = personaDraft;
-    if (quizQuestionCountDraft !== currentConfig.quiz_question_count) patch.quiz_question_count = quizQuestionCountDraft;
-    if (quizPassCountDraft !== currentQuizPassCount || quizQuestionCountDraft !== currentConfig.quiz_question_count) {
-      patch.pass_threshold = quizPassCountDraft / quizQuestionCountDraft;
-    }
-    if (straightEdgeLinesDraft !== straightEdgeLinesEnabled) {
-      setStraightEdgeLinesEnabled(straightEdgeLinesDraft);
-    }
-    if (Object.keys(patch).length > 0) void updateWorkspaceConfig(patch);
   }
 
   async function sendChat(
@@ -1939,7 +1825,7 @@ export default function App(): React.JSX.Element {
         rollbackSnapshot={rollbackSnapshot}
         configSaving={configSaving}
         settingsDirty={settingsDirty}
-        saveSettings={saveSettings}
+        saveSettings={settingsState.saveSettings}
       />
 
       <DebugLogsModal

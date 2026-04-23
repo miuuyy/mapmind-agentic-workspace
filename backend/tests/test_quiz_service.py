@@ -6,7 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from app.core.config import Settings
-from app.services.quiz_service import QuizService
+from app.services.quiz_service import QuizGenerationError, QuizService
 from app.services.repository import GraphRepository
 
 
@@ -105,6 +105,24 @@ class QuizServiceTests(unittest.TestCase):
             self.quiz_service.start_session(graph, "arithmetics", 6)
 
         self.assertIn("missing AI provider", str(context.exception))
+
+    def test_provider_failure_surfaces_quiz_generation_error_with_diagnostics(self) -> None:
+        repository = self._repository()
+        graph = repository.graph(self.DEMO_GRAPH_ID)
+
+        class ProviderStub:
+            @staticmethod
+            def generate_structured(**kwargs):  # noqa: ANN003, ANN201
+                raise RuntimeError("socket closed")
+
+        self.quiz_service._provider = ProviderStub()  # type: ignore[attr-defined]
+
+        with self.assertRaises(QuizGenerationError) as context:
+            self.quiz_service.start_session(graph, "arithmetics", 6)
+
+        self.assertIn("unexpected provider error", str(context.exception))
+        self.assertEqual(context.exception.diagnostics["topic_id"], "arithmetics")
+        self.assertEqual(context.exception.diagnostics["graph_id"], self.DEMO_GRAPH_ID)
 
     def _repository(self) -> GraphRepository:
         tempdir = tempfile.TemporaryDirectory()

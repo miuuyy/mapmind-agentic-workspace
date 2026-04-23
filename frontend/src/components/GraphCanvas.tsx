@@ -38,6 +38,7 @@ import {
   type TopicAnchorPoint,
   type ZoneGeometry,
 } from "./graphCanvasCore";
+import { buildTopicAnchorPoint, screenToCanvasPoint, zoomViewportAroundClientPoint } from "./graphCanvasInteractions";
 
 export type { TopicAnchorPoint } from "./graphCanvasCore";
 
@@ -1387,16 +1388,13 @@ function GraphCanvasComponent({
   function screenToCanvas(screenX: number, screenY: number): { x: number; y: number } {
     const wrap = containerRef.current;
     if (!wrap) return { x: screenX, y: screenY };
-    const rect = wrap.getBoundingClientRect();
-    const mouseX = screenX - rect.left;
-    const mouseY = screenY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const zoom = zoomRef.current;
-    return {
-      x: (mouseX - centerX) / zoom + centerX - panOffsetRef.current.x,
-      y: (mouseY - centerY) / zoom + centerY - panOffsetRef.current.y,
-    };
+    return screenToCanvasPoint({
+      screenX,
+      screenY,
+      rect: wrap.getBoundingClientRect(),
+      zoom: zoomRef.current,
+      panOffset: panOffsetRef.current,
+    });
   }
 
   function buildTopicAnchor(topicId: string | null): TopicAnchorPoint | null {
@@ -1404,28 +1402,27 @@ function GraphCanvasComponent({
     const rect = containerRef.current?.getBoundingClientRect();
     const position = nodesRef.current.get(topicId);
     if (!rect || !position) return null;
-    const zoom = zoomRef.current;
-    const x = (position.x + panOffsetRef.current.x - rect.width / 2) * zoom + rect.width / 2;
-    const y = (position.y + panOffsetRef.current.y - rect.height / 2) * zoom + rect.height / 2;
-    return { x, y, side: x > rect.width * 0.56 ? "left" : "right" };
+    return buildTopicAnchorPoint({
+      rect,
+      position,
+      zoom: zoomRef.current,
+      panOffset: panOffsetRef.current,
+    });
   }
 
   function applyZoomAtClientPoint(nextZoom: number, clientX: number, clientY: number): void {
     const wrap = containerRef.current;
     if (!wrap) return;
-    const rect = wrap.getBoundingClientRect();
-    const oldZoom = zoomRef.current;
-    const resolvedZoom = clamp(nextZoom, 0.45, 2.2);
-    if (!Number.isFinite(resolvedZoom) || Math.abs(resolvedZoom - oldZoom) < 0.0001) return;
-    zoomRef.current = resolvedZoom;
-    const pointerX = clientX - rect.left;
-    const pointerY = clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const worldX = (pointerX - centerX) / oldZoom + centerX - panOffsetRef.current.x;
-    const worldY = (pointerY - centerY) / oldZoom + centerY - panOffsetRef.current.y;
-    panOffsetRef.current.x = (pointerX - centerX) / resolvedZoom + centerX - worldX;
-    panOffsetRef.current.y = (pointerY - centerY) / resolvedZoom + centerY - worldY;
+    const updatedViewport = zoomViewportAroundClientPoint({
+      nextZoom,
+      rect: wrap.getBoundingClientRect(),
+      clientX,
+      clientY,
+      currentZoom: zoomRef.current,
+      panOffset: panOffsetRef.current,
+    });
+    zoomRef.current = updatedViewport.zoom;
+    panOffsetRef.current = updatedViewport.panOffset;
   }
 
   function resetPointerGestureState(): void {

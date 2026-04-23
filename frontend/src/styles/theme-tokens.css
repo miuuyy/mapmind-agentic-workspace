@@ -1,0 +1,20 @@
+:root {
+  --clew-accent-rgb: 195, 90, 44;
+  --clew-accent-strong-rgb: 145, 63, 28;
+  --clew-radius-pill: 999px;
+  --clew-radius-panel: 14px;
+  --clew-radius-card: 18px;
+  --clew-shadow-soft: 0 4px 12px rgba(45, 43, 40, 0.04);
+}
+
+:root[data-theme="light"] {
+  --clew-surface-highlight: rgba(var(--clew-accent-rgb), 0.1);
+  --clew-surface-highlight-border: rgba(var(--clew-accent-rgb), 0.24);
+  --clew-surface-highlight-text: rgba(var(--clew-accent-strong-rgb), 0.96);
+}
+
+:root[data-theme="dark"] {
+  --clew-surface-highlight: rgba(255, 255, 255, 0.08);
+  --clew-surface-highlight-border: rgba(255, 255, 255, 0.14);
+  --clew-surface-highlight-text: rgba(255, 255, 255, 0.94);
+}

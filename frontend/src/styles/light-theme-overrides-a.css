@@ -3,9 +3,9 @@
 :root[data-theme="light"] .sidebarGraphRowEditing,
 :root[data-theme="light"] .sidebarAccountTrigger:hover,
 :root[data-theme="light"] .sidebarTreeItemGhost:hover {
-  background: rgba(195, 90, 44, 0.1) !important;
-  box-shadow: inset 0 0 0 1px rgba(195, 90, 44, 0.12);
-  border-radius: 14px;
+  background: var(--clew-surface-highlight) !important;
+  box-shadow: inset 0 0 0 1px rgba(var(--clew-accent-rgb), 0.12);
+  border-radius: var(--clew-radius-panel);
 }
 
 :root[data-theme="light"] .sessionItemGroupActive,
@@ -18,9 +18,9 @@
 :root[data-theme="light"] .thinkingModeChipActive,
 :root[data-theme="light"] .mobileGraphChipActive,
 :root[data-theme="light"] .settingsTabActive {
-  background: rgba(195, 90, 44, 0.1) !important;
-  border-color: rgba(195, 90, 44, 0.24) !important;
-  color: rgba(145, 63, 28, 0.96) !important;
+  background: var(--clew-surface-highlight) !important;
+  border-color: var(--clew-surface-highlight-border) !important;
+  color: var(--clew-surface-highlight-text) !important;
 }
 
 :root[data-theme="light"] .assistantTemplate,
@@ -28,11 +28,11 @@
 :root[data-theme="light"] .groundingToggle {
   min-height: 38px;
   padding: 8px 13px;
-  border-radius: 999px;
+  border-radius: var(--clew-radius-pill);
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--border);
   color: rgba(45, 43, 40, 0.74);
-  box-shadow: 0 4px 12px rgba(45, 43, 40, 0.04);
+  box-shadow: var(--clew-shadow-soft);
   font-weight: 600;
 }
 

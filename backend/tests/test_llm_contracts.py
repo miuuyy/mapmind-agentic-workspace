@@ -4,6 +4,7 @@ import unittest
 
 from pydantic import ValidationError
 
+from app.llm.base import LLMProviderError
 from app.llm.contracts import render_action_contract, render_quiz_contract
 from app.llm.prompt_templates import (
     orchestrator_system_instruction,
@@ -95,6 +96,13 @@ class LLMContractTests(unittest.TestCase):
             self.assertIn("MATH FORMATTING RULES:", prompt)
             self.assertIn("KaTeX-compatible LaTeX", prompt)
             self.assertIn("Use $...$ for inline formulas", prompt)
+
+    def test_llm_provider_error_preserves_diagnostics_payload(self) -> None:
+        error = LLMProviderError("schema failed", diagnostics={"provider": "gemini", "model": "gemini-2.5-pro"})
+
+        self.assertEqual(str(error), "schema failed")
+        self.assertEqual(error.diagnostics["provider"], "gemini")
+        self.assertEqual(error.diagnostics["model"], "gemini-2.5-pro")
 
 
 if __name__ == "__main__":

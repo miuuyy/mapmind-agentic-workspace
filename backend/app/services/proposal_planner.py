@@ -443,8 +443,9 @@ class ProposalPlanner:
         This runs after Gemini output is coerced but before validation.
         Gemini sometimes generates zones referencing topic_ids it intended
         to create but either forgot or lost due to output truncation.
-        Instead of failing the entire proposal, we strip the orphan refs
-        and add a warning so the user knows what happened.
+        Instead of failing the entire proposal, we strip the orphan refs,
+        leave the rest of the proposal untouched, and add a warning so the
+        review surface shows exactly what structural cleanup was applied.
         """
         existing_topic_ids = {t.id for t in graph.topics}
         proposed_topic_ids = {
@@ -461,7 +462,7 @@ class ProposalPlanner:
             op.zone.topic_ids = [tid for tid in op.zone.topic_ids if tid in known]
             envelope.warnings.append(
                 f"zone {op.zone.id}: stripped {len(orphans)} orphaned topic ref(s) "
-                f"that Gemini referenced but did not propose: {', '.join(sorted(orphans))}"
+                f"during structural cleanup before review because the model did not propose them: {', '.join(sorted(orphans))}"
             )
 
     def _proposal_response_schema(self) -> dict[str, Any]:

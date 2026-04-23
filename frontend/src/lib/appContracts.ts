@@ -104,6 +104,34 @@ export type AuthSessionPayload = {
 
 export type ThemeMode = "dark" | "light";
 
+export type WorkspaceConfigPatch = {
+  ai_provider?: string;
+  default_model?: string;
+  gemini_api_key?: string;
+  openai_api_key?: string;
+  openai_base_url?: string;
+  thinking_mode?: ThinkingMode;
+  memory_mode?: MemoryMode;
+  planner_max_output_tokens?: number;
+  planner_thinking_budget?: number;
+  orchestrator_max_output_tokens?: number;
+  quiz_max_output_tokens?: number;
+  assistant_max_output_tokens?: number;
+  assistant_nickname?: string;
+  disable_idle_animations?: boolean;
+  persona_rules?: string;
+  quiz_question_count?: number;
+  pass_threshold?: number;
+  enable_closure_tests?: boolean;
+  debug_mode_enabled?: boolean;
+  memory_history_message_limit?: number;
+  memory_include_graph_context?: boolean;
+  memory_include_progress_context?: boolean;
+  memory_include_quiz_context?: boolean;
+  memory_include_frontier_context?: boolean;
+  memory_include_selected_topic_context?: boolean;
+};
+
 export type SettingsDrafts = {
   provider: string;
   model: string;
