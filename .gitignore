@@ -37,3 +37,5 @@ README.archive.local.md
 references/
 logs/
 .agents/
+.claude/
+.playwright-cli/
