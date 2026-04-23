@@ -46,11 +46,7 @@ type StateSetter<T> = React.Dispatch<React.SetStateAction<T>>;
   const noop = () => {};
   const LIGHT_WORKSPACE_EXPANDED_GRAPH_STORAGE_KEY = "knowledge_graph_light_workspace_expanded_graph_v1";
 
-// Small mount/close animation helper. When `isOpen` flips to false we keep the
-// element mounted for `delayMs` so CSS can run a fade-out keyframe before the
-// node is removed. Previously closing a floating window just disappeared —
-// which user feedback described as "ебанутое закрытие". This lets the caller
-// append a `lightFloatingWindowExit` class while `closing` is true.
+// Keep closing windows mounted briefly so the exit animation can complete.
 const WINDOW_CLOSE_MS = 110;
 
 function useDelayedUnmount(isOpen: boolean, delayMs: number): { rendered: boolean; closing: boolean } {
@@ -95,8 +91,7 @@ type AssistantTemplate = {
   value: string;
 };
 
-type WorkspaceShellProps = {
-  copy: AppCopy;
+type WorkspaceNavigationProps = {
   sidebarVisible: boolean;
   leftSidebarClosing: boolean;
   closeSidebar: () => void;
@@ -118,6 +113,11 @@ type WorkspaceShellProps = {
   setDeleteConfirm: StateSetter<{ graphId: string; title: string } | null>;
   setCreateGraphOpen: StateSetter<boolean>;
   setCreateGraphError: StateSetter<string | null>;
+  mobileMenuOpen: boolean;
+  setMobileMenuOpen: StateSetter<boolean>;
+};
+
+type WorkspaceChromeProps = {
   openConfigurationSettings: () => void;
   openDebugLogs: () => void;
   closeOverlaySurfaces: () => void;
@@ -135,10 +135,24 @@ type WorkspaceShellProps = {
   topOverlayCompact: boolean;
   overlayLeftOffset: number;
   overlayRightOffset: number;
+  floatingStatsRef: React.RefObject<HTMLDivElement | null>;
+  sessionUser: AuthSessionPayload["user"];
+  isSettingsOpen: boolean;
+  debugModeEnabled: boolean;
+  themeMode: ThemeMode;
+  setThemeMode: StateSetter<ThemeMode>;
+  overlayRestoreEpoch: number;
+};
+
+type WorkspaceStatusProps = {
   data: WorkspaceEnvelope | null;
   assessmentError: string | null;
   configSaving: boolean;
   error: string | null;
+  workspaceSurface: WorkspaceSurfacePayload | null;
+};
+
+type GraphWorkspaceProps = {
   graphSummary: GraphSummary;
   activeAssessmentCards: GraphAssessment["cards"];
   graphLayoutEditing: boolean;
@@ -147,11 +161,8 @@ type WorkspaceShellProps = {
   startGraphLayoutEdit: () => void;
   setGraphLayoutEditing: StateSetter<boolean>;
   setGraphLayoutDraft: StateSetter<ManualLayoutPositions | null>;
-  floatingStatsRef: React.RefObject<HTMLDivElement | null>;
   graphShellRef: React.RefObject<HTMLDivElement | null>;
   focusData: FocusData;
-  addTopicResource: (topicId: string, url: string) => Promise<void>;
-  addTopicArtifact: (topicId: string, title: string, body: string) => Promise<void>;
   handleSelectTopic: (topicId: string | null, anchor: TopicAnchorPoint | null) => void;
   handleSelectedTopicAnchorChange: (next: TopicAnchorPoint | null) => void;
   selectedTopicId: string | null;
@@ -161,7 +172,11 @@ type WorkspaceShellProps = {
   showGraphLoadingState: boolean;
   showGraphEmptyState: boolean;
   onboardingNeedsFirstGraph: boolean;
-  workspaceSurface: WorkspaceSurfacePayload | null;
+};
+
+type TopicDetailsProps = {
+  addTopicResource: (topicId: string, url: string) => Promise<void>;
+  addTopicArtifact: (topicId: string, title: string, body: string) => Promise<void>;
   selectedTopic: Topic | null;
   popoverPosition: PopoverPosition | null;
   topicPopoverRef: React.RefObject<HTMLDivElement | null>;
@@ -177,6 +192,9 @@ type WorkspaceShellProps = {
   quizLoading: boolean;
   startQuiz: () => Promise<void>;
   markTopicFinished: () => Promise<void>;
+};
+
+type AssistantWorkspaceProps = {
   assistantResizing: boolean;
   handleAssistantResize: (startX: number) => void;
   chatSessions: ChatSessionSummary[];
@@ -207,19 +225,29 @@ type WorkspaceShellProps = {
   composerUseGrounding: boolean;
   setComposerUseGrounding: StateSetter<boolean>;
   chatComposerRef: React.RefObject<HTMLTextAreaElement | null>;
-  mobileMenuOpen: boolean;
-  setMobileMenuOpen: StateSetter<boolean>;
-  sessionUser: AuthSessionPayload["user"];
-  isSettingsOpen: boolean;
-  debugModeEnabled: boolean;
-  themeMode: ThemeMode;
-  setThemeMode: StateSetter<ThemeMode>;
-  overlayRestoreEpoch: number;
+};
+
+type WorkspaceShellProps = {
+  copy: AppCopy;
+  navigation: WorkspaceNavigationProps;
+  chrome: WorkspaceChromeProps;
+  workspaceStatus: WorkspaceStatusProps;
+  graphWorkspace: GraphWorkspaceProps;
+  topicDetails: TopicDetailsProps;
+  assistant: AssistantWorkspaceProps;
 };
 
 export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const {
     copy,
+    navigation,
+    chrome,
+    workspaceStatus,
+    graphWorkspace,
+    topicDetails,
+    assistant,
+  } = props;
+  const {
     sidebarVisible,
     leftSidebarClosing,
     closeSidebar,
@@ -241,6 +269,10 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     setDeleteConfirm,
     setCreateGraphOpen,
     setCreateGraphError,
+    mobileMenuOpen,
+    setMobileMenuOpen,
+  } = navigation;
+  const {
     openConfigurationSettings,
     openDebugLogs,
     closeOverlaySurfaces,
@@ -258,10 +290,22 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     topOverlayCompact,
     overlayLeftOffset,
     overlayRightOffset,
+    floatingStatsRef,
+    sessionUser,
+    isSettingsOpen,
+    debugModeEnabled,
+    themeMode,
+    setThemeMode,
+    overlayRestoreEpoch,
+  } = chrome;
+  const {
     data,
     assessmentError,
     configSaving,
     error,
+    workspaceSurface,
+  } = workspaceStatus;
+  const {
     graphSummary,
     activeAssessmentCards,
     graphLayoutEditing,
@@ -270,11 +314,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     startGraphLayoutEdit,
     setGraphLayoutEditing,
     setGraphLayoutDraft,
-    floatingStatsRef,
     graphShellRef,
     focusData,
-    addTopicResource,
-    addTopicArtifact,
     handleSelectTopic,
     handleSelectedTopicAnchorChange,
     selectedTopicId,
@@ -284,7 +325,10 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     showGraphLoadingState,
     showGraphEmptyState,
     onboardingNeedsFirstGraph,
-    workspaceSurface,
+  } = graphWorkspace;
+  const {
+    addTopicResource,
+    addTopicArtifact,
     selectedTopic,
     popoverPosition,
     topicPopoverRef,
@@ -300,6 +344,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     quizLoading,
     startQuiz,
     markTopicFinished,
+  } = topicDetails;
+  const {
     assistantResizing,
     handleAssistantResize,
     chatSessions,
@@ -330,15 +376,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     composerUseGrounding,
     setComposerUseGrounding,
     chatComposerRef,
-    mobileMenuOpen,
-    setMobileMenuOpen,
-    sessionUser,
-    isSettingsOpen,
-    debugModeEnabled,
-    themeMode,
-    setThemeMode,
-    overlayRestoreEpoch,
-  } = props;
+  } = assistant;
   const assistantDisplayName = data?.workspace.config.assistant_nickname?.trim() || copy.sessions.assistantTitle;
   const experimentalLightDesktop = !isMobileViewport;
   const shellSurfaceRef = React.useRef<HTMLDivElement | null>(null);
@@ -399,8 +437,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const [topicArtifactBodyDraft, setTopicArtifactBodyDraft] = React.useState("");
   const topicAssetModalRef = React.useRef<HTMLDivElement | null>(null);
   const topicAssetPrimaryInputRef = React.useRef<HTMLElement | null>(null);
-  // Guard against double-submit when creating a topic chat session
-  // (double-click or duplicate pointer event would POST twice → duplicate sessions).
+  // Prevent repeated pointer events from creating duplicate topic chat sessions.
   const createTopicSessionPendingRef = React.useRef(false);
   const closeTopicAssetModal = React.useCallback(() => {
     setTopicAssetDialog(null);
@@ -451,9 +488,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       };
       const blockedRects: FloatingRect[] = [];
 
-      // Only TOP TAGS (individual stat chips + topic popover) block window drag.
-      // Block each chip independently, not the whole container — container has empty padding
-      // that would create a phantom block. Windows/chat/dock do NOT block each other.
+      // Only visible stat chips block floating-window drag targets.
       const statsContainer = floatingStatsRef.current;
       if (statsContainer) {
         for (const child of Array.from(statsContainer.children) as HTMLElement[]) {
@@ -463,9 +498,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
           }
         }
       }
-      // Topic popover intentionally not pushed to blockedRects — users expect
-      // dock / workspace / chat windows to float over it, not get shoved
-      // aside when they cross the popover's footprint.
+      // Topic popovers do not block floating windows.
 
       const clampedCandidate = clampFloatingPosition(drag.target, nextPosition, drag.size, drag.shellRect);
       const candidateRect = makeFloatingRect(clampedCandidate, drag.size);
@@ -537,11 +570,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
 
   React.useLayoutEffect(() => {
     if (!experimentalLightDesktop) return;
-    // Intentionally no longer snaps the dock / workspace / chat back to the
-    // canonical layout when settings or logs close. Slamming everything to
-    // default each time the user toggles an overlay feels broken — if they
-    // dragged the dock, it should stay where they left it. Kept the refs in
-    // sync so downstream logic (panel-open transitions) still tracks state.
+    // Preserve user-adjusted floating-window positions across overlay toggles.
     lastOverlayRestoreEpochRef.current = overlayRestoreEpoch;
     prevLightWorkspacePanelOpenRef.current = lightWorkspacePanelOpen;
     prevLightChatPanelOpenRef.current = lightChatPanelOpen;

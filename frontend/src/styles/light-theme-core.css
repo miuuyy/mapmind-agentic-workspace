@@ -800,7 +800,7 @@
     box-shadow: 0 24px 54px rgba(15, 23, 42, 0.16), 0 0 0 1px inset rgba(255, 255, 255, 0.6);
   }
 
-  /* Hide close button when in desktop view for light theme OS mode */
+  /* Hide close button in desktop light theme mode. */
   :root[data-theme="light"] .settingsOverlay .settingsModal .modalCloseButton {
     display: none !important;
   }

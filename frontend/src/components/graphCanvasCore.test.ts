@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildAnchorMap, buildZoneContour } from "./graphCanvasCore";
+import { buildAnchorMap, buildZoneContour, edgeRenderMotion, idleRenderOffset, nextIdleMotionState } from "./graphCanvasCore";
 
 describe("buildAnchorMap", () => {
   it("does not recurse forever on cyclic graphs", () => {
@@ -56,5 +56,155 @@ describe("buildZoneContour", () => {
     for (const point of points) {
       expect(polygonContainsPoint(contour, point)).toBe(true);
     }
+  });
+});
+
+describe("nextIdleMotionState", () => {
+  it("lets graph physics settle even while visual idle animations are enabled", () => {
+    let state = { idleFrozen: false, idleSettleFrames: 0 };
+
+    for (let i = 0; i < 4; i += 1) {
+      state = nextIdleMotionState({
+        currentMaxVelocity: 0.03,
+        draggedNodeId: null,
+        frameCount: 120 + i,
+        idleFrozen: state.idleFrozen,
+        idleSettleFrames: state.idleSettleFrames,
+        layoutEditMode: false,
+        revealActive: false,
+        structureActivityFrame: 0,
+      });
+    }
+
+    expect(state).toEqual({ idleFrozen: true, idleSettleFrames: 4 });
+  });
+
+  it("keeps graph physics active while the user edits or drags nodes", () => {
+    expect(
+      nextIdleMotionState({
+        currentMaxVelocity: 0.01,
+        draggedNodeId: "topic-a",
+        frameCount: 240,
+        idleFrozen: true,
+        idleSettleFrames: 3,
+        layoutEditMode: false,
+        revealActive: false,
+        structureActivityFrame: 0,
+      }),
+    ).toEqual({ idleFrozen: false, idleSettleFrames: 0 });
+  });
+
+  it("waits for cascade reveal before freezing edge geometry", () => {
+    expect(
+      nextIdleMotionState({
+        currentMaxVelocity: 0.01,
+        draggedNodeId: null,
+        frameCount: 240,
+        idleFrozen: false,
+        idleSettleFrames: 3,
+        layoutEditMode: false,
+        revealActive: true,
+        structureActivityFrame: 0,
+      }),
+    ).toEqual({ idleFrozen: false, idleSettleFrames: 0 });
+  });
+});
+
+describe("idleRenderOffset", () => {
+  it("keeps visual idle motion deterministic and bounded", () => {
+    const first = idleRenderOffset({
+      enabled: true,
+      frameCount: 240,
+      nodeId: "kernel-trick",
+      zoneId: "dimensionality-reduction-kernels",
+    });
+    const second = idleRenderOffset({
+      enabled: true,
+      frameCount: 240,
+      nodeId: "kernel-trick",
+      zoneId: "dimensionality-reduction-kernels",
+    });
+
+    expect(second).toEqual(first);
+    expect(Math.hypot(first.x, first.y)).toBeLessThan(2.3);
+  });
+
+  it("can be disabled without moving render positions", () => {
+    expect(
+      idleRenderOffset({
+        enabled: false,
+        frameCount: 240,
+        nodeId: "kernel-trick",
+        zoneId: "dimensionality-reduction-kernels",
+      }),
+    ).toEqual({ x: 0, y: 0 });
+  });
+
+  it("ramps visual idle motion in without snapping", () => {
+    const full = idleRenderOffset({
+      enabled: true,
+      frameCount: 240,
+      nodeId: "kernel-trick",
+      progress: 1,
+      zoneId: "dimensionality-reduction-kernels",
+    });
+    const half = idleRenderOffset({
+      enabled: true,
+      frameCount: 240,
+      nodeId: "kernel-trick",
+      progress: 0.5,
+      zoneId: "dimensionality-reduction-kernels",
+    });
+
+    expect(
+      idleRenderOffset({
+        enabled: true,
+        frameCount: 240,
+        nodeId: "kernel-trick",
+        progress: 0,
+        zoneId: "dimensionality-reduction-kernels",
+      }),
+    ).toEqual({ x: 0, y: 0 });
+    expect(half.x).toBeCloseTo(full.x * 0.5);
+    expect(half.y).toBeCloseTo(full.y * 0.5);
+  });
+});
+
+describe("edgeRenderMotion", () => {
+  it("freezes curved edge reveal and stroke pulse after settle", () => {
+    expect(
+      edgeRenderMotion({
+        edgeMotionFrozen: true,
+        fadeRate: 18,
+        frameCount: 240,
+        fromX: 120,
+        litFrame: 300,
+      }),
+    ).toEqual({ brightness: 1, pulse: 0.84 });
+  });
+
+  it("keeps cascade reveal active before edge motion freezes", () => {
+    const motion = edgeRenderMotion({
+      edgeMotionFrozen: false,
+      fadeRate: 20,
+      frameCount: 110,
+      fromX: 120,
+      litFrame: 100,
+    });
+
+    expect(motion.brightness).toBeCloseTo(0.5);
+    expect(motion.pulse).not.toBe(0.84);
+  });
+
+  it("does not produce invalid brightness when fade rate is zero", () => {
+    expect(
+      edgeRenderMotion({
+        edgeMotionFrozen: false,
+        fadeRate: 0,
+        frameCount: 110,
+        fromX: 120,
+        litFrame: 100,
+      }).brightness,
+    ).toBe(1);
   });
 });

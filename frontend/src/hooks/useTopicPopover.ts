@@ -163,8 +163,7 @@ export function useTopicPopover({
       resizeObserver.disconnect();
       window.removeEventListener("resize", updatePosition);
     };
-    // Recreate the observer only when the selected topic changes; anchor
-    // coordinates are read through refs inside the callback.
+    // Recreate the observer only when the selected topic changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [popoverFollowAnchor, selectedTopic?.id]);
 

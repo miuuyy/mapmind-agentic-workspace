@@ -10,35 +10,18 @@ import { API_BASE } from "./lib/api";
 import { APP_COPY } from "./lib/appCopy";
 import { setDebugModeEnabled } from "./lib/debugLogs";
 import {
-  ASSISTANT_WIDTH_STORAGE_KEY,
   ASSISTANT_COLLAPSE_THRESHOLD,
-  APP_FAVICON_DARK_SRC,
-  APP_FAVICON_LIGHT_SRC,
   ASSISTANT_MAX_WIDTH,
   ASSISTANT_MIN_WIDTH,
   type AuthSessionPayload,
   type GraphChatState,
-  type ThemeMode,
   type WorkspaceSurfacePayload,
 } from "./lib/appContracts";
 import {
   COMPACT_TOP_OVERLAY_THRESHOLD,
-  STRAIGHT_EDGE_LINES_STORAGE_KEY,
-  LEFT_SIDEBAR_OPEN_STORAGE_KEY,
-  LOGS_OPEN_STORAGE_KEY,
-  MOBILE_LAYOUT_BREAKPOINT,
-  SETTINGS_OPEN_STORAGE_KEY,
-  THEME_MODE_STORAGE_KEY,
-  VIEWPORT_CENTERED_ZOOM_STORAGE_KEY,
   activeChatSessionStorageKey,
-  readInitialThemeMode,
   readStoredActiveChatSession,
-  readStoredAssistantWidth,
-  readStoredBoolean,
-  readStoredStraightEdgeLines,
-  readStoredViewportCenteredZoom,
 } from "./lib/appStatePersistence";
-import { usePersistedBoolean, usePersistedNumber, usePersistedString } from "./lib/usePersistedState";
 import {
   apiFetch,
   computePopoverPosition,
@@ -71,8 +54,8 @@ import {
 } from "./lib/obsidianImport";
 import { useChatModelSelection } from "./hooks/useChatModelSelection";
 import { useWorkspaceSettings } from "./hooks/useWorkspaceSettings";
+import { useWorkspaceChromeState } from "./hooks/useWorkspaceChromeState";
 import { useTopicPopover } from "./hooks/useTopicPopover";
-import { ensureThemeStylesheet } from "./lib/themeStyles";
 import { useModalAccessibility } from "./lib/useModalAccessibility";
 import type {
   ChatMessage,
@@ -183,15 +166,7 @@ export default function App(): React.JSX.Element {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [applyLoadingMessageId, setApplyLoadingMessageId] = useState<string | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [assistantWidth, setAssistantWidth] = useState<number>(readStoredAssistantWidth);
   const [assistantResizing, setAssistantResizing] = useState(false);
-  const [isMobileViewport, setIsMobileViewport] = useState(false);
-  const [viewportWidth, setViewportWidth] = useState<number>(() => (typeof window === "undefined" ? 1440 : window.innerWidth));
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(() => readStoredBoolean(LEFT_SIDEBAR_OPEN_STORAGE_KEY, true));
-  const [leftSidebarClosing, setLeftSidebarClosing] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isSettingsOpen, setSettingsOpen] = useState(() => readStoredBoolean(SETTINGS_OPEN_STORAGE_KEY, false));
-  const [isLogsOpen, setLogsOpen] = useState(() => readStoredBoolean(LOGS_OPEN_STORAGE_KEY, false));
   const [configSaving, setConfigSaving] = useState(false);
   const [quizSession, setQuizSession] = useState<TopicQuizSession | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
@@ -205,10 +180,29 @@ export default function App(): React.JSX.Element {
   const [debugLogsLoading, setDebugLogsLoading] = useState(false);
   const [debugLogsError, setDebugLogsError] = useState<string | null>(null);
   const [composerUseGrounding, setComposerUseGrounding] = useState(true);
-  const [viewportCenteredZoom, setViewportCenteredZoom] = useState(readStoredViewportCenteredZoom);
-  const [straightEdgeLinesEnabled, setStraightEdgeLinesEnabled] = useState<boolean>(readStoredStraightEdgeLines);
-  const initialThemeMode = useMemo<ThemeMode>(readInitialThemeMode, []);
-  const [themeModeDraft, setThemeModeDraft] = useState<ThemeMode>(initialThemeMode);
+  const {
+    assistantWidth,
+    setAssistantWidth,
+    isMobileViewport,
+    viewportWidth,
+    leftSidebarOpen,
+    setLeftSidebarOpen,
+    leftSidebarClosing,
+    setLeftSidebarClosing,
+    mobileMenuOpen,
+    setMobileMenuOpen,
+    isSettingsOpen,
+    setSettingsOpen,
+    isLogsOpen,
+    setLogsOpen,
+    viewportCenteredZoom,
+    setViewportCenteredZoom,
+    straightEdgeLinesEnabled,
+    setStraightEdgeLinesEnabled,
+    initialThemeMode,
+    themeModeDraft,
+    setThemeModeDraft,
+  } = useWorkspaceChromeState();
   const graphShellRef = useRef<HTMLDivElement | null>(null);
   const deleteGraphModalRef = useRef<HTMLDivElement | null>(null);
   const deleteGraphCancelButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -397,54 +391,6 @@ export default function App(): React.JSX.Element {
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const media = window.matchMedia(`(max-width: ${MOBILE_LAYOUT_BREAKPOINT}px)`);
-    const sync = () => {
-      setIsMobileViewport(media.matches);
-      setViewportWidth(window.innerWidth);
-    };
-    sync();
-    media.addEventListener("change", sync);
-    window.addEventListener("resize", sync);
-    return () => {
-      media.removeEventListener("change", sync);
-      window.removeEventListener("resize", sync);
-    };
-  }, []);
-
-  const wasMobileViewportRef = useRef(false);
-
-  useEffect(() => {
-    if (wasMobileViewportRef.current && !isMobileViewport) {
-      setLeftSidebarOpen(true);
-      setLeftSidebarClosing(false);
-      setAssistantWidth((current) => (current < ASSISTANT_MIN_WIDTH ? 390 : current));
-    }
-    wasMobileViewportRef.current = isMobileViewport;
-  }, [isMobileViewport]);
-
-  usePersistedNumber(ASSISTANT_WIDTH_STORAGE_KEY, assistantWidth);
-  usePersistedBoolean(LEFT_SIDEBAR_OPEN_STORAGE_KEY, leftSidebarOpen);
-  usePersistedBoolean(SETTINGS_OPEN_STORAGE_KEY, isSettingsOpen);
-  usePersistedBoolean(LOGS_OPEN_STORAGE_KEY, isLogsOpen);
-  usePersistedBoolean(VIEWPORT_CENTERED_ZOOM_STORAGE_KEY, viewportCenteredZoom);
-  usePersistedBoolean(STRAIGHT_EDGE_LINES_STORAGE_KEY, straightEdgeLinesEnabled);
-  usePersistedString(THEME_MODE_STORAGE_KEY, themeModeDraft);
-  useEffect(() => {
-    document.documentElement.dataset.theme = themeModeDraft;
-    ensureThemeStylesheet(themeModeDraft);
-    const faviconHref = themeModeDraft === "light" ? APP_FAVICON_LIGHT_SRC : APP_FAVICON_DARK_SRC;
-    const iconLink = document.querySelector('link[rel="icon"]');
-    const appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]');
-    if (iconLink instanceof HTMLLinkElement) {
-      iconLink.href = faviconHref;
-    }
-    if (appleTouchIcon instanceof HTMLLinkElement) {
-      appleTouchIcon.href = faviconHref;
-    }
-  }, [themeModeDraft]);
 
   const availableGraphs = useMemo(() => data?.workspace.graphs ?? [], [data]);
   const activeGraph = useMemo(
@@ -752,10 +698,7 @@ export default function App(): React.JSX.Element {
     };
   }, [activeGraph?.graph_id, data?.snapshot.id]);
 
-  // Auto-scroll to bottom only when a NEW message is appended or while the
-  // assistant is loading, not on every mutation of the messages array (e.g.
-  // answering an inline quiz updates the existing message and used to jerk
-  // the scroll to the bottom).
+  // Auto-scroll only for new messages or active assistant loading.
   const lastMessagesLengthRef = useRef(0);
   useEffect(() => {
     const viewport = chatViewportRef.current;
@@ -1621,124 +1564,136 @@ export default function App(): React.JSX.Element {
       <div className="ambient-glow" />
       <WorkspaceShell
         copy={copy}
-        sidebarVisible={sidebarVisible}
-        leftSidebarClosing={leftSidebarClosing}
-        closeSidebar={closeSidebar}
-        projectsExpanded={projectsExpanded}
-        setProjectsExpanded={setProjectsExpanded}
-        availableGraphs={availableGraphs}
-        activeGraph={activeGraph}
-        renamingGraphId={renamingGraphId}
-        renameGraphDraft={renameGraphDraft}
-        setRenameGraphDraft={setRenameGraphDraft}
-        renameGraphSaving={renameGraphSaving}
-        renameGraph={renameGraph}
-        setError={setError}
-        setRenamingGraphId={setRenamingGraphId}
-        setActiveGraphId={setActiveGraphId}
-        setSelectedTopicId={setSelectedTopicId}
-        setSelectedTopicAnchor={setSelectedTopicAnchor}
-        openExportGraphModal={openExportGraphModal}
-        setDeleteConfirm={setDeleteConfirm}
-        setCreateGraphOpen={setCreateGraphOpen}
-        setCreateGraphError={setCreateGraphError}
-        openConfigurationSettings={openConfigurationSettings}
-        openDebugLogs={toggleDebugLogs}
-        closeOverlaySurfaces={closeOverlaySurfaces}
-        isLogsOpen={isLogsOpen}
-        modalSurfaceLocked={isSettingsOpen || isLogsOpen}
-        isMobileViewport={isMobileViewport}
-        leftSidebarOpen={leftSidebarOpen}
-        openSidebar={openSidebar}
-        assistantOpen={assistantOpen}
-        setAssistantWidth={setAssistantWidth}
-        assistantWidth={assistantWidth}
-        viewportCenteredZoom={viewportCenteredZoom}
-        setViewportCenteredZoom={setViewportCenteredZoom}
-        straightEdgeLinesEnabled={straightEdgeLinesEnabled}
-        topOverlayCompact={topOverlayCompact}
-        overlayLeftOffset={overlayLeftOffset}
-        overlayRightOffset={overlayRightOffset}
-        data={data}
-        assessmentError={assessmentError}
-        configSaving={configSaving}
-        error={error}
-        graphSummary={graphSummary}
-        activeAssessmentCards={activeAssessmentCards}
-        graphLayoutEditing={graphLayoutEditing}
-        graphLayoutSaving={graphLayoutSaving}
-        saveGraphLayout={saveGraphLayout}
-        startGraphLayoutEdit={startGraphLayoutEdit}
-        setGraphLayoutEditing={setGraphLayoutEditing}
-        setGraphLayoutDraft={setGraphLayoutDraft}
-        floatingStatsRef={floatingStatsRef}
-        graphShellRef={graphShellRef}
-        focusData={focusData}
-        addTopicResource={addTopicResource}
-        addTopicArtifact={addTopicArtifact}
-        handleSelectTopic={handleSelectTopic}
-        handleSelectedTopicAnchorChange={handleSelectedTopicAnchorChange}
-        selectedTopicId={selectedTopicId}
-        graphLayoutDraft={graphLayoutDraft}
-        activeGraphManualLayout={activeGraphManualLayout}
-        liveDisableIdleAnimations={liveDisableIdleAnimations}
-        showGraphLoadingState={showGraphLoadingState}
-        showGraphEmptyState={showGraphEmptyState}
-        onboardingNeedsFirstGraph={onboardingNeedsFirstGraph}
-        workspaceSurface={workspaceSurface}
-        selectedTopic={selectedTopic}
-        popoverPosition={popoverPosition}
-        topicPopoverRef={topicPopoverRef}
-        popoverDragRef={popoverDragRef}
-        selectedZoneLabel={selectedZoneLabel}
-        selectedResourceLinks={selectedResourceLinks}
-        selectedArtifacts={selectedArtifacts}
-        selectedClosureStatus={selectedClosureStatus}
-        topicTitlesById={topicTitlesById}
-        quizError={quizError}
-        quizSuccess={quizSuccess}
-        closureTestsEnabled={closureTestsEnabled}
-        quizLoading={quizLoading}
-        startQuiz={startQuiz}
-        markTopicFinished={markTopicFinished}
-        assistantResizing={assistantResizing}
-        handleAssistantResize={handleAssistantResize}
-        chatSessions={chatSessions}
-        activeSessionId={activeSessionId}
-        setActiveSessionId={setActiveSessionId}
-        sessionListWrapRef={sessionListWrapRef}
-        sessionListRef={sessionListRef}
-        sessionDragRef={sessionDragRef}
-        apiFetch={apiFetch}
-        loadSessions={loadSessions}
-        currentChatState={currentChatState}
-        chatViewportRef={chatViewportRef}
-        chatThreadLoading={chatThreadLoading}
-        hasInlinePlanningWidget={hasInlinePlanningWidget}
-        chatLoading={chatLoading}
-        chatError={chatError}
-        chatSessionsError={chatSessionsError}
-        updateCurrentChatState={updateCurrentChatState}
-        sendChat={sendChat}
-        applyLoadingMessageId={applyLoadingMessageId}
-        applyProposalFromMessage={applyProposalFromMessage}
-        setSessionDeleteConfirm={setSessionDeleteConfirm}
-        applyError={applyError}
-        assistantTemplates={assistantTemplates}
-        chatModelOptions={chatModelOptions}
-        selectedChatModel={selectedChatModel}
-        setSelectedChatModel={setSelectedChatModel}
-        composerUseGrounding={composerUseGrounding}
-        setComposerUseGrounding={setComposerUseGrounding}
-        chatComposerRef={chatComposerRef}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-        sessionUser={sessionUser}
-        isSettingsOpen={isSettingsOpen}
-        debugModeEnabled={debugModeEnabled}
-        themeMode={themeModeDraft}
-        setThemeMode={setThemeModeDraft}
-        overlayRestoreEpoch={overlayRestoreEpoch}
+        navigation={{
+          sidebarVisible,
+          leftSidebarClosing,
+          closeSidebar,
+          projectsExpanded,
+          setProjectsExpanded,
+          availableGraphs,
+          activeGraph,
+          renamingGraphId,
+          renameGraphDraft,
+          setRenameGraphDraft,
+          renameGraphSaving,
+          renameGraph,
+          setError,
+          setRenamingGraphId,
+          setActiveGraphId,
+          setSelectedTopicId,
+          setSelectedTopicAnchor,
+          openExportGraphModal,
+          setDeleteConfirm,
+          setCreateGraphOpen,
+          setCreateGraphError,
+          mobileMenuOpen,
+          setMobileMenuOpen,
+        }}
+        chrome={{
+          openConfigurationSettings,
+          openDebugLogs: toggleDebugLogs,
+          closeOverlaySurfaces,
+          isLogsOpen,
+          modalSurfaceLocked: isSettingsOpen || isLogsOpen,
+          isMobileViewport,
+          leftSidebarOpen,
+          openSidebar,
+          assistantOpen,
+          setAssistantWidth,
+          assistantWidth,
+          viewportCenteredZoom,
+          setViewportCenteredZoom,
+          straightEdgeLinesEnabled,
+          topOverlayCompact,
+          overlayLeftOffset,
+          overlayRightOffset,
+          floatingStatsRef,
+          sessionUser,
+          isSettingsOpen,
+          debugModeEnabled,
+          themeMode: themeModeDraft,
+          setThemeMode: setThemeModeDraft,
+          overlayRestoreEpoch,
+        }}
+        workspaceStatus={{
+          data,
+          assessmentError,
+          configSaving,
+          error,
+          workspaceSurface,
+        }}
+        graphWorkspace={{
+          graphSummary,
+          activeAssessmentCards,
+          graphLayoutEditing,
+          graphLayoutSaving,
+          saveGraphLayout,
+          startGraphLayoutEdit,
+          setGraphLayoutEditing,
+          setGraphLayoutDraft,
+          graphShellRef,
+          focusData,
+          handleSelectTopic,
+          handleSelectedTopicAnchorChange,
+          selectedTopicId,
+          graphLayoutDraft,
+          activeGraphManualLayout,
+          liveDisableIdleAnimations,
+          showGraphLoadingState,
+          showGraphEmptyState,
+          onboardingNeedsFirstGraph,
+        }}
+        topicDetails={{
+          addTopicResource,
+          addTopicArtifact,
+          selectedTopic,
+          popoverPosition,
+          topicPopoverRef,
+          popoverDragRef,
+          selectedZoneLabel,
+          selectedResourceLinks,
+          selectedArtifacts,
+          selectedClosureStatus,
+          topicTitlesById,
+          quizError,
+          quizSuccess,
+          closureTestsEnabled,
+          quizLoading,
+          startQuiz,
+          markTopicFinished,
+        }}
+        assistant={{
+          assistantResizing,
+          handleAssistantResize,
+          chatSessions,
+          activeSessionId,
+          setActiveSessionId,
+          sessionListWrapRef,
+          sessionListRef,
+          sessionDragRef,
+          apiFetch,
+          loadSessions,
+          currentChatState,
+          chatViewportRef,
+          chatThreadLoading,
+          hasInlinePlanningWidget,
+          chatLoading,
+          chatError,
+          chatSessionsError,
+          updateCurrentChatState,
+          sendChat,
+          applyLoadingMessageId,
+          applyProposalFromMessage,
+          setSessionDeleteConfirm,
+          applyError,
+          assistantTemplates,
+          chatModelOptions,
+          selectedChatModel,
+          setSelectedChatModel,
+          composerUseGrounding,
+          setComposerUseGrounding,
+          chatComposerRef,
+        }}
       />
 
       <SettingsModal

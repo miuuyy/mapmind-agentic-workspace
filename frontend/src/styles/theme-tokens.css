@@ -11,6 +11,14 @@
   --clew-surface-highlight: rgba(var(--clew-accent-rgb), 0.1);
   --clew-surface-highlight-border: rgba(var(--clew-accent-rgb), 0.24);
   --clew-surface-highlight-text: rgba(var(--clew-accent-strong-rgb), 0.96);
+  --clew-light-dock-bg: rgba(246, 242, 236, 0.97);
+  --clew-light-dock-border: rgba(233, 225, 215, 0.98);
+  --clew-accent-orange: #d97757;
+  --clew-light-dock-active-bg: rgba(214, 106, 51, 0.16);
+  --clew-light-dock-active-text: rgba(62, 49, 39, 0.96);
+  --clew-light-chat-bubble-bg: var(--dt-light-card);
+  --clew-light-chat-bubble-border: var(--dt-light-border);
+  --clew-light-chat-bubble-shadow: 0 1px 8px rgba(0, 0, 0, 0.03);
 }
 
 :root[data-theme="dark"] {

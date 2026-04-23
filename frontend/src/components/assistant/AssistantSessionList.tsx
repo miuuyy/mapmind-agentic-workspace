@@ -19,10 +19,9 @@ export type AssistantSessionListProps = {
   selectedTopic: { id: string; title: string } | null;
   selectedTopicId: string | null;
   createTopicSession: () => Promise<void>;
-  /** Extra class merged onto every session chip — used by the floating
-   *  light dock to add `lightChatSessionChip`. */
+  /** Extra class merged onto every session chip. */
   chipClassName?: string;
-  /** Extra class merged onto the active chip in the same variant. */
+  /** Extra class merged onto the active session chip. */
   chipActiveClassName?: string;
 };
 

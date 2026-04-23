@@ -152,7 +152,7 @@ export function computeFocusData(
     };
   }
 
-  // Collect ALL ancestors (full prerequisite tree)
+  // Collect the full prerequisite ancestor tree.
   const ancestorIds = new Set<string>();
   const stack = [...(parentsByChild.get(selectedTopicId) ?? [])];
   while (stack.length > 0) {
@@ -162,10 +162,10 @@ export function computeFocusData(
     stack.push(...(parentsByChild.get(current) ?? []));
   }
 
-  // Build path: all ancestors + selected topic
+  // Build the selected-topic path.
   const pathNodeIds = new Set<string>([...ancestorIds, selectedTopicId]);
 
-  // Collect all edges within the path
+  // Collect prerequisite edges within the path.
   const pathEdgeIds = new Set<string>();
   for (const edge of graph.edges) {
     if (!isPrerequisiteEdge(edge.relation)) continue;
@@ -174,7 +174,7 @@ export function computeFocusData(
     }
   }
 
-  // Build layers by depth (BFS from roots within the ancestor set)
+  // Build prerequisite layers from path roots.
   const depthOf = new Map<string, number>();
   const bfsQueue: string[] = [];
   for (const nodeId of pathNodeIds) {

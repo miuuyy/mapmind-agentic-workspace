@@ -1,4 +1,4 @@
-/* TRUE EOF dark topic asset geometry parity */
+/* Dark topic asset geometry parity. */
 
 :root[data-theme="dark"] .topicAssetModal .quizModalHeader {
   margin: 0 -18px 14px !important;
@@ -10,7 +10,7 @@
   padding-right: 0 !important;
 }
 
-/* TRUE EOF dark cleanup: remove non-color drift from chat/settings/logs */
+/* Dark cleanup removes non-color drift from chat, settings, and logs. */
 :root[data-theme="dark"] .lightChatWindow .assistantThread,
 :root[data-theme="dark"] .debugLogsList,
 :root[data-theme="dark"] .lightWorkspaceWindowBody,
@@ -296,7 +296,7 @@
   flex-shrink: 0 !important;
 }
 
-/* TRUE EOF dark desktop overlay logic: match light-theme window behavior */
+/* Dark desktop overlays match light window behavior. */
 @media (min-width: 1181px) {
   :root[data-theme="dark"] .quizOverlay.settingsOverlay {
     align-items: flex-start !important;
@@ -596,7 +596,7 @@
   border-radius: 22px !important;
 }
 
-/* Absolute EOF dark-theme pass: settings, logs, and chat composer geometry */
+/* Dark settings, logs, and chat composer geometry. */
 
 :root[data-theme="dark"] .debugLogRowSource {
   border-radius: 999px !important;
@@ -649,7 +649,7 @@
   border-radius: 999px !important;
 }
 
-/* Absolute EOF dark-theme shape pass */
+/* Dark theme shape alignment. */
 :root[data-theme="dark"] .pageStat,
 :root[data-theme="dark"] .floatingStatusButton,
 :root[data-theme="dark"] .pageStatControl {
@@ -737,7 +737,7 @@
   border-radius: 16px !important;
 }
 
-/* Absolute EOF dark-theme template unification */
+/* Dark theme template unification. */
 :root[data-theme="dark"] .lightFloatingWindow,
 :root[data-theme="dark"] .settingsModal,
 :root[data-theme="dark"] .quizModal,
@@ -984,7 +984,7 @@
   border-bottom-color: rgba(255, 255, 255, 0.06) !important;
 }
 
-/* Final lock: create-workspace modal must not inherit extra dark layered fills */
+/* Create-workspace modal avoids extra dark layered fills. */
 :root[data-theme="dark"] .quizModal.workspaceCreateModal {
   background: #0a0a0b !important;
   box-shadow:
@@ -1166,7 +1166,7 @@
   display: none !important;
 }
 
-/* Absolute EOF lock: dark create-graph field content must align like light theme */
+/* Dark create-graph fields align with light theme geometry. */
 :root[data-theme="dark"] .quizModal.workspaceCreateModal .quizModalHeader {
   padding-bottom: 12px !important;
   padding: 22px 18px 12px !important;
@@ -1193,7 +1193,7 @@
   padding: 0 0 18px !important;
 }
 
-/* Final dark chat/delete cleanup */
+/* Dark chat and delete cleanup. */
 :root[data-theme="dark"] .quizOverlay.confirmOverlay {
   background: rgba(0, 0, 0, 0.28) !important;
   backdrop-filter: none !important;

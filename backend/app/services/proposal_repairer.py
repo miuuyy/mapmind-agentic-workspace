@@ -19,11 +19,7 @@ class ProposalRepairer:
     """
 
     def materialize_missing_zones(self, envelope: GraphProposalEnvelope, graph: StudyGraph) -> None:
-        # This safeguard is intentionally structural-only: it materializes a zone
-        # only when the model already referenced that exact zone id from proposed
-        # topics. The proposal still stays reviewable and carries an explicit
-        # warning, so we avoid hidden graph mutation while keeping the draft from
-        # failing over a missing container object.
+        # Keep repair structural-only: materialize only model-referenced zones and warn for review.
         existing_zone_ids = {zone.id for zone in graph.zones}
         proposed_zone_ids = {
             operation.zone.id

@@ -14,6 +14,27 @@ export type NodePosition = {
   vy: number;
 };
 
+export type IdleMotionState = {
+  idleFrozen: boolean;
+  idleSettleFrames: number;
+};
+
+export type IdleRenderOffsetArgs = {
+  enabled: boolean;
+  frameCount: number;
+  nodeId: string;
+  progress?: number;
+  zoneId: string | null;
+};
+
+export type EdgeRenderMotionArgs = {
+  edgeMotionFrozen: boolean;
+  fadeRate: number;
+  frameCount: number;
+  fromX: number;
+  litFrame: number | undefined;
+};
+
 export type ManualNodePositions = Record<string, { x: number; y: number }>;
 
 export type LabelBox = {
@@ -120,10 +141,7 @@ export type GraphCanvasPalette = {
 
 export function graphCanvasPalette(themeMode: GraphCanvasThemeMode): GraphCanvasPalette {
   if (themeMode === "light") {
-    // Warm earthy palette for node fills — blue-grey was reading as cold
-    // and visually "loud" against the cream background + orange accent.
-    // New tones sit on a brown / bronze axis so dots feel like part of
-    // the same paper-and-ink palette as everything else in light mode.
+    // Keep light-theme node fills warm so they sit with the paper-and-ink palette.
     return {
       gridStroke: "rgba(45,43,40,0.05)",
       edgeRgb: "45,43,40",
@@ -228,6 +246,86 @@ export function averageAngles(values: number[]): number {
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+export function nextIdleMotionState({
+  currentMaxVelocity,
+  draggedNodeId,
+  frameCount,
+  idleFrozen,
+  idleSettleFrames,
+  layoutEditMode,
+  revealActive,
+  structureActivityFrame,
+}: {
+  currentMaxVelocity: number;
+  draggedNodeId: string | null;
+  frameCount: number;
+  idleFrozen: boolean;
+  idleSettleFrames: number;
+  layoutEditMode: boolean;
+  revealActive: boolean;
+  structureActivityFrame: number;
+}): IdleMotionState {
+  if (layoutEditMode || draggedNodeId) {
+    return { idleFrozen: false, idleSettleFrames: 0 };
+  }
+  if (revealActive || frameCount - structureActivityFrame <= 90) {
+    return { idleFrozen: false, idleSettleFrames: 0 };
+  }
+  if (idleFrozen) {
+    return { idleFrozen: true, idleSettleFrames: 0 };
+  }
+  if (currentMaxVelocity < 0.35 || frameCount - structureActivityFrame > 180) {
+    const nextSettleFrames = idleSettleFrames + 1;
+    return {
+      idleFrozen: nextSettleFrames >= 4,
+      idleSettleFrames: nextSettleFrames,
+    };
+  }
+  return { idleFrozen: false, idleSettleFrames: 0 };
+}
+
+export function idleRenderOffset({
+  enabled,
+  frameCount,
+  nodeId,
+  progress = 1,
+  zoneId,
+}: IdleRenderOffsetArgs): { x: number; y: number } {
+  if (!enabled) return { x: 0, y: 0 };
+  const amplitude = clamp(progress, 0, 1);
+  if (amplitude === 0) return { x: 0, y: 0 };
+
+  const topicSeed = hashString(nodeId);
+  const zoneSeed = zoneId ? hashString(zoneId) : topicSeed;
+  const topicPhase = ((topicSeed % 8192) / 8192) * Math.PI * 2;
+  const zonePhase = ((zoneSeed % 8192) / 8192) * Math.PI * 2;
+  const slowTime = frameCount * 0.018;
+  const localTime = frameCount * 0.011;
+
+  return {
+    x: (Math.sin(slowTime + zonePhase) * 1.45 + Math.sin(localTime + topicPhase) * 0.42) * amplitude,
+    y: (Math.cos(slowTime * 0.82 + zonePhase) * 1.05 + Math.cos(localTime * 0.91 + topicPhase * 1.17) * 0.34) * amplitude,
+  };
+}
+
+export function edgeRenderMotion({
+  edgeMotionFrozen,
+  fadeRate,
+  frameCount,
+  fromX,
+  litFrame,
+}: EdgeRenderMotionArgs): { brightness: number; pulse: number } {
+  if (edgeMotionFrozen) {
+    return { brightness: 1, pulse: 0.84 };
+  }
+
+  const safeFadeRate = Math.max(fadeRate, Number.EPSILON);
+  return {
+    brightness: litFrame === undefined ? 0 : clamp((frameCount - litFrame) / safeFadeRate, 0, 1),
+    pulse: 0.84 + Math.sin(frameCount * 0.03 + fromX * 0.008) * 0.05,
+  };
 }
 
 export function buildZoneContour(points: NodePosition[], intensity: number): Array<{ x: number; y: number }> {

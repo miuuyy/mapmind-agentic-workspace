@@ -1,4 +1,4 @@
-/* DeepTutor-inspired light theme overrides for Clew surfaces */
+/* Light theme surface overrides. */
 :root[data-theme="light"] .sidebarGraphRowActive,
 :root[data-theme="light"] .sidebarGraphRowEditing,
 :root[data-theme="light"] .sidebarAccountTrigger:hover,
@@ -201,7 +201,7 @@
   border-radius: 22px;
 }
 
-/* Calm light-theme pass: neutralize noisy surfaces, keep orange only as the main accent */
+/* Light theme keeps orange as the main accent. */
 :root[data-theme="light"] .sidebarTreeItem,
 :root[data-theme="light"] .sidebarSectionHeader,
 :root[data-theme="light"] .sidebarNewAction,
@@ -349,7 +349,7 @@
   background: rgba(247, 244, 238, 0.88) !important;
 }
 
-/* Final light-theme fixes for specific rejected surfaces */
+/* Light theme surface fixes. */
 
 :root[data-theme="light"] .quizOverlay {
   background: rgba(250, 249, 246, 0.36) !important;
@@ -417,7 +417,7 @@
   -webkit-backdrop-filter: none !important;
 }
 
-/* Targeted cleanup based on surface review */
+/* Reviewed surface cleanup. */
 :root[data-theme="light"] .proposalInlineCard,
 :root[data-theme="light"] .proposalInlinePending,
 :root[data-theme="light"] .proposalMiniItem,
@@ -528,7 +528,7 @@
   flex-shrink: 0;
 }
 
-/* Strict DeepTutor-inspired light theme cleanup */
+/* Light theme component cleanup. */
 :root[data-theme="light"] .pageStat,
 :root[data-theme="light"] .pageStatWarn,
 :root[data-theme="light"] .pageStatHint,
@@ -745,7 +745,7 @@
   box-shadow: none !important;
 }
 
-/* Final direct fixes from latest review */
+/* Light overlay fixes. */
 :root[data-theme="light"] .quizOverlay,
 :root[data-theme="light"] .quizOverlay.settingsOverlay {
   background: rgba(250, 249, 246, 0.12) !important;
@@ -842,7 +842,7 @@
   color: rgba(120, 46, 17, 0.98) !important;
 }
 
-/* Final override: neutral light logs + white chat glow only */
+/* Neutral light logs and white chat glow. */
 :root[data-theme="light"] .debugLogsGrid {
   gap: 12px !important;
   background: transparent !important;
@@ -884,7 +884,7 @@
   display: none !important;
 }
 
-/* Light workspace explorer */
+/* Light workspace explorer. */
 :root[data-theme="light"] .lightWorkspaceWindow {
   border-radius: 22px !important;
   border: 1px solid rgba(223, 214, 203, 0.96) !important;
@@ -1309,7 +1309,7 @@
   transition: none !important;
 }
 
-/* DeepTutor light-theme palette pass: unify chat/workspace surfaces */
+/* Shared light palette for chat and workspace surfaces. */
 :root[data-theme="light"] {
   --dt-light-bg: #faf9f6;
   --dt-light-card: #ffffff;
@@ -1449,7 +1449,7 @@
   border-radius: 22px !important;
   color: var(--dt-light-text) !important;
 }
-/* EOF real final override: light dock/chat */
+/* Light dock and chat cleanup. */
 :root[data-theme="light"] .lightDock .lightDockButtonActive::before {
   box-shadow: none !important;
 }
@@ -1457,7 +1457,7 @@
   box-shadow: none !important;
 }
 
-/* EOF final override: light dock/chat */
+/* Light dock and chat active state. */
 :root[data-theme="light"] .lightDockButtonActive {
   color: rgba(62, 49, 39, 0.96) !important;
   background: rgba(214, 106, 51, 0.16) !important;
@@ -1525,7 +1525,7 @@
   box-shadow: none !important;
 }
 
-/* Final light chat/dock harmony override */
+/* Light chat and dock harmony. */
 :root[data-theme="light"] .lightDock {
   background: rgba(246, 242, 236, 0.97) !important;
   border-color: rgba(233, 225, 215, 0.98) !important;

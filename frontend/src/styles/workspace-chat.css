@@ -228,10 +228,7 @@ input[type="number"] {
   animation: chatPulse 0.9s ease-in-out infinite;
 }
 
-/* Brand loader — traces the Clew logo path as a stroke, pauses at the top,
-   then erases back. `pathLength` is normalised to 100 on the path so
-   dasharray / dashoffset values are clean percentages. Colour inherits
-   from the parent via `currentColor`. */
+/* Brand loader traces the Clew logo path and inherits color from the parent. */
 .clewBrandLoader {
   display: inline-flex;
   align-items: center;
@@ -268,9 +265,7 @@ input[type="number"] {
   color: #ffffff;
 }
 
-/* Fullscreen launch screen — shown over `#root` until React finishes its
-   first mount / workspace data is fetched. Inline-defined in index.html so
-   it appears the moment the browser has HTML, before any JS has run. */
+/* Fullscreen launch screen covers root until React mounts and workspace data loads. */
 .clewLaunchScreen {
   position: fixed;
   inset: 0;
@@ -294,10 +289,7 @@ input[type="number"] {
   color: #ffffff;
 }
 
-/* Centred clew-logo loader that sits inside the chat viewport while the
-   current session's messages are still being fetched. Uses the same
-   wipe-reveal keyframe as the launch screen; smaller size so it doesn't
-   dominate the thread area. */
+/* Chat viewport loader uses the same logo reveal at a smaller size. */
 .clewChatLoader {
   display: inline-flex;
   align-items: center;
@@ -317,13 +309,7 @@ input[type="number"] {
   color: rgba(255, 255, 255, 0.62);
 }
 
-/* Shared mask-reveal classes for both the fullscreen launch loader (rendered
-   from React early-return in App.tsx) and the in-chat loader. Matches the
-   inline HTML version declared in index.html. Fill path is covered by a
-   mask whose stroke traces the path's trajectory as the dashoffset runs.
-   Forward (100 → 0) reveals the filled logo along the path; backward
-   (0 → 100) erases it along the same path from the tip. One cycle =
-   one fill-in + one un-fill. */
+/* Shared mask-reveal classes for the launch loader and the in-chat loader. */
 .clewLaunchFillPath {
   fill: currentColor;
   stroke: none;
@@ -346,10 +332,7 @@ input[type="number"] {
   100% { stroke-dashoffset: 100; }
 }
 
-/* Settings section eyebrow labels ("PROVIDERS", "AI BEHAVIOR", "CLOSURE QUIZ")
-   — base had `letter-spacing: 0.14em` which put huge gaps between letters
-   and made the uppercase labels feel spaced-out. Tighten letter-spacing,
-   keep uppercase but bump weight for readability. Applies to both themes. */
+/* Settings eyebrow labels use tighter uppercase spacing in both themes. */
 .settingsPanelEyebrow,
 .settingsSidebarTitle,
 .thinkingModeChipLabel {

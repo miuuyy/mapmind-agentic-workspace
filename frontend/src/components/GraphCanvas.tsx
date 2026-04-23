@@ -11,16 +11,19 @@ import {
   cacheEntryKey,
   clamp,
   cloneManualNodePositions,
+  edgeRenderMotion,
   graphCanvasPalette,
   hashString,
   hexToRgb,
   highlightedZoneIdsForSelection,
+  idleRenderOffset,
   intersectsAny,
   labelCandidateOrder,
   labelSpreadRadius,
   mixRgb,
   nodeFillColor,
   nodeRadius,
+  nextIdleMotionState,
   normalizeAngle,
   primaryZoneIdForTopic,
   positionCache,
@@ -110,6 +113,7 @@ function GraphCanvasComponent({
   const graphSignatureRef = useRef<string>("");
   const structureActivityFrameRef = useRef<number>(0);
   const idleFrozenRef = useRef<boolean>(false);
+  const idleFrozenFrameRef = useRef<number | null>(null);
   const idleSettleFramesRef = useRef<number>(0);
   const lastEmittedAnchorRef = useRef<{ x: number; y: number; side: string } | null>(null);
   const pendingResizeRef = useRef<boolean>(false);
@@ -139,7 +143,7 @@ function GraphCanvasComponent({
   themeModeRef.current = themeMode;
   curvedEdgeLinesEnabledRef.current = curvedEdgeLinesEnabled;
 
-  // Smoothly animate zoom towards targetZoom
+  // Animate zoom toward the requested target.
   useEffect(() => {
     if (targetZoom == null) return;
     if (staticLayout) {
@@ -163,13 +167,14 @@ function GraphCanvasComponent({
   useEffect(() => {
     idleSettleFramesRef.current = 0;
     idleFrozenRef.current = disableIdleAnimations;
+    idleFrozenFrameRef.current = disableIdleAnimations ? 0 : null;
     for (const position of nodesRef.current.values()) {
       position.vx = 0;
       position.vy = 0;
     }
   }, [disableIdleAnimations]);
 
-  // Auto-pan to center on specified node, or reset to center when null
+  // Center the requested node, or reset pan when no target is set.
   useEffect(() => {
     if (staticLayout) {
       if (centerOnNodeId) {
@@ -270,6 +275,7 @@ function GraphCanvasComponent({
     lastEmittedAnchorRef.current = null;
     idleSettleFramesRef.current = 0;
     idleFrozenRef.current = disableIdleAnimations;
+    idleFrozenFrameRef.current = disableIdleAnimations ? 0 : null;
     draggedNodeRef.current = null;
     dragStartRef.current = null;
     isDraggingRef.current = false;
@@ -352,6 +358,7 @@ function GraphCanvasComponent({
       handleResize();
       idleSettleFramesRef.current = 0;
       idleFrozenRef.current = disableIdleAnimationsRef.current;
+      idleFrozenFrameRef.current = disableIdleAnimationsRef.current ? frameCount : null;
       lastEmittedAnchorRef.current = null;
     }
 
@@ -374,6 +381,7 @@ function GraphCanvasComponent({
         viewportSignatureRef.current = viewportSignature;
         structureActivityFrameRef.current = frameCount;
         idleFrozenRef.current = false;
+        idleFrozenFrameRef.current = null;
         idleSettleFramesRef.current = 0;
         lastEmittedAnchorRef.current = null;
         labelPlacementRef.current.clear();
@@ -641,6 +649,7 @@ function GraphCanvasComponent({
         structureActivityFrameRef.current = frameCount;
         zoneRevealStartFrameRef.current = frameCount + (staticLayout ? 6 : Math.max(12, cascadeStepFramesRef.current * 2));
         idleFrozenRef.current = false;
+        idleFrozenFrameRef.current = null;
         idleSettleFramesRef.current = 0;
         labelPlacementRef.current.clear();
         zoneGeometryRef.current.clear();
@@ -705,25 +714,25 @@ function GraphCanvasComponent({
           0,
           ...Array.from(positions.values()).map((position) => Math.max(Math.abs(position.vx), Math.abs(position.vy))),
         );
-        if (!idleAnimationsDisabled || layoutEditModeRef.current || draggedNodeId) {
-          idleFrozenRef.current = false;
-          idleSettleFramesRef.current = 0;
-        } else {
-          const settleWindowReached = frameCount - structureActivityFrameRef.current > 90;
-          if (!settleWindowReached) {
-            idleFrozenRef.current = false;
-            idleSettleFramesRef.current = 0;
-          } else if (idleFrozenRef.current) {
-            // Keep the scene fully still until the graph structure changes again.
-            idleSettleFramesRef.current = 0;
-          } else if (currentMaxVelocity < 0.35 || frameCount - structureActivityFrameRef.current > 180) {
-            idleSettleFramesRef.current += 1;
-            if (idleSettleFramesRef.current >= 4) {
-              idleFrozenRef.current = true;
-            }
-          } else {
-            idleSettleFramesRef.current = 0;
-          }
+        const revealFadeRate = Math.max(18, cascadeStepFramesRef.current * 1.5);
+        const revealActive = Array.from(litFrameRef.current.values()).some((litFrame) => frameCount - litFrame < revealFadeRate);
+        const wasIdleFrozen = idleFrozenRef.current;
+        const idleMotionState = nextIdleMotionState({
+          currentMaxVelocity,
+          draggedNodeId,
+          frameCount,
+          idleFrozen: idleFrozenRef.current,
+          idleSettleFrames: idleSettleFramesRef.current,
+          layoutEditMode: layoutEditModeRef.current,
+          revealActive,
+          structureActivityFrame: structureActivityFrameRef.current,
+        });
+        idleFrozenRef.current = idleMotionState.idleFrozen;
+        idleSettleFramesRef.current = idleMotionState.idleSettleFrames;
+        if (idleMotionState.idleFrozen && !wasIdleFrozen) {
+          idleFrozenFrameRef.current = frameCount;
+        } else if (!idleMotionState.idleFrozen) {
+          idleFrozenFrameRef.current = null;
         }
         const shouldFreezeIdleMotion = idleFrozenRef.current;
         if (shouldFreezeIdleMotion) {
@@ -740,7 +749,7 @@ function GraphCanvasComponent({
         const centerPull = 0.00008;
         const levelPull = 0.004;
         const siblingFanStrength = 0.0015;
-        // Smooth startup: forces ramp up gradually, constant high damping prevents bounce
+        // Ramp forces gradually at startup to avoid bounce.
         const startupProgress = Math.min(1, frameCount / 80);
         const startupEase = startupProgress * startupProgress; // quadratic ease-in
         const damping = idleAnimationsDisabled ? 0.76 : 0.91;
@@ -749,7 +758,7 @@ function GraphCanvasComponent({
         const velocityEpsilon = idleAnimationsDisabled ? 0.018 : 0.003;
 
         if (!disablePhysicsRef.current) {
-          // Pre-compute zone membership for density-aware repulsion
+          // Precompute zone membership for density-aware repulsion.
           const nodeZoneId = new Map<string, string>();
         const zoneSizeById = new Map<string, number>();
         for (const z of zonesDataRef.current) {
@@ -944,7 +953,7 @@ function GraphCanvasComponent({
             }
           }
         }
-        } // End disablePhysicsRef.current block
+        }
 
         for (const node of currentNodes) {
           const position = positions.get(node.id);
@@ -1043,12 +1052,41 @@ function GraphCanvasComponent({
           : new Set<string>();
       const zoneByTopicId = zoneIdByTopicId(zonesDataRef.current);
       const zoneById = new Map(zonesDataRef.current.map((zone) => [zone.id, zone]));
+      const idleVisualMotionEnabled =
+        !disableIdleAnimationsRef.current &&
+        idleFrozenRef.current &&
+        !layoutEditModeRef.current &&
+        draggedNodeRef.current === null;
+      const idleVisualMotionProgress =
+        idleVisualMotionEnabled && idleFrozenFrameRef.current !== null
+          ? clamp((frameCount - idleFrozenFrameRef.current) / 36, 0, 1)
+          : 0;
+      const edgeMotionFrozen = idleFrozenRef.current && !layoutEditModeRef.current && draggedNodeRef.current === null;
+      const renderPositions = new Map<string, NodePosition>();
+      for (const node of currentNodes) {
+        const position = positions.get(node.id);
+        if (!position) continue;
+        const offset = idleRenderOffset({
+          enabled: idleVisualMotionEnabled,
+          frameCount,
+          nodeId: node.id,
+          progress: idleVisualMotionProgress,
+          zoneId: zoneByTopicId.get(node.id) ?? null,
+        });
+        renderPositions.set(node.id, {
+          x: position.x + offset.x,
+          y: position.y + offset.y,
+          vx: position.vx,
+          vy: position.vy,
+        });
+      }
+      const edgePositions = idleVisualMotionEnabled ? positions : renderPositions;
       const bundleMetaByEdgeId = new Map<string, { angle: number; laneOffset: number; laneCount: number }>();
 
       const outgoingBySource = new Map<string, Array<{ edge: Edge; angle: number }>>();
       for (const edge of currentEdges) {
-        const from = positions.get(edge.source_topic_id);
-        const to = positions.get(edge.target_topic_id);
+        const from = edgePositions.get(edge.source_topic_id);
+        const to = edgePositions.get(edge.target_topic_id);
         if (!from || !to) continue;
         const angle = Math.atan2(to.y - from.y, to.x - from.x);
         outgoingBySource.set(edge.source_topic_id, [...(outgoingBySource.get(edge.source_topic_id) ?? []), { edge, angle }]);
@@ -1071,20 +1109,25 @@ function GraphCanvasComponent({
       }
 
       for (const edge of currentEdges) {
-        const from = positions.get(edge.source_topic_id);
-        const to = positions.get(edge.target_topic_id);
+        const from = edgePositions.get(edge.source_topic_id);
+        const to = edgePositions.get(edge.target_topic_id);
         if (!from || !to) continue;
         const edgeKey = `e:${edge.id}`;
         const litFrame = litFrameRef.current.get(edgeKey);
         const fadeRate = Math.max(16, cascadeStepFramesRef.current * 1.5);
-        const edgeBrightness = litFrame === undefined ? 0 : Math.min(1, Math.max(0, (frameCount - litFrame) / fadeRate));
+        const { brightness: edgeBrightness, pulse } = edgeRenderMotion({
+          edgeMotionFrozen,
+          fadeRate,
+          frameCount,
+          fromX: from.x,
+          litFrame,
+        });
         const onPath = pathEdgeIdsRef.current.has(edge.id);
         const onFrontier = frontierEdgeIdsRef.current.has(edge.id);
         const sourceZoneId = zoneByTopicId.get(edge.source_topic_id) ?? null;
         const targetZoneId = zoneByTopicId.get(edge.target_topic_id) ?? null;
         const highlightedSourceZone = sourceZoneId && selectedZoneIds.has(sourceZoneId) ? zoneById.get(sourceZoneId) ?? null : null;
         const highlightedTargetZone = targetZoneId && selectedZoneIds.has(targetZoneId) ? zoneById.get(targetZoneId) ?? null : null;
-        const pulse = renderIdleFrozen ? 0.84 : 0.84 + Math.sin(frameCount * 0.03 + from.x * 0.008) * 0.05;
         const targetX = from.x + (to.x - from.x) * edgeBrightness;
         const targetY = from.y + (to.y - from.y) * edgeBrightness;
         const bundleMeta = bundleMetaByEdgeId.get(edge.id);
@@ -1139,7 +1182,7 @@ function GraphCanvasComponent({
       }
 
       for (const node of currentNodes) {
-        const position = positions.get(node.id);
+        const position = renderPositions.get(node.id);
         if (!position) continue;
         const litFrame = litFrameRef.current.get(node.id);
         const fadeRate = Math.max(18, cascadeStepFramesRef.current * 1.5);
@@ -1158,7 +1201,7 @@ function GraphCanvasComponent({
         const haloPulse = renderIdleFrozen ? 0.55 : 0.55 + Math.sin(frameCount * 0.04 + position.x * 0.008) * 0.07;
         const frontierSources = currentEdges
           .filter((edge) => frontierEdgeIdsRef.current.has(edge.id) && edge.target_topic_id === node.id)
-          .map((edge) => positions.get(edge.source_topic_id))
+          .map((edge) => edgePositions.get(edge.source_topic_id))
           .filter((point): point is NodePosition => Boolean(point));
 
         if (brightness > 0.06 && (selected || onPath)) {
@@ -1252,7 +1295,7 @@ function GraphCanvasComponent({
       ctx2.textBaseline = "middle";
 
       for (const node of labelNodes) {
-        const position = positions.get(node.id);
+        const position = renderPositions.get(node.id);
         const anchor = anchors.get(node.id);
         if (!position || !anchor) continue;
         const selected = selectedTopicIdRef.current === node.id;
@@ -1325,10 +1368,7 @@ function GraphCanvasComponent({
           : null;
         const highlightedZoneRgb = highlightedZone ? hexToRgb(highlightedZone.color) : null;
         if (themeModeRef.current === "light" && highlightedZoneRgb && (selected || onPath)) {
-          // Solid pale-tinted fill (no transparency) + solid zone-coloured
-          // border. Pre-mix the orange with 90% white so the final colour is
-          // a visible cream chip, without the underlying grid / edges
-          // bleeding through. Border carries the emphasis.
+          // Use an opaque cream chip so grid and edges do not bleed through selected labels.
           const labelBg = mixRgb(highlightedZoneRgb, { r: 255, g: 255, b: 255 }, 0.9);
           ctx2.beginPath();
           ctx2.roundRect(chosenBox.left - 4, chosenBox.top - 3, chosenBox.right - chosenBox.left + 8, chosenBox.bottom - chosenBox.top + 6, 10);
@@ -1348,7 +1388,7 @@ function GraphCanvasComponent({
 
       for (const zone of zonesDataRef.current) {
         if (!selectedZoneIds.has(zone.id)) continue;
-        const zonePoints = zone.topic_ids.map((topicId) => positions.get(topicId)).filter((point): point is NodePosition => Boolean(point));
+        const zonePoints = zone.topic_ids.map((topicId) => renderPositions.get(topicId)).filter((point): point is NodePosition => Boolean(point));
         if (zonePoints.length === 0) continue;
         const center = zonePoints.reduce(
           (acc, point) => ({ x: acc.x + point.x / zonePoints.length, y: acc.y + point.y / zonePoints.length }),

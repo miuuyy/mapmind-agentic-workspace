@@ -1,4 +1,4 @@
-/* Final light dock/chat overrides */
+/* Light dock and chat component states. */
 :root[data-theme="light"] .lightDock .lightDockButton,
 :root[data-theme="light"] .lightDock .lightDockButtonLink {
   color: var(--dt-light-muted) !important;
@@ -10,8 +10,8 @@
 }
 
 :root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive {
-  color: rgba(62, 49, 39, 0.96) !important;
-  background: rgba(214, 106, 51, 0.16) !important;
+  color: var(--clew-light-dock-active-text) !important;
+  background: var(--clew-light-dock-active-bg) !important;
   border-radius: 999px !important;
 }
 
@@ -21,7 +21,7 @@
   box-shadow: none !important;
 }
 
-/* Tight light-chat cleanup */
+/* Light chat cleanup. */
 
 :root[data-theme="light"] .chatMessage-user .chatBubble,
 :root[data-theme="light"] .workspaceShellLightDockMode .chatMessage-user .chatBubble {
@@ -58,7 +58,7 @@
   box-shadow: none !important;
 }
 
-/* Chat-only harmony pass: keep workspace palette, lighten chat surfaces */
+/* Chat surfaces keep the workspace palette while staying lighter. */
 
 :root[data-theme="light"] .lightWorkspaceWindow {
   background: rgba(249, 245, 239, 0.965) !important;
@@ -181,21 +181,10 @@
 
 :root[data-theme="light"] .chatBubble,
 :root[data-theme="light"] .workspaceShellLightDockMode .chatBubble {
-  background: var(--dt-light-card) !important;
-  border: 1px solid var(--dt-light-border) !important;
+  background: var(--clew-light-chat-bubble-bg) !important;
+  border: 1px solid var(--clew-light-chat-bubble-border) !important;
   color: var(--dt-light-text) !important;
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.03) !important;
-}
-/* EOF ultimate override */
-:root[data-theme="light"] .lightDockButtonActive {
-  color: rgba(92, 53, 35, 0.98) !important;
-  background: rgba(214, 106, 51, 0.16) !important;
-  border-radius: 999px !important;
-}
-:root[data-theme="light"] .lightDockButtonActive::before {
-  opacity: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
+  box-shadow: var(--clew-light-chat-bubble-shadow) !important;
 }
 :root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
 :root[data-theme="light"] .lightChatWindow .sessionListWrap::after,
@@ -220,8 +209,7 @@
 :root[data-theme="light"] .lightChatWindow .sessionItemActive,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroupActive {
   background: rgba(240, 233, 223, 0.98) !important;
-  /* Darker brand-orange shade so the thin chat-name type stays readable
-     against the cream pill. Same hue as #d97757 just ~12% darker. */
+  /* Darker brand-orange keeps thin session labels readable on cream. */
   color: #b55a38 !important;
   border: 0 !important;
   border-radius: 999px !important;
@@ -229,18 +217,14 @@
   border-color: rgba(233, 225, 215, 0.98) !important;
 }
 
-/* Inner label node has its own explicit `color` rule in light-theme-overrides-a.css
-   which would otherwise win over the wrapper rule above. Re-assert the darker
-   shade specifically on the label so the thin chat-name type actually picks
-   up the darker reading colour. */
+/* Reassert the active session label color against earlier label-specific rules. */
 :root[data-theme="light"] .lightChatWindow .sessionItemActive .sessionItemLabel,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroupActive .sessionItemLabel {
   color: rgba(60, 55, 50, 0.88) !important;
   font-weight: 550 !important;
 }
 
-/* Count badge next to active session title — inherit the same weight and
-   tone as the label so it visually belongs to the same word. */
+/* Active session badges inherit the label tone and weight. */
 :root[data-theme="light"] .lightChatWindow .sessionItemActive .sessionItemBadge,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroupActive .sessionItemBadge {
   color: rgba(60, 55, 50, 0.62) !important;
@@ -248,11 +232,7 @@
   opacity: 1 !important;
 }
 
-/* The top-of-thread fade (`.sessionShadow::after`, 48px linear-gradient) used
-   to paint over the 1px border-bottom of `.sessionListWrap`, hiding the
-   divider that separates the session chip row from the chat thread. Push
-   the fade 1px down so the border stays visible, and promote the sessions
-   row above it so its border wins the stacking order regardless. */
+/* Keep the session divider visible above the top-of-thread fade. */
 :root[data-theme="light"] .lightChatWindow .sessionShadow::after,
 :root[data-theme="light"] .workspaceShellLightDockMode .sessionShadow::after {
   top: 1px !important;
@@ -265,10 +245,7 @@
   z-index: 4 !important;
 }
 
-/* Absolute EOF lock: light-theme quiz palette (user-specified).
-   Card body #faf7f3, choice body #faf8f3 (a shade brighter), matching
-   #e9e1d7 border on both. Hover is a tiny neutral step darker — no brand
-   orange. Dark theme quiz untouched. */
+/* Light quiz palette uses cream surfaces with neutral hover. */
 :root[data-theme="light"] .inlineQuizCard,
 :root[data-theme="light"] .lightChatWindow .inlineQuizCard,
 :root[data-theme="light"] .workspaceShellLightDockMode .inlineQuizCard {
@@ -329,9 +306,7 @@
   color: rgba(185, 28, 28, 0.96) !important;
 }
 
-/* User message bubble in light theme — palette matched to the quiz card:
-   #f0e9df body, #e9e1d7 border (same as quiz + choice border). Flat, no
-   gradient, no shadow. Dark theme unchanged. */
+/* Light user bubbles match the quiz card palette without shadow or glass. */
 :root[data-theme="light"] .chatMessage-user .chatBubble,
 :root[data-theme="light"] .lightChatWindow .chatMessage-user .chatBubble,
 :root[data-theme="light"] .workspaceShellLightDockMode .chatMessage-user .chatBubble {
@@ -342,10 +317,7 @@
   -webkit-backdrop-filter: none !important;
 }
 
-/* Session chips in the chat header: user feedback — "при наводке на
-   сессию не нужно менять фон у названия". We keep hover identical to rest
-   (no background shift, no text darken) — only the cursor changes.
-   Active chip keeps its dark-orange label through hover. */
+/* Session chip hover keeps the same visual state as rest. */
 :root[data-theme="light"] .lightChatWindow .sessionItem:hover,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroup:hover,
 :root[data-theme="light"] .lightChatWindow .lightChatSessionChip:hover {
@@ -442,7 +414,7 @@
   box-shadow: none !important;
 }
 
-/* EOF cleanup: strip chat artifacts + readable topic popover */
+/* Chat artifact cleanup and readable topic popover. */
 
 :root[data-theme="light"] .lightChatWindow .assistantThread::-webkit-scrollbar {
   display: none !important;
@@ -476,7 +448,7 @@
   box-shadow: none !important;
 }
 
-/* EOF light-theme de-glass pass */
+/* Remove glass treatment from light chat controls. */
 :root[data-theme="light"] .lightChatWindow .assistantTemplate,
 :root[data-theme="light"] .lightChatWindow .webGroundingToggle,
 :root[data-theme="light"] .lightChatWindow .groundingToggle {
@@ -653,13 +625,13 @@
   color: currentColor !important;
 }
 
-/* EOF restore chat separator */
+/* Keep the light chat separator visible. */
 :root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader,
 :root[data-theme="light"] .lightChatWindow .sessionListWrap {
   background: rgba(250, 249, 246, 0.98) !important;
 }
 
-/* EOF modal pass: light dialogs follow chat background, not white glass */
+/* Light dialogs follow the chat background tone. */
 :root[data-theme="light"] .quizModal,
 :root[data-theme="light"] .topicAssetModal {
   background: rgba(250, 249, 246, 0.982) !important;
@@ -744,7 +716,7 @@
   box-shadow: none !important;
 }
 
-/* EOF targeted settings + snapshots tone sync */
+/* Settings and snapshots tone sync. */
 :root[data-theme="light"] .settingsModal,
 :root[data-theme="light"] .settingsSidebar,
 :root[data-theme="light"] .settingsPanel,
@@ -794,9 +766,7 @@
   box-shadow: none !important;
 }
 
-/* EOF keep chat separator visible */
-
-/* EOF final settings fix */
+/* Light settings surfaces. */
 :root[data-theme="light"] .settingsModal,
 :root[data-theme="light"] .settingsSidebar,
 :root[data-theme="light"] .settingsContentHeader,
@@ -863,7 +833,7 @@
   box-shadow: none !important;
 }
 
-/* EOF restore light theme contract */
+/* Restore the light overlay contract. */
 :root[data-theme="light"] .quizOverlay.settingsOverlay,
 :root[data-theme="light"] .debugLogsOverlay,
 :root[data-theme="light"] .quizOverlay {
@@ -1000,7 +970,7 @@
   background: var(--light-soft-bg) !important;
 }
 
-/* EOF hover stability + workspace button parity */
+/* Hover stability and workspace button parity. */
 
 :root[data-theme="light"] .lightChatWindow .sessionItemLabel,
 :root[data-theme="light"] .lightChatWindow .sessionItemInline,
@@ -1016,7 +986,7 @@
   transform: none !important;
 }
 
-/* EOF settings background restore + no-hover-drift */
+/* Settings background and hover stability. */
 
 :root[data-theme="light"] .settingsSnapshotsCard,
 :root[data-theme="light"] .snapshotsCard,
@@ -1033,7 +1003,7 @@
   transform: none !important;
 }
 
-/* Absolute EOF lock: light snapshot rows should not change tone on hover */
+/* Light snapshot rows keep the same tone on hover. */
 :root[data-theme="light"] .settingsSnapshotsCard .listItem:hover,
 :root[data-theme="light"] .snapshotsCard .listItem:hover {
   background: rgba(250, 249, 246, 0.98) !important;
@@ -1080,7 +1050,7 @@
   transform: none !important;
 }
 
-/* Final light-theme pass: unify chat top strip + freeze workspace CTA hover */
+/* Light chat top strip and workspace CTA hover. */
 
 :root[data-theme="light"] .lightChatWindow .lightFloatingWindowHeader,
 :root[data-theme="light"] .lightChatWindow .sessionListWrap,
@@ -1192,7 +1162,7 @@
   box-shadow: none !important;
 }
 
-/* Final settings swap: section cards use the former background, shell uses the former card color */
+/* Settings shell and section cards use separate light surface tones. */
 
 :root[data-theme="light"] .settingsPanel,
 :root[data-theme="light"] .settingsPanelHeader,
@@ -1200,7 +1170,7 @@
   background: var(--light-flat-bg) !important;
 }
 
-/* Revert settings tabs to a neutral light style */
+/* Settings tabs use a neutral light style. */
 
 :root[data-theme="light"] .settingsTab:hover {
   background: rgba(17, 24, 39, 0.04) !important;
@@ -1223,7 +1193,7 @@
   color: rgba(17, 24, 39, 0.88) !important;
 }
 
-/* Final settings/logs coexist + snapshot swap */
+/* Settings, logs, and snapshots share the light surface hierarchy. */
 :root[data-theme="light"] .settingsModal,
 :root[data-theme="light"] .settingsContent,
 :root[data-theme="light"] .settingsContentHeader,
@@ -1249,7 +1219,7 @@
   background: var(--light-flat-bg) !important;
 }
 
-/* Absolute final settings color lock */
+/* Settings color baseline. */
 :root[data-theme="light"] .settingsModal,
 :root[data-theme="light"] .settingsContent,
 :root[data-theme="light"] .settingsSidebar,
@@ -1299,7 +1269,7 @@
   color: rgba(17, 24, 39, 0.88) !important;
 }
 
-/* DeepTutor settings light tokens for inputs/background */
+/* Light settings tokens for inputs and backgrounds. */
 :root[data-theme="light"] .settingsModal,
 :root[data-theme="light"] .settingsContent,
 :root[data-theme="light"] .settingsSidebar,
@@ -1511,7 +1481,7 @@
   color: rgba(255, 255, 255, 0.74) !important;
 }
 
-/* Absolute EOF lock: light chat model menu must render above the session strip */
+/* Light chat model menu renders above the session strip. */
 :root[data-theme="light"] .lightChatWindow {
   background: var(--light-flat-bg) !important;
   border: 1px solid rgba(233, 225, 215, 0.96) !important;
@@ -1609,7 +1579,7 @@
   margin-right: 4px !important;
 }
 
-/* Final light chat separator/fade lock */
+/* Light chat separator and fade geometry. */
 :root[data-theme="light"] .lightChatWindow .sessionListWrap,
 :root[data-theme="light"] .lightChatWindow .sessionList,
 :root[data-theme="light"] .lightChatWindow .assistantThread,
@@ -1639,7 +1609,7 @@
   transition: opacity 0.18s ease !important;
 }
 
-/* Session list has fade on BOTH sides in light theme — symmetric with dark. */
+/* Session list uses symmetric light fades. */
 :root[data-theme="light"] .lightChatWindow .sessionListWrap::before {
   display: block !important;
   opacity: 1 !important;
@@ -1713,7 +1683,7 @@
   line-height: 1 !important;
 }
 
-/* Final light-chat separator lock: force the lower divider to reach both edges */
+/* Lower chat divider reaches both edges. */
 :root[data-theme="light"] .lightChatWindow .assistantComposerWrap {
   border-top: 0 !important;
   padding-top: 12px !important;
@@ -1734,7 +1704,7 @@
   z-index: 3 !important;
 }
 
-/* Absolute EOF lock: landing-accent pass for light theme */
+/* Dock accent states. */
 
 :root[data-theme="light"] .lightDockButton:hover,
 :root[data-theme="light"] .lightDockButtonLink:hover {
@@ -1759,7 +1729,7 @@
 :root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive,
 :root[data-theme="light"] .lightDock .lightDockButton.lightDockButtonActive:hover {
   color: #fbf5ec !important;
-  background: #d97757 !important;
+  background: var(--clew-accent-orange, #d97757) !important;
   border-radius: 999px !important;
   box-shadow: none !important;
   outline: none !important;
@@ -1774,7 +1744,7 @@
   opacity: 0 !important;
 }
 
-/* Keep closure CTA stable instead of inheriting the generic darkening hover */
+/* Keep closure CTA stable instead of inheriting generic darkening hover. */
 :root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon) {
   all: unset !important;
   appearance: none !important;
@@ -1824,7 +1794,7 @@
   cursor: not-allowed !important;
 }
 
-/* Final lock for the current UI pass */
+/* Inline proposal status. */
 :root[data-theme="light"] .inlineNoticeError {
   border-color: rgba(222, 131, 102, 0.24) !important;
   background: linear-gradient(180deg, rgba(255, 246, 243, 0.96), rgba(252, 242, 238, 0.98)) !important;
@@ -1849,8 +1819,8 @@
 }
 
 :root[data-theme="light"] .lightDock {
-  background: var(--light-flat-bg) !important;
-  border-color: rgba(233, 225, 215, 0.98) !important;
+  background: var(--clew-light-dock-bg) !important;
+  border-color: var(--clew-light-dock-border) !important;
   box-shadow:
     0 1px 8px rgba(45, 43, 40, 0.04),
     0 14px 28px rgba(45, 43, 40, 0.06) !important;
@@ -1881,9 +1851,7 @@
 :root[data-theme="light"] .chatTypingDot {
   width: 4px !important;
   height: 4px !important;
-  /* Match the muted warm-beige tone used for quiz borders (#e9e1d7 family)
-     so the typing indicator sits in the same palette as the quiz surfaces
-     instead of the old brand-orange tint. */
+  /* Typing dots use the same muted warm-beige family as quiz borders. */
   background: #c9c0ae !important;
 }
 
@@ -1910,7 +1878,7 @@
   box-shadow: 0 8px 18px rgba(45, 43, 40, 0.05) !important;
 }
 
-/* Absolute EOF lock: final web button parity (patch 02:21:54 — match send button) */
+/* Web grounding button matches primary actions. */
 :root[data-theme="light"] .lightChatWindow .webGroundingToggle.active,
 :root[data-theme="light"] .workspaceShellLightDockMode .webGroundingToggle.active,
 :root[data-theme="light"] .webGroundingToggle.active {
@@ -1920,14 +1888,14 @@
   box-shadow: none !important;
 }
 
-/* Absolute EOF lock: light snapshots list items — more rounded (matches dark feel) */
+/* Light snapshot rows match the dark theme radius. */
 :root[data-theme="light"] .settingsSnapshotsCard .listItem,
 :root[data-theme="light"] .snapshotsCard .listItem,
 :root[data-theme="light"] .snapshotsCard .listActions {
   border-radius: 16px !important;
 }
 
-/* Absolute EOF lock: proposal "+" accept button — match send button palette */
+/* Proposal accept button matches the send button palette. */
 :root[data-theme="light"] .proposalAddButton:not([title="Applied"]):not(.proposalAddButtonApplied) {
   background: #d97757 !important;
   color: #fffaf6 !important;
@@ -1942,7 +1910,7 @@
   box-shadow: 0 6px 16px rgba(217, 119, 87, 0.22) !important;
 }
 
-/* Absolute EOF lock: proposal mini item hover — no hover effect (match dark). */
+/* Proposal mini items keep a stable hover state. */
 :root[data-theme="light"] .proposalMiniItem:hover {
   background: transparent !important;
   border: 0 !important;
@@ -1951,16 +1919,14 @@
   box-shadow: none !important;
 }
 
-/* Absolute EOF lock: Delete button geometry matches Cancel in light theme.
-   Cancel (.btnGhost) has border-radius: 16; Delete (.btn.btnDanger) was 22. */
+/* Delete button geometry matches Cancel in light theme. */
 :root[data-theme="light"] .btn.btnDanger {
   min-height: 40px !important;
   padding: 10px 14px !important;
   border-radius: 16px !important;
   font-weight: 600 !important;
   font-size: 13px !important;
-  /* Solid muted red pairing — matches the `.badge-red` / failed-topic
-     palette. No translucent red-glass. */
+  /* Use the same muted red pairing as failure badges. */
   background: #f6ebe8 !important;
   border: 1px solid #e3b9b0 !important;
   color: #a63a2f !important;
@@ -1975,9 +1941,7 @@
   color: #8f1d16 !important;
 }
 
-/* Modal Cancel + Delete buttons — identical treatment.
-   Same bg, border, text colour. No hover shift. No focus ring. The word
-   "Delete" / "Cancel" alone distinguishes them. */
+/* Modal Cancel and Delete buttons share the same neutral treatment. */
 :root[data-theme="light"] .btn.btnGhost,
 :root[data-theme="light"] .btn.btnGhost:hover,
 :root[data-theme="light"] .btn.btnGhost:focus,
@@ -2001,8 +1965,7 @@ button.btn.btnDanger,
   filter: none !important;
 }
 
-/* Absolute EOF lock: applied proposal (✓) mirrors the plus (+) button —
-   solid brand orange + cream text, same as send button. */
+/* Applied proposal state mirrors the accept button. */
 :root[data-theme="light"] .proposalAddButton[title="Applied"],
 :root[data-theme="light"] .proposalAddButtonApplied,
 :root[data-theme="light"] .proposalAddButton[title="Applied"]:disabled,
@@ -2036,16 +1999,14 @@ button.btn.btnDanger,
   overflow: hidden !important;
 }
 
-/* Subtle blur on New Workspace modal overlay — was too heavy at 6px. */
+/* New Workspace modal overlay uses a subtle blur. */
 .quizOverlay:has(.workspaceCreateModal) {
   backdrop-filter: blur(2px) !important;
   -webkit-backdrop-filter: blur(2px) !important;
   background: rgba(0, 0, 0, 0.22) !important;
 }
 
-/* Absolute EOF lock: sessionShadow gradient in light theme matches chat cream
-   background instead of near-pure white #fcfdff which visually popped as a
-   bright band behind the session list. */
+/* Session shadow gradient matches the light chat cream. */
 :root[data-theme="light"] .sessionShadow::after,
 :root[data-theme="light"] .workspaceShellLightDockMode .sessionShadow::after,
 :root[data-theme="light"] .lightChatWindow .sessionShadow::after {
@@ -2058,11 +2019,7 @@ button.btn.btnDanger,
       transparent 100%) !important;
 }
 
-/* Absolute EOF lock: light chat window geometry — all four corners rounded
-   (was erroneously top-only in a prior pass), header padding matches dark,
-   session list has no extra clip-path, and the left/right scroll fades are
-   explicitly bounded inside the session list wrapper so they can't bleed
-   into the chat area below. */
+/* Light chat geometry keeps rounded corners and bounded session fades. */
 :root[data-theme="light"] .lightChatWindow {
   border-radius: 24px !important;
 }
@@ -2073,11 +2030,7 @@ button.btn.btnDanger,
 :root[data-theme="light"] .lightChatWindow .sessionList {
   clip-path: none !important;
 }
-/* Session list fade — mask-image stays on (that's the visual user wants),
-   but the LEFT cut is only applied when the wrap has scrolled away from
-   the left edge. Right cut is always present (list always has more items
-   to scroll towards). Pseudo-element fades kept disabled to avoid double
-   darkening. */
+/* Session list fade is handled by the mask, not pseudo-element overlays. */
 :root[data-theme="light"] .lightChatWindow .sessionListWrap {
   overflow: hidden !important;
   position: relative !important;
@@ -2133,10 +2086,7 @@ button.btn.btnDanger,
   content: none !important;
 }
 
-/* Divider line between session-chip row and chat thread — move it OFF
-   `.sessionListWrap` (whose mask-image was clipping the border on fade
-   edges) onto `.assistantThread`'s top edge. The mask only lives on the
-   wrapper, so the line on the sibling below is always crisp. */
+/* Move the session divider outside the masked wrapper. */
 :root[data-theme="light"] .lightChatWindow .sessionListWrap {
   border-bottom: 0 !important;
 }
@@ -2154,12 +2104,7 @@ button.btn.btnDanger,
   opacity: 0 !important;
 }
 
-/* Absolute EOF lock: inline quiz inside chat — light-theme v2.
-   - card uses the same warm gradient as .proposalInlineCard so it reads
-     as a distinct block from the chat bubble (same visual weight as proposal)
-   - hover has no orange border; subtle cream tone shift only
-   - correct answer = brand orange #d97757 (already the CTA accent — no new green)
-   - wrong answer = muted cream with faded text (no red hue at all) */
+/* Inline quiz in chat uses the same light card language as proposals. */
 :root[data-theme="light"] .inlineQuizCard {
   gap: 12px !important;
   margin-top: 6px !important;
@@ -2202,9 +2147,7 @@ button.btn.btnDanger,
   box-shadow: none !important;
 }
 
-/* Absolute EOF lock: dock buttons as "rounded squares" instead of pills.
-   Active was pill (999) — looked out of character against the squared panel.
-   16px reads as soft-square, consistent with panel's 26px container radius. */
+/* Dock buttons use soft-square geometry instead of pills. */
 :root[data-theme="light"] .lightDockButton,
 :root[data-theme="light"] .lightDockButtonLink,
 :root[data-theme="light"] .lightDock .lightDockButton,
@@ -2219,8 +2162,7 @@ button.btn.btnDanger,
   border-radius: 16px !important;
 }
 
-/* Absolute EOF lock: dock icons a touch bigger (24 → 28) without resizing the
-   button or the panel itself. Applies to both themes. */
+/* Dock icons are larger without resizing the button or panel. */
 :root[data-theme="light"] .lightDockButton svg,
 :root[data-theme="light"] .lightDockButtonLink svg,
 :root[data-theme="dark"] .lightDockButton svg,
@@ -2229,11 +2171,7 @@ button.btn.btnDanger,
   height: 28px !important;
 }
 
-/* Absolute EOF lock: inactive Web toggle reads as neutral cream (matches
-   Expand graph / Ingest topics) — previously it had an orange tint at rest
-   which looked half-active. Hover picks up a subtle orange border so it still
-   hints at being the web-grounding control. Active state is #d97757 + white
-   text (the existing rule earlier in this file). */
+/* Inactive Web toggle stays neutral and gains emphasis only on hover. */
 :root[data-theme="light"] .lightChatWindow .webGroundingToggle:not(.active),
 :root[data-theme="light"] .workspaceShellLightDockMode .webGroundingToggle:not(.active) {
   background: rgba(240, 233, 223, 0.88) !important;
@@ -2255,11 +2193,7 @@ button.btn.btnDanger,
   color: rgba(139, 133, 128, 0.92) !important;
 }
 
-/* Absolute EOF lock: tighter vertical rhythm between the templates row
-   (Web / Expand graph / Ingest topics) and the composer below. Dark theme
-   already reads tight because of its composer-wrap gradient overlay; light
-   was inheriting base-shell padding (16/18) which felt airy. Halve the top
-   padding and inter-row gap. */
+/* Tighten the vertical rhythm between templates and composer. */
 :root[data-theme="light"] .lightChatWindow .assistantComposerWrap,
 :root[data-theme="light"] .workspaceShellLightDockMode .assistantComposerWrap {
   padding: 10px 18px 14px !important;
@@ -2272,14 +2206,9 @@ button.btn.btnDanger,
   gap: 8px !important;
 }
 
-/* Absolute EOF lock: de-glass in light theme.
-   User feedback: "Snapshot badge / Save layout / Node started / Current / quiz
-   card — всё стеклянное". We kill the translucent backgrounds and borders on
-   the surfaces that are supposed to read as matte cream chips, not windows.
-   Keeps colour palette brand-aligned (cream #f0e9df / border #d8d2c6 / text
-   #736e66) instead of the blue-gray rgba that leaked from the dark theme. */
+/* Matte light chips keep badges and controls out of glass treatment. */
 
-/* Badges: Snapshot N, zone labels, kind chips, Current marker, etc. */
+/* Badges share the matte light chip treatment. */
 :root[data-theme="light"] .badge,
 :root[data-theme="light"] .badge-gray,
 :root[data-theme="light"] .badge-yellow,
@@ -2293,10 +2222,7 @@ button.btn.btnDanger,
   box-shadow: none !important;
 }
 
-/* Red badge — brand orange pill matching the Start Closure Quiz button.
-   Uses the --mm-accent-green tokens (which resolve to brand orange #d97757
-   in light theme) so the Failed badge sits in the same visual family as
-   primary brand actions instead of pulling the eye with pure red. */
+/* Red badges use the brand-orange action treatment in light mode. */
 :root[data-theme="light"] .badge-red {
   background: #d97757 !important;
   border: 1px solid #d97757 !important;
@@ -2307,9 +2233,7 @@ button.btn.btnDanger,
   box-shadow: none !important;
 }
 
-/* Error notices in the chat / dialogs should NOT scream red — they read as
-   "something went wrong but recoverable". Match the proposal-pending chip
-   palette (cream body, muted warm text) so they blend into the light flow. */
+/* Error notices stay recoverable in tone rather than alarm-red. */
 :root[data-theme="light"] .inlineNotice.inlineNoticeError,
 :root[data-theme="light"] .lightChatWindow .inlineNotice.inlineNoticeError,
 :root[data-theme="light"] .workspaceShellLightDockMode .inlineNotice.inlineNoticeError {
@@ -2321,13 +2245,7 @@ button.btn.btnDanger,
   box-shadow: none !important;
 }
 
-/* Save layout button (pageStatControlActive) — was translucent orange glass,
-   now a solid cream chip with orange text so it still reads as "editing".
-   NOTE: intentionally does NOT include `.floatingStatusButtonActive` because
-   that class ALSO applies to the theme-toggle (moon/sun) and viewport-lock
-   buttons at the top right; pasting an orange border onto those made the
-   hover feel wrong. If we ever need floatingStatus active state restyled,
-   do it per-instance, not blanket. */
+/* Save layout uses an editing state without affecting other floating buttons. */
 :root[data-theme="light"] .pageStatControlActive {
   background: #f0e9df !important;
   border: 1px solid #d97757 !important;
@@ -2337,10 +2255,7 @@ button.btn.btnDanger,
   box-shadow: none !important;
 }
 
-/* Revert any stray orange outline on the top-right floating status buttons
-   (theme toggle, viewport lock, layout edit pencil). They should keep their
-   base light-theme look without the orange-active treatment an earlier EOF
-   block accidentally applied. */
+/* Top-right floating status buttons keep their neutral utility treatment. */
 :root[data-theme="light"] .floatingStatusButton,
 :root[data-theme="light"] .floatingStatusButton:hover,
 :root[data-theme="light"] .floatingStatusButtonActive,
@@ -2359,8 +2274,7 @@ button.btn.btnDanger,
   color: rgba(17, 24, 39, 0.96) !important;
 }
 
-/* Closure / inline quiz card — flat cream so questions don't look like
-   floating glass panels. */
+/* Closure and inline quiz cards use a flat cream surface. */
 :root[data-theme="light"] .inlineQuizCard,
 :root[data-theme="light"] .lightChatWindow .inlineQuizCard,
 :root[data-theme="light"] .workspaceShellLightDockMode .inlineQuizCard {
@@ -2371,9 +2285,7 @@ button.btn.btnDanger,
   box-shadow: none !important;
 }
 
-/* Inline quiz choices (answer pills) — cream base, cream-darker hover instead
-   of the dark-theme white-at-alpha 0.1 which reads as pitch black on the
-   light background. Correct / wrong / selected states are handled elsewhere. */
+/* Inline quiz choices use a cream base and darker cream hover. */
 :root[data-theme="light"] .inlineQuizChoice,
 :root[data-theme="light"] .lightChatWindow .inlineQuizChoice,
 :root[data-theme="light"] .workspaceShellLightDockMode .inlineQuizChoice {
@@ -2402,30 +2314,18 @@ button.btn.btnDanger,
   outline-offset: 2px !important;
 }
 
-/* Closure actions row — now only contains the button (and optional error /
-   success badges). The "Close prerequisites first" hint moved to its own
-   line above the row (see WorkspaceShell.tsx), so we don't need the old
-   flex-order / row-reverse juggling. The button sits naturally on the
-   right via `justify-content: flex-end` inherited from dark-theme-core.css. */
+/* Closure actions keep the button aligned after the prerequisite hint. */
 :root[data-theme="light"] .topicClosureActions {
   justify-content: flex-end !important;
   gap: 8px !important;
 }
 
-/* Closure actions row — re-assert `order: 2` on the Start Quiz / Mark
-   Finished button AFTER the earlier `all: unset !important` block (line
-   ~1618) which silently reset `order` to initial. Without this, dark-theme-
-   core's `order: 2` is lost and the button flows before the hint. The
-   `:not(...)` selector matches the all-unset rule's specificity so the
-   later-in-file declaration wins the cascade. */
+/* Reassert action ordering after the shared button reset. */
 :root[data-theme="light"] .topicClosureActions .assistantSendButton:not(.assistantSendButtonIcon) {
   order: 2 !important;
 }
 
-/* Hint styling. Font-size/line-height re-declared here because the shared
-   rule in dark-theme-core.css only loads when the dark bundle is active
-   (themeStyles.ts switches entrypoint files), so in the light theme the
-   font-size would otherwise fall back to 16px inherit. */
+/* Light theme owns hint typography because theme CSS bundles load separately. */
 :root[data-theme="light"] .topicClosureActions .topicClosureBlockedHint {
   display: inline-flex !important;
   align-items: center !important;
@@ -2437,13 +2337,7 @@ button.btn.btnDanger,
   color: rgba(217, 119, 87, 0.94) !important;
 }
 
-/* Absolute EOF lock: unified primary brand-orange button treatment.
-   Covers Save (Settings), Start closure quiz, Mark as finished, chat send
-   button, empty-state Create Graph. Previously each had its own hover:
-   some darkened, some shifted to green, some added glow/shadow. User
-   feedback: "один и тот же ховер". Fixed recipe: brand orange #d97757 at
-   rest AND on hover, no shadow, no colour shift, just a tiny brightness
-   dip for tactile feel. Focus ring uses the same orange. */
+/* Unified primary brand-orange button treatment. */
 :root[data-theme="light"] .assistantSendButton:not(.assistantSendButtonIcon),
 :root[data-theme="light"] .assistantSendButton:not(.assistantSendButtonIcon):hover,
 :root[data-theme="light"] .assistantSendButton:not(.assistantSendButtonIcon):focus-visible,
@@ -2483,11 +2377,7 @@ button.btn.btnDanger,
 }
 
 
-/* Top-stats chips adopt the Workspace window palette — same cream fill +
-   cream tint border that `.lightWorkspaceWindow` uses for the selected
-   workspace panel. Tighter footprint so the row reads as small pills
-   rather than chunky stat cards. Snapshot label (rule below) keeps its
-   darker cream fill so it stays the one "contextual" marker in the row. */
+/* Top-stat chips adopt the compact workspace-window palette. */
 :root[data-theme="light"] .pageStat,
 :root[data-theme="light"] .pageStatWarn,
 :root[data-theme="light"] .pageStatComplete,
@@ -2513,11 +2403,7 @@ button.btn.btnDanger,
   color: rgba(45, 43, 40, 0.96) !important;
 }
 
-/* ABSOLUTE EOF — hover on a (non-active) session chip does nothing visual.
-   Background, border, colour all stay identical to rest; only the cursor
-   changes. Multiple older blocks still painted a cream wash on hover
-   (sessionItem:hover → rgba(245, 241, 235, 0.96) and similar); this rule
-   runs last so it wins regardless. */
+/* Non-active session-chip hover keeps the same visual state as rest. */
 :root[data-theme="light"] .lightChatWindow .sessionItem:not(.sessionItemActive):hover,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroup:not(.sessionItemGroupActive):hover,
 :root[data-theme="light"] .lightChatWindow .lightChatSessionChip:not(.lightChatSessionChipActive):hover {
@@ -2527,11 +2413,7 @@ button.btn.btnDanger,
   color: var(--dt-light-muted) !important;
 }
 
-/* ABSOLUTE EOF — kill the mono face on digit-heavy chrome (top stats, badges,
-   eyebrow labels, artifact-kind tags). User feedback: "числа разные шрифты,
-   closure 0 другой чем в чате, нолик уродский". System mono with slashed
-   zero was bleeding through. Using sans (Manrope) across these so digits
-   line up with the chat body. Code / debug log / textarea still use mono. */
+/* Compact numeric chrome uses the sans face. */
 .pageStat,
 .pageStat strong,
 .pageStat span,
@@ -2543,18 +2425,12 @@ button.btn.btnDanger,
   letter-spacing: 0 !important;
 }
 
-/* Keep the topic popover close (×) button anchored to the right edge of
-   the header row. Some override earlier in the cascade started pushing it
-   inward when the eyebrow's font / spacing changed — forcing margin-left
-   auto locks it against the right padding. */
+/* Keep the topic popover close button anchored to the right edge. */
 :root[data-theme="light"] .topicPopoverHeader .topicPopoverClose {
   margin-left: auto !important;
 }
 
-/* Quiz selected choice — was translucent yellow-olive glass (inherited dark
-   base) / red-ish tint in light. Unify with the rest of the light quiz
-   palette: cream body (#f0e9df) + brand-orange border + dark orange text.
-   No gradient, no shadow, no glass. */
+/* Selected quiz choices use the light quiz palette. */
 :root[data-theme="light"] .quizChoiceSelected,
 :root[data-theme="light"] .quizChoiceSelected:hover {
   background: #f0e9df !important;
@@ -2565,25 +2441,21 @@ button.btn.btnDanger,
   -webkit-backdrop-filter: none !important;
 }
 
-/* Quiz review "your wrong answer" — toned down; background matches cream,
-   only border + text carry the red signal. No more translucent red glass. */
+/* Wrong quiz review state carries signal through text, not glass. */
 :root[data-theme="light"] .quizReviewWrong {
   background: transparent !important;
   color: #b94a3f !important;
   border: 0 !important;
 }
 
-/* Failed topic badge in the popover — same brand orange as the global
-   .badge-red rule. No context-specific softening. */
+/* Failed topic badges match the global brand-orange badge. */
 :root[data-theme="light"] .topicPopoverSection .badge-red {
   background: #d97757 !important;
   border: 1px solid #d97757 !important;
   color: #fffaf6 !important;
 }
 
-/* Unified number weight across stats. Prior mono removal left strong
-   elements with font-weight inherited from mixed contexts — force them to
-   the same 600 weight so "Closure 0" and "Closed N" glyphs match. */
+/* Unified number weight across compact stats. */
 :root[data-theme="light"] .pageStat strong,
 :root[data-theme="light"] .pageStatWarn strong,
 :root[data-theme="light"] .pageStatComplete strong,
@@ -2605,9 +2477,7 @@ button.btn.btnDanger,
   font-weight: 600 !important;
 }
 
-/* Snapshot badge in top stats — cream fill that the surrounding `.pageStat`
-   chips used to carry, so Snapshot now reads as the one "contextual" marker
-   in the row while the stats chips blend into the chat-surface off-white. */
+/* Snapshot badge remains the contextual marker in the top-stats row. */
 :root[data-theme="light"] .floatingStatsContainer .badge.badge-gray,
 :root[data-theme="light"] .topOverlayInline .badge.badge-gray {
   font-family: var(--sans) !important;
@@ -2622,31 +2492,19 @@ button.btn.btnDanger,
   font-size: 11px !important;
 }
 
-/* Snapshots card in light — dark gets 22px radius but light was falling
-   back to unrounded default; match the rest of the settings panel corner
-   language. */
+/* Light snapshots card matches the settings panel corner language. */
 :root[data-theme="light"] .snapshotsCard,
 :root[data-theme="light"] .settingsSnapshotsCard {
   border-radius: 22px !important;
   overflow: hidden !important;
 }
 
-/* Dock panel must float above the topic popover in light. Popover base
-   z-index is 3 (workspace-chat.css:1807); the `.lightDock` was landing in
-   a stacking context below the popover in some layouts. Bump it. */
+/* Dock panel floats above topic popovers in light mode. */
 :root[data-theme="light"] .lightDock {
   z-index: 120 !important;
 }
 
-/* Dock icons — palette-aligned warm-brown muted tones instead of pure
-   grey / pure black. User: "серого уже почти не осталось". Rest picks up
-   a half-opacity warm dark, hover crisps up to near-full warm dark.
-   Cascade-safe: explicit rule on svg (phosphor icons inherit color but
-   in some states the parent color was being filtered), active button
-   intentionally untouched (it has its own orange-on-cream treatment). */
-/* Match the graph's default node fill (warm bronze `rgba(178, 162, 140, X)`)
-   — dock icons now live in the same palette as the dots on the map. Hover
-   deepens to the "stable" bronze tone. */
+/* Dock icons use the graph's warm bronze palette. */
 :root[data-theme="light"] .lightDock .lightDockButton:not(.lightDockButtonActive),
 :root[data-theme="light"] .lightDock .lightDockButtonLink:not(.lightDockButtonActive),
 :root[data-theme="light"] button.lightDockButton:not(.lightDockButtonActive),
@@ -2676,10 +2534,7 @@ button.btn.btnDanger,
   color: rgba(128, 104, 78, 0.92) !important;
 }
 
-/* ABSOLUTE EOF — kill the `.sessionShadow::after` top-of-thread fade in light.
-   User feedback: the 44px cream gradient extended below the session-row divider
-   and was visible washing over messages as they scrolled past. Dropping it
-   entirely — messages meet the divider cleanly with no fade halo. */
+/* Remove the light chat fade under the session row. */
 :root[data-theme="light"] .sessionShadow,
 :root[data-theme="light"] .sessionShadow::after,
 :root[data-theme="light"] .lightChatWindow .sessionShadow,
@@ -2694,10 +2549,7 @@ button.btn.btnDanger,
   pointer-events: none !important;
 }
 
-/* ABSOLUTE EOF — active session chip: no hover state at all. Rest = hover =
-   focus = active-state, single pill appearance. User: "при наводке на активную
-   сессию не надо ховера / то что было с этим ховером должно быть просто всегда
-   у активной". Collapse all interaction states into one. */
+/* Active session chips keep one visual state across interactions. */
 :root[data-theme="light"] .lightChatWindow .sessionItemActive,
 :root[data-theme="light"] .lightChatWindow .sessionItemActive:hover,
 :root[data-theme="light"] .lightChatWindow .sessionItemActive:focus,
@@ -2746,10 +2598,7 @@ button.btn.btnDanger,
   opacity: 1 !important;
 }
 
-/* Off-state settings switch picks up the cream row tone so the inactive
-   control sits flush with the surrounding settingsToggleRow card. Active
-   state is left alone — the original brand pill in light-theme-core.css
-   stays in charge. */
+/* Off-state settings switches match the surrounding cream row tone. */
 :root[data-theme="light"] .settingsSwitch:not(.settingsSwitchActive) {
   background: rgba(233, 225, 215, 0.95);
   border-color: rgba(195, 90, 44, 0.16);

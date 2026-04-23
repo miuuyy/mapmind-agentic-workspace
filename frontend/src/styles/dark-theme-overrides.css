@@ -1,4 +1,4 @@
-/* Dark theme on the same floating desktop template */
+/* Dark theme uses the same floating desktop template. */
 :root[data-theme="dark"] .workspaceShellLightDockMode {
   isolation: auto !important;
 }
@@ -57,7 +57,7 @@
   line-height: 1 !important;
 }
 
-/* Final dark dock cleanup: no pseudo layers, tactile circle lives on the button itself */
+/* Dark dock cleanup keeps tactile state on the button itself. */
 :root[data-theme="dark"] .lightDockButton::before,
 :root[data-theme="dark"] .lightDockButtonLink::before,
 :root[data-theme="dark"] .lightDockButton::after,
@@ -362,7 +362,7 @@
   opacity: 1 !important;
 }
 
-/* Final light-theme quiz pass: swap prompt/choice tones and keep review readable */
+/* Light quiz review keeps prompt and choice tones readable. */
 
 :root[data-theme="light"] .quizPrompt,
 :root[data-theme="light"] .quizChoiceText,
@@ -386,10 +386,7 @@
   box-shadow: none !important;
 }
 
-/* Light inline quiz — matches .proposalInlineCard surface; correct uses the
-   brand orange CTA accent; wrong stays in the neutral cream family (no red
-   hue). Was previously white-glass + green/red rgba — replaced in palette
-   cleanup. */
+/* Light inline quiz matches the proposal card palette. */
 :root[data-theme="light"] .inlineQuizCard {
   gap: 12px !important;
   margin-top: 6px !important;
@@ -431,7 +428,7 @@
   color: inherit !important;
 }
 
-/* Final logs pass: one flat list, no grouped columns/cards, no clipped top glow */
+/* Logs render as one flat list without clipped glow. */
 
 .debugLogsFlatList {
   list-style: none;
@@ -457,7 +454,7 @@
   color: rgba(114, 108, 101, 0.96) !important;
 }
 
-/* Final quiz modal pass for light theme */
+/* Light quiz modal surface. */
 :root[data-theme="light"] .quizModal {
   background: #faf9f6 !important;
   border: 1px solid rgba(233, 225, 215, 0.98) !important;
@@ -547,7 +544,7 @@
   color: rgba(185, 28, 28, 0.96) !important;
 }
 
-/* Final logs redesign: flat grouped list instead of cards */
+/* Logs use a flat grouped list instead of cards. */
 .debugLogsModal {
   width: min(1080px, calc(100vw - 56px)) !important;
 }
@@ -668,7 +665,7 @@
   color: rgba(139, 133, 128, 0.88) !important;
 }
 
-/* Final chat/session stability */
+/* Chat session stability. */
 :root[data-theme="light"] .lightChatWindow .sessionItemNew {
   background: rgba(240, 233, 223, 0.88) !important;
   border: 1px dashed rgba(233, 225, 215, 0.96) !important;
@@ -691,9 +688,7 @@
   z-index: 120 !important;
 }
 
-/* Restore settings top/bottom glow + visible save bar */
-
-/* Final settings/snapshots stability */
+/* Settings and snapshots stability. */
 :root[data-theme="light"] .settingsContentHeader {
   position: sticky !important;
   top: 0 !important;
@@ -812,7 +807,7 @@
   transform: none !important;
 }
 
-/* Absolute final DeepTutor light settings input/background match */
+/* Light settings inputs match the surrounding background. */
 :root[data-theme="light"] .settingsModal,
 :root[data-theme="light"] .settingsContent,
 :root[data-theme="light"] .settingsSidebar,
@@ -1001,7 +996,7 @@
   color: rgba(255, 255, 255, 0.74) !important;
 }
 
-/* Final lock: opened dark workspace zone must not dim on hover */
+/* Open dark workspace zones do not dim on hover. */
 :root[data-theme="dark"] .lightWorkspaceFolder.lightWorkspaceFolderOpen,
 :root[data-theme="dark"] .lightWorkspaceFolder.lightWorkspaceFolderOpen:hover,
 :root[data-theme="dark"] .lightWorkspaceFolder.lightWorkspaceFolderActive.lightWorkspaceFolderOpen,
@@ -1010,7 +1005,7 @@
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Final dark dock cleanup v2 */
+/* Dark dock hover cleanup. */
 
 :root[data-theme="dark"] .lightDockButton:hover,
 :root[data-theme="dark"] .lightDockButtonLink:hover {
@@ -1035,7 +1030,7 @@
   filter: none !important;
 }
 
-/* Final lock: Obsidian import modal must not inherit the heavy wide-card dark treatment */
+/* Obsidian import modal avoids heavy wide-card treatment. */
 :root[data-theme="dark"] .quizModalWide,
 :root[data-theme="dark"] .quizModalWide .quizModalHeader,
 :root[data-theme="dark"] .quizModalWide .quizModalBody {
@@ -1119,14 +1114,14 @@
   font-weight: 500 !important;
 }
 
-/* Final dark workspace header separator */
+/* Dark workspace header separator. */
 :root[data-theme="dark"] .lightWorkspaceWindow .lightFloatingWindowHeader {
   background: #050505 !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
   box-shadow: none !important;
 }
 
-/* Final dark workspace CTA parity with light theme */
+/* Dark workspace CTA matches light theme geometry. */
 :root[data-theme="dark"] .lightWindowCreateWorkspaceButton,
 :root[data-theme="dark"] .lightWorkspaceWindowHeaderActions .lightWindowCreateWorkspaceButton {
   display: inline-flex !important;
@@ -1149,7 +1144,7 @@
   line-height: 1 !important;
 }
 
-/* Final lock for the current dark chat/proposal pass */
+/* Dark inline error notice. */
 :root[data-theme="dark"] .inlineNoticeError {
   border-color: rgba(197, 109, 89, 0.24) !important;
   background: linear-gradient(180deg, rgba(34, 18, 16, 0.96), rgba(28, 15, 14, 0.98)) !important;
@@ -1201,12 +1196,7 @@
   height: 32px !important;
 }
 
-/* Base geometry for dock buttons in dark theme. Active background lives in the
-   dedicated `.lightDockButtonActive` rule below so we don't clobber it here
-   (previously this block set `background: transparent` which silently killed
-   every active selector in the dock). `border-radius` matches the rounded
-   square applied in light-theme-overrides-b.css final EOF block so both themes
-   stay visually aligned. */
+/* Base geometry for dock buttons in dark theme. */
 :root[data-theme="dark"] .lightDockButton,
 :root[data-theme="dark"] .lightDockButtonLink {
   box-shadow: none !important;
@@ -1220,15 +1210,13 @@
   height: 54px !important;
 }
 
-/* Non-active dock buttons must be transparent so only the active one reads.
-   Scoped via :not() to avoid clobbering the active rule above. */
+/* Non-active dock buttons stay transparent so the active one reads. */
 :root[data-theme="dark"] .lightDockButton:not(.lightDockButtonActive),
 :root[data-theme="dark"] .lightDockButtonLink:not(.lightDockButtonActive) {
   background: transparent !important;
 }
 
-/* Final dark dock active lock — identical radii to light theme, sits AFTER the
-   base geometry rule so the flat white overlay wins the cascade. */
+/* Dark active dock buttons keep the same radius as light mode. */
 :root[data-theme="dark"] .lightDockButtonActive,
 :root[data-theme="dark"] .lightDockButtonActive:hover,
 :root[data-theme="dark"] .lightDock .lightDockButtonActive,
@@ -1246,10 +1234,7 @@
   padding: 11px 12px !important;
 }
 
-/* Absolute EOF lock: delete-confirm modal uses the SAME trick as the
-   workspace-create modal — body padding fully removed so its content sits
-   flush left with the modal edge (modal already has 18px self-padding).
-   Header keeps its own padding so the title visually floats a touch inward. */
+/* Delete-confirm modal aligns content with the workspace-create modal. */
 :root[data-theme="dark"] .quizModal.confirmModal .quizModalHeader {
   padding: 22px 18px 14px !important;
 }
@@ -1264,18 +1249,12 @@
   margin: 0 !important;
 }
 
-/* Absolute EOF lock: dark inline quiz card radius — was 10px, rest of dark
-   surfaces are 14-24. Bump to 14 so it matches the general corner feel. */
+/* Dark inline quiz card uses the shared dark corner radius. */
 :root[data-theme="dark"] .inlineQuizCard {
   border-radius: 14px !important;
 }
 
-/* Absolute EOF lock: dark quiz — choices read as real blocks but painted
-   the same colour as the card behind them. Card bg is ≈ #1a1a1a (0.04 white
-   overlay on #111 bubble); we set choice bg to the exact same shade so they
-   don't compound into a lighter rectangle, yet they still carry a visible
-   chrome (faint border) so you can tell they're clickable. No brand-orange
-   on hover per user feedback — just a small brightness bump. */
+/* Dark quiz choices read as blocks without leaving the card surface. */
 :root[data-theme="dark"] .inlineQuizChoice {
   background: #1a1a1a !important;
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
@@ -1298,8 +1277,7 @@
   outline-offset: 2px !important;
 }
 
-/* Outcome states — only border + text colour, no heavy fill. Choice still
-   reads as part of the same card surface, just now with a coloured ring. */
+/* Outcome states use border and text color without heavy fill. */
 :root[data-theme="dark"] .inlineQuizCorrect {
   background: transparent !important;
   border-color: rgba(110, 231, 183, 0.5) !important;
@@ -1312,18 +1290,14 @@
   color: rgba(252, 165, 165, 0.98) !important;
 }
 
-/* Dark quiz modal — drop the backdrop blur so the underlying graph/chat
-   stay sharp, matching light behaviour. */
+/* Dark quiz modal leaves the graph and chat sharp beneath it. */
 :root[data-theme="dark"] .quizOverlay,
 :root[data-theme="dark"] .settingsOverlay {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
-/* Chat error notice in dark — soft red fill + red text, matching the
-   `.badge-red` palette. Rounded-rect (not a pill) because long error
-   messages wrap to multiple lines and 999px radius was ballooning the
-   whole block into a giant curved capsule. */
+/* Dark chat errors use a rounded rectangle that handles multiline text. */
 :root[data-theme="dark"] .inlineNotice.inlineNoticeError,
 :root[data-theme="dark"] .lightChatWindow .inlineNotice.inlineNoticeError {
   background: rgba(255, 69, 58, 0.12) !important;
@@ -1338,7 +1312,7 @@
   -webkit-backdrop-filter: none !important;
 }
 
-/* Dark quiz choice selected — cream tone matching brand orange accent. */
+/* Dark selected quiz choice uses the brand accent tone. */
 :root[data-theme="dark"] .quizChoiceSelected,
 :root[data-theme="dark"] .quizChoiceSelected:hover {
   background: rgba(217, 119, 87, 0.14) !important;

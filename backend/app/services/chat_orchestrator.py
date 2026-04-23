@@ -261,7 +261,7 @@ class ChatOrchestratorService:
         if not attempts:
             return "no quizzes taken yet"
 
-        # Section 1: Attempt summary (all, last 15)
+        # Summarize the most recent quiz attempts.
         lines: list[str] = ["## Recent attempts"]
         for attempt in attempts[:15]:
             topic_title = self._topic_title(topics_by_id, attempt.topic_id)
@@ -273,18 +273,18 @@ class ChatOrchestratorService:
                 + (" → closure awarded" if attempt.closure_awarded else "")
             )
 
-        # Section 2: Missed questions from unclosed topics only (smart filtering)
+        # Include missed questions only for unclosed topics.
         missed_by_topic: dict[str, list[str]] = {}
         for attempt in attempts:
             if attempt.topic_id in closed_ids:
-                continue  # topic is closed, skip — learner already mastered it
+                continue  # Closed topics no longer need missed-question reminders.
             if not attempt.missed_questions:
                 continue
             topic_title = self._topic_title(topics_by_id, attempt.topic_id)
             if topic_title not in missed_by_topic:
                 missed_by_topic[topic_title] = []
             for q in attempt.missed_questions:
-                if q not in missed_by_topic[topic_title]:  # deduplicate
+                if q not in missed_by_topic[topic_title]:  # Deduplicate repeated missed prompts.
                     missed_by_topic[topic_title].append(q)
 
         if missed_by_topic:
@@ -295,7 +295,7 @@ class ChatOrchestratorService:
                     lines.append(f"... (truncated, {sum(len(q) for q in missed_by_topic.values()) - total_missed} more)")
                     break
                 lines.append(f"### {topic_title}")
-                for q in questions[:10]:  # max 10 per topic
+                for q in questions[:10]:  # Keep each topic summary short.
                     lines.append(f"  - {q}")
                     total_missed += 1
 
