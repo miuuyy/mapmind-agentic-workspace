@@ -235,7 +235,17 @@
    up the darker reading colour. */
 :root[data-theme="light"] .lightChatWindow .sessionItemActive .sessionItemLabel,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroupActive .sessionItemLabel {
-  color: #b55a38 !important;
+  color: rgba(60, 55, 50, 0.88) !important;
+  font-weight: 550 !important;
+}
+
+/* Count badge next to active session title — inherit the same weight and
+   tone as the label so it visually belongs to the same word. */
+:root[data-theme="light"] .lightChatWindow .sessionItemActive .sessionItemBadge,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive .sessionItemBadge {
+  color: rgba(60, 55, 50, 0.62) !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
 }
 
 /* The top-of-thread fade (`.sessionShadow::after`, 48px linear-gradient) used
@@ -295,8 +305,8 @@
 :root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled),
 :root[data-theme="light"] .lightChatWindow .inlineQuizChoice:hover:not(:disabled),
 :root[data-theme="light"] .workspaceShellLightDockMode .inlineQuizChoice:hover:not(:disabled) {
-  background: #f5ecde !important;
-  border-color: rgba(217, 119, 87, 0.28) !important;
+  background: #f3ecde !important;
+  border-color: rgba(62, 49, 39, 0.28) !important;
   color: rgba(45, 43, 40, 0.98) !important;
   box-shadow: none !important;
   filter: none !important;
@@ -362,7 +372,8 @@
 :root[data-theme="light"] .lightChatWindow .sessionItemActive:hover .sessionItemLabel,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroupActive:hover .sessionItemLabel,
 :root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive:hover .sessionItemLabel {
-  color: #b55a38 !important;
+  color: rgba(60, 55, 50, 0.88) !important;
+  font-weight: 550 !important;
 }
 
 :root[data-theme="light"] .lightChatWindow .assistantComposer {
@@ -1860,7 +1871,10 @@
 :root[data-theme="light"] .chatTypingDot {
   width: 4px !important;
   height: 4px !important;
-  background: rgba(180, 92, 56, 0.62) !important;
+  /* Match the muted warm-beige tone used for quiz borders (#e9e1d7 family)
+     so the typing indicator sits in the same palette as the quiz surfaces
+     instead of the old brand-orange tint. */
+  background: #c9c0ae !important;
 }
 
 :root[data-theme="light"] .chatBubbleLoading {
@@ -1935,6 +1949,46 @@
   border-radius: 16px !important;
   font-weight: 600 !important;
   font-size: 13px !important;
+  /* Solid muted red pairing — matches the `.badge-red` / failed-topic
+     palette. No translucent red-glass. */
+  background: #f6ebe8 !important;
+  border: 1px solid #e3b9b0 !important;
+  color: #a63a2f !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="light"] .btn.btnDanger:hover {
+  background: #eedcd7 !important;
+  border-color: #d9a29a !important;
+  color: #8f1d16 !important;
+}
+
+/* Modal Cancel + Delete buttons — identical treatment.
+   Same bg, border, text colour. No hover shift. No focus ring. The word
+   "Delete" / "Cancel" alone distinguishes them. */
+:root[data-theme="light"] .btn.btnGhost,
+:root[data-theme="light"] .btn.btnGhost:hover,
+:root[data-theme="light"] .btn.btnGhost:focus,
+:root[data-theme="light"] .btn.btnGhost:focus-visible,
+:root[data-theme="light"] .btn.btnGhost:active,
+button.btn.btnDanger,
+:root[data-theme="light"] button.btn.btnDanger,
+:root[data-theme="light"] button.btn.btnDanger:hover,
+:root[data-theme="light"] button.btn.btnDanger:focus,
+:root[data-theme="light"] button.btn.btnDanger:focus-visible,
+:root[data-theme="light"] button.btn.btnDanger:active,
+:root[data-theme="light"] .quizModal button.btn.btnDanger,
+:root[data-theme="light"] .quizModal button.btn.btnDanger:hover {
+  background: #ffffff !important;
+  border: 1px solid #e9e1d7 !important;
+  color: rgba(45, 43, 40, 0.98) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
 }
 
 /* Absolute EOF lock: applied proposal (✓) mirrors the plus (+) button —
@@ -2009,13 +2063,29 @@
 :root[data-theme="light"] .lightChatWindow .sessionList {
   clip-path: none !important;
 }
-/* Session list fade via mask-image on the wrapper itself — guarantees the
-   fade is confined to the wrap's own bounds (cannot bleed into chat area
-   below) AND is perfectly symmetric left/right. Pseudo-element fades are
-   fully disabled to remove cascade noise. */
+/* Session list fade — mask-image stays on (that's the visual user wants),
+   but the LEFT cut is only applied when the wrap has scrolled away from
+   the left edge. Right cut is always present (list always has more items
+   to scroll towards). Pseudo-element fades kept disabled to avoid double
+   darkening. */
 :root[data-theme="light"] .lightChatWindow .sessionListWrap {
   overflow: hidden !important;
   position: relative !important;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - 34px),
+    transparent 100%
+  ) !important;
+  mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - 34px),
+    transparent 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap.scrolledLeft {
   -webkit-mask-image: linear-gradient(
     to right,
     transparent 0,
@@ -2030,6 +2100,39 @@
     #000 calc(100% - 34px),
     transparent 100%
   ) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap.scrolledRight {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 34px,
+    #000 100%
+  ) !important;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 34px,
+    #000 100%
+  ) !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
+:root[data-theme="light"] .lightChatWindow .sessionListWrap::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Divider line between session-chip row and chat thread — move it OFF
+   `.sessionListWrap` (whose mask-image was clipping the border on fade
+   edges) onto `.assistantThread`'s top edge. The mask only lives on the
+   wrapper, so the line on the sibling below is always crisp. */
+:root[data-theme="light"] .lightChatWindow .sessionListWrap {
+  border-bottom: 0 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .assistantThread {
+  border-top: 1px solid rgba(233, 225, 215, 0.9) !important;
 }
 :root[data-theme="light"] .lightChatWindow .sessionListWrap::before,
 :root[data-theme="light"] .lightChatWindow .sessionListWrap::after,
@@ -2273,10 +2376,11 @@
 :root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled),
 :root[data-theme="light"] .lightChatWindow .inlineQuizChoice:hover:not(:disabled),
 :root[data-theme="light"] .workspaceShellLightDockMode .inlineQuizChoice:hover:not(:disabled) {
-  background: #f3ede3 !important;
-  border-color: #c9c0ae !important;
+  background: #ffffff !important;
+  border-color: #e9e1d7 !important;
   color: rgba(45, 43, 40, 0.98) !important;
   box-shadow: none !important;
+  filter: none !important;
 }
 
 :root[data-theme="light"] .inlineQuizChoice:focus-visible:not(:disabled),
@@ -2395,7 +2499,7 @@
 :root[data-theme="light"] .lightChatWindow .sessionItem:not(.sessionItemActive):hover,
 :root[data-theme="light"] .lightChatWindow .sessionItemGroup:not(.sessionItemGroupActive):hover,
 :root[data-theme="light"] .lightChatWindow .lightChatSessionChip:not(.lightChatSessionChipActive):hover {
-  background: transparent !important;
+  background: rgba(240, 233, 223, 0.88) !important;
   border-color: transparent !important;
   box-shadow: none !important;
   color: var(--dt-light-muted) !important;
@@ -2423,4 +2527,180 @@
    auto locks it against the right padding. */
 :root[data-theme="light"] .topicPopoverHeader .topicPopoverClose {
   margin-left: auto !important;
+}
+
+/* Quiz selected choice — was translucent yellow-olive glass (inherited dark
+   base) / red-ish tint in light. Unify with the rest of the light quiz
+   palette: cream body (#f0e9df) + brand-orange border + dark orange text.
+   No gradient, no shadow, no glass. */
+:root[data-theme="light"] .quizChoiceSelected,
+:root[data-theme="light"] .quizChoiceSelected:hover {
+  background: #f0e9df !important;
+  border-color: #d97757 !important;
+  color: rgba(111, 44, 17, 0.98) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Quiz review "your wrong answer" — toned down; background matches cream,
+   only border + text carry the red signal. No more translucent red glass. */
+:root[data-theme="light"] .quizReviewWrong {
+  background: transparent !important;
+  color: #b94a3f !important;
+  border: 0 !important;
+}
+
+/* Failed topic badge — softer: solid pale red fill + muted red text,
+   matching the badge-red sweep earlier in EOF but tighter here for the
+   topic popover context. */
+:root[data-theme="light"] .topicPopoverSection .badge-red {
+  background: #f6ebe8 !important;
+  border: 1px solid #e3b9b0 !important;
+  color: #a63a2f !important;
+}
+
+/* Unified number weight across stats. Prior mono removal left strong
+   elements with font-weight inherited from mixed contexts — force them to
+   the same 600 weight so "Closure 0" and "Closed N" glyphs match. */
+:root[data-theme="light"] .pageStat strong,
+:root[data-theme="light"] .pageStatWarn strong,
+:root[data-theme="light"] .pageStatComplete strong,
+:root[data-theme="light"] .pageStatGood strong,
+:root[data-theme="light"] .pageStatAssessment strong,
+:root[data-theme="light"] .badge strong {
+  font-family: var(--sans) !important;
+  font-weight: 600 !important;
+  font-variant-numeric: lining-nums tabular-nums !important;
+  letter-spacing: 0 !important;
+  color: rgba(60, 55, 50, 0.88) !important;
+}
+
+:root[data-theme="light"] .pageStat,
+:root[data-theme="light"] .pageStatWarn,
+:root[data-theme="light"] .pageStatComplete,
+:root[data-theme="light"] .pageStatGood,
+:root[data-theme="light"] .pageStatAssessment {
+  font-weight: 600 !important;
+}
+
+/* Snapshot badge in top stats — matches `.pageStat` shape and typography
+   so the row reads as one consistent set of tags. */
+:root[data-theme="light"] .floatingStatsContainer .badge.badge-gray,
+:root[data-theme="light"] .topOverlayInline .badge.badge-gray {
+  font-family: var(--sans) !important;
+  font-weight: 600 !important;
+  font-variant-numeric: lining-nums tabular-nums !important;
+  letter-spacing: 0 !important;
+  background: rgba(255, 255, 255, 0.86) !important;
+  border: 1px solid rgba(17, 24, 39, 0.12) !important;
+  color: rgba(60, 55, 50, 0.82) !important;
+  padding: 7px 14px !important;
+  border-radius: 12px !important;
+}
+
+/* Snapshots card in light — dark gets 22px radius but light was falling
+   back to unrounded default; match the rest of the settings panel corner
+   language. */
+:root[data-theme="light"] .snapshotsCard,
+:root[data-theme="light"] .settingsSnapshotsCard {
+  border-radius: 22px !important;
+  overflow: hidden !important;
+}
+
+/* Dock panel must float above the topic popover in light. Popover base
+   z-index is 3 (workspace-chat.css:1807); the `.lightDock` was landing in
+   a stacking context below the popover in some layouts. Bump it. */
+:root[data-theme="light"] .lightDock {
+  z-index: 120 !important;
+}
+
+/* Dock icons — palette-aligned warm-brown muted tones instead of pure
+   grey / pure black. User: "серого уже почти не осталось". Rest picks up
+   a half-opacity warm dark, hover crisps up to near-full warm dark.
+   Cascade-safe: explicit rule on svg (phosphor icons inherit color but
+   in some states the parent color was being filtered), active button
+   intentionally untouched (it has its own orange-on-cream treatment). */
+/* Match the graph's default node fill (warm bronze `rgba(178, 162, 140, X)`)
+   — dock icons now live in the same palette as the dots on the map. Hover
+   deepens to the "stable" bronze tone. */
+:root[data-theme="light"] .lightDock .lightDockButton:not(.lightDockButtonActive),
+:root[data-theme="light"] .lightDock .lightDockButtonLink:not(.lightDockButtonActive),
+:root[data-theme="light"] button.lightDockButton:not(.lightDockButtonActive),
+:root[data-theme="light"] a.lightDockButtonLink:not(.lightDockButtonActive) {
+  color: rgba(178, 162, 140, 0.92) !important;
+}
+
+:root[data-theme="light"] .lightDock .lightDockButton:not(.lightDockButtonActive) svg,
+:root[data-theme="light"] .lightDock .lightDockButtonLink:not(.lightDockButtonActive) svg,
+:root[data-theme="light"] button.lightDockButton:not(.lightDockButtonActive) svg,
+:root[data-theme="light"] a.lightDockButtonLink:not(.lightDockButtonActive) svg {
+  color: rgba(178, 162, 140, 0.92) !important;
+}
+
+:root[data-theme="light"] .lightDock .lightDockButton:not(.lightDockButtonActive):hover,
+:root[data-theme="light"] .lightDock .lightDockButtonLink:not(.lightDockButtonActive):hover,
+:root[data-theme="light"] button.lightDockButton:not(.lightDockButtonActive):hover,
+:root[data-theme="light"] a.lightDockButtonLink:not(.lightDockButtonActive):hover {
+  color: rgba(128, 104, 78, 0.92) !important;
+  background: transparent !important;
+}
+
+:root[data-theme="light"] .lightDock .lightDockButton:not(.lightDockButtonActive):hover svg,
+:root[data-theme="light"] .lightDock .lightDockButtonLink:not(.lightDockButtonActive):hover svg,
+:root[data-theme="light"] button.lightDockButton:not(.lightDockButtonActive):hover svg,
+:root[data-theme="light"] a.lightDockButtonLink:not(.lightDockButtonActive):hover svg {
+  color: rgba(128, 104, 78, 0.92) !important;
+}
+
+/* ABSOLUTE EOF — active session chip: no hover state at all. Rest = hover =
+   focus = active-state, single pill appearance. User: "при наводке на активную
+   сессию не надо ховера / то что было с этим ховером должно быть просто всегда
+   у активной". Collapse all interaction states into one. */
+:root[data-theme="light"] .lightChatWindow .sessionItemActive,
+:root[data-theme="light"] .lightChatWindow .sessionItemActive:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemActive:focus,
+:root[data-theme="light"] .lightChatWindow .sessionItemActive:focus-visible,
+:root[data-theme="light"] .lightChatWindow .sessionItemActive:active,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive:hover,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive:focus,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive:focus-visible,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive:active,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive:hover,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive:focus,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive:focus-visible,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive:active {
+  background: rgba(240, 233, 223, 0.98) !important;
+  border: 1px solid rgba(233, 225, 215, 0.98) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  outline: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transition: none !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItemActive .sessionItemLabel,
+:root[data-theme="light"] .lightChatWindow .sessionItemActive:hover .sessionItemLabel,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive .sessionItemLabel,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive:hover .sessionItemLabel,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive .sessionItemLabel,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive:hover .sessionItemLabel {
+  color: rgba(60, 55, 50, 0.88) !important;
+  font-weight: 550 !important;
+  opacity: 1 !important;
+}
+
+:root[data-theme="light"] .lightChatWindow .sessionItemActive .sessionItemBadge,
+:root[data-theme="light"] .lightChatWindow .sessionItemActive:hover .sessionItemBadge,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive .sessionItemBadge,
+:root[data-theme="light"] .lightChatWindow .sessionItemGroupActive:hover .sessionItemBadge,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive .sessionItemBadge,
+:root[data-theme="light"] .lightChatWindow .lightChatSessionChipActive:hover .sessionItemBadge {
+  color: rgba(60, 55, 50, 0.62) !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
 }

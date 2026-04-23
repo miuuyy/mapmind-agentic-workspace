@@ -1311,3 +1311,40 @@
   border-color: rgba(248, 113, 113, 0.5) !important;
   color: rgba(252, 165, 165, 0.98) !important;
 }
+
+/* Dark quiz modal — drop the backdrop blur so the underlying graph/chat
+   stay sharp, matching light behaviour. */
+:root[data-theme="dark"] .quizOverlay,
+:root[data-theme="dark"] .settingsOverlay {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Chat error notice in dark — soft red fill + red text, matching the
+   `.badge-red` palette. Rounded-rect (not a pill) because long error
+   messages wrap to multiple lines and 999px radius was ballooning the
+   whole block into a giant curved capsule. */
+:root[data-theme="dark"] .inlineNotice.inlineNoticeError,
+:root[data-theme="dark"] .lightChatWindow .inlineNotice.inlineNoticeError {
+  background: rgba(255, 69, 58, 0.12) !important;
+  border: 1px solid rgba(255, 69, 58, 0.28) !important;
+  color: #ff453a !important;
+  font-family: var(--sans) !important;
+  font-weight: 500 !important;
+  border-radius: 14px !important;
+  padding: 10px 14px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Dark quiz choice selected — cream tone matching brand orange accent. */
+:root[data-theme="dark"] .quizChoiceSelected,
+:root[data-theme="dark"] .quizChoiceSelected:hover {
+  background: rgba(217, 119, 87, 0.14) !important;
+  border-color: rgba(217, 119, 87, 0.48) !important;
+  color: #fce6d5 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}

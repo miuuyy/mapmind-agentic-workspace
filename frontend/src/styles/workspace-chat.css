@@ -228,6 +228,141 @@ input[type="number"] {
   animation: chatPulse 0.9s ease-in-out infinite;
 }
 
+/* Brand loader — traces the Clew logo path as a stroke, pauses at the top,
+   then erases back. `pathLength` is normalised to 100 on the path so
+   dasharray / dashoffset values are clean percentages. Colour inherits
+   from the parent via `currentColor`. */
+.clewBrandLoader {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #d97757;
+  line-height: 0;
+}
+
+.clewBrandLoaderSvg {
+  overflow: visible;
+}
+
+.clewBrandLoaderPath {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 72;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: clewBrandLoaderTrace 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes clewBrandLoaderTrace {
+  0%   { stroke-dashoffset: 100; opacity: 1; }
+  45%  { stroke-dashoffset: 0;   opacity: 1; }
+  65%  { stroke-dashoffset: 0;   opacity: 1; }
+  80%  { stroke-dashoffset: 0;   opacity: 0; }
+  81%  { stroke-dashoffset: 100; opacity: 0; }
+  100% { stroke-dashoffset: 100; opacity: 0; }
+}
+
+:root[data-theme="dark"] .clewBrandLoader {
+  color: #ffffff;
+}
+
+/* Fullscreen launch screen — shown over `#root` until React finishes its
+   first mount / workspace data is fetched. Inline-defined in index.html so
+   it appears the moment the browser has HTML, before any JS has run. */
+.clewLaunchScreen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #faf9f6;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+:root[data-theme="dark"] .clewLaunchScreen {
+  background: #000000;
+}
+
+.clewLaunchScreen .clewBrandLoader {
+  color: #d97757;
+}
+
+:root[data-theme="dark"] .clewLaunchScreen .clewBrandLoader {
+  color: #ffffff;
+}
+
+/* Centred clew-logo loader that sits inside the chat viewport while the
+   current session's messages are still being fetched. Uses the same
+   wipe-reveal keyframe as the launch screen; smaller size so it doesn't
+   dominate the thread area. */
+.clewChatLoader {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  color: #d97757;
+  line-height: 0;
+}
+
+.clewChatLoader svg {
+  width: 100%;
+  height: 100%;
+}
+
+:root[data-theme="dark"] .clewChatLoader {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+/* Shared mask-reveal classes for both the fullscreen launch loader (rendered
+   from React early-return in App.tsx) and the in-chat loader. Matches the
+   inline HTML version declared in index.html. Fill path is covered by a
+   mask whose stroke traces the path's trajectory as the dashoffset runs.
+   Forward (100 → 0) reveals the filled logo along the path; backward
+   (0 → 100) erases it along the same path from the tip. One cycle =
+   one fill-in + one un-fill. */
+.clewLaunchFillPath {
+  fill: currentColor;
+  stroke: none;
+}
+
+.clewLaunchMaskStroke {
+  fill: none;
+  stroke: white;
+  stroke-width: 400;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: clewLaunchTrace 2.8s linear infinite;
+}
+
+@keyframes clewLaunchTrace {
+  0%   { stroke-dashoffset: 100; }
+  35%  { stroke-dashoffset: 0;   }
+  100% { stroke-dashoffset: 100; }
+}
+
+/* Settings section eyebrow labels ("PROVIDERS", "AI BEHAVIOR", "CLOSURE QUIZ")
+   — base had `letter-spacing: 0.14em` which put huge gaps between letters
+   and made the uppercase labels feel spaced-out. Tighten letter-spacing,
+   keep uppercase but bump weight for readability. Applies to both themes. */
+.settingsPanelEyebrow,
+.settingsSidebarTitle,
+.thinkingModeChipLabel {
+  font-family: var(--sans) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+}
+
+.assistantHelloLoading {
+  justify-content: center;
+  align-items: center;
+}
 
 .chatTypingDot:nth-child(2) {
   animation-delay: 0.12s;

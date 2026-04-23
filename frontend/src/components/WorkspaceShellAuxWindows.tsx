@@ -6,6 +6,7 @@ import type { AppCopy } from "../lib/appCopy";
 import { renderDisplayText } from "../lib/appUiHelpers";
 import { formatTopicState, getTopicStateTone } from "../lib/graph";
 import { summarizePreviewCounts, summarizeTopOperations } from "../lib/graph";
+import { ClewLoader } from "./ClewLoader";
 import type { ChatSessionSummary, GraphEnvelope } from "../lib/types";
 import type { TopicAnchorPoint } from "./GraphCanvas";
 
@@ -621,6 +622,11 @@ export function LightChatWindow({
       </div>
       <div className="sessionShadow" />
       <div ref={chatViewportRef} className="assistantThread">
+        {chatThreadLoading ? (
+          <div className="assistantHello assistantHelloLoading" role="status" aria-label="Loading chat thread">
+            <ClewLoader size={56} />
+          </div>
+        ) : null}
         {currentChatState.messages.length === 0 && !chatThreadLoading ? (
           <div className="assistantHello">
             <div className="assistantHelloTitle">{copy.sessions.helloTitle}</div>

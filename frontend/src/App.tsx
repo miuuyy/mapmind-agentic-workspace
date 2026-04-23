@@ -4,6 +4,7 @@ import { AppDialogs } from "./components/AppDialogs";
 import { DebugLogsModal } from "./components/DebugLogsModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { WorkspaceShell } from "./components/WorkspaceShell";
+import { ClewLoader } from "./components/ClewLoader";
 import type { TopicAnchorPoint } from "./components/GraphCanvas";
 import { API_BASE } from "./lib/api";
 import { APP_COPY } from "./lib/appCopy";
@@ -186,6 +187,7 @@ export default function App(): React.JSX.Element {
   const [chatError, setChatError] = useState<string | null>(null);
   const [chatSessionsError, setChatSessionsError] = useState<string | null>(null);
   const [chatSessions, setChatSessions] = useState<ChatSessionSummary[]>([]);
+  const [chatSessionsBootstrapped, setChatSessionsBootstrapped] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [applyLoadingMessageId, setApplyLoadingMessageId] = useState<string | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
@@ -1003,7 +1005,10 @@ export default function App(): React.JSX.Element {
   }
 
   async function loadSessions(): Promise<void> {
-    if (!activeGraph) return;
+    if (!activeGraph) {
+      setChatSessionsBootstrapped(true);
+      return;
+    }
     setChatSessionsError(null);
     try {
       const sessions = await fetchChatSessions(
@@ -1014,6 +1019,8 @@ export default function App(): React.JSX.Element {
       setChatSessions(sessions);
     } catch (loadError) {
       setChatSessionsError(loadError instanceof Error ? loadError.message : copy.errors.loadChatSessions);
+    } finally {
+      setChatSessionsBootstrapped(true);
     }
   }
 
@@ -1887,6 +1894,14 @@ export default function App(): React.JSX.Element {
   }, [debugModeEnabled, isLogsOpen, loadDebugLogs]);
 
   const sidebarVisible = leftSidebarOpen || leftSidebarClosing;
+
+  if (!data || !workspaceSurface) {
+    return (
+      <div className="clewLaunchInline" role="status" aria-label="Loading Clew">
+        <ClewLoader size={56} />
+      </div>
+    );
+  }
 
   return (
     <div className="app" data-theme={themeModeDraft}>

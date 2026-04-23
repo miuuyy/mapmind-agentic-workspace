@@ -23,6 +23,7 @@ import { useModalAccessibility } from "../lib/useModalAccessibility";
 import { GraphCanvas } from "./GraphCanvas";
 import type { TopicAnchorPoint } from "./GraphCanvas";
 import { AssistantModelMenuTrigger, LightChatWindow, LightWorkspaceWindow, TopicAssetModal } from "./WorkspaceShellAuxWindows";
+import { ClewLoader } from "./ClewLoader";
 import { TopStatsOverlay } from "./TopStatsOverlay";
 import type {
   Artifact,
@@ -463,10 +464,9 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
           }
         }
       }
-      if (selectedTopic && popoverPosition) {
-        const topicPopoverRect = topicPopoverRef.current?.getBoundingClientRect();
-        if (topicPopoverRect) blockedRects.push(toFloatingRect(drag.shellRect, topicPopoverRect));
-      }
+      // Topic popover intentionally not pushed to blockedRects — users expect
+      // dock / workspace / chat windows to float over it, not get shoved
+      // aside when they cross the popover's footprint.
 
       const clampedCandidate = clampFloatingPosition(drag.target, nextPosition, drag.size, drag.shellRect);
       const candidateRect = makeFloatingRect(clampedCandidate, drag.size);
@@ -1501,6 +1501,11 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
 
             <div className="sessionShadow" />
             <div ref={chatViewportRef} className="assistantThread">
+              {chatThreadLoading ? (
+                <div className="assistantHello assistantHelloLoading" role="status" aria-label="Loading chat thread">
+                  <ClewLoader size={56} />
+                </div>
+              ) : null}
               {currentChatState.messages.length === 0 && !chatThreadLoading ? (
                 <div className="assistantHello">
                   <div className="assistantHelloTitle">{copy.sessions.helloTitle}</div>
