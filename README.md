@@ -65,6 +65,7 @@ Clew uses AI because building that graph manually is too expensive. The model do
 - `Graph-first workspace`: topics, dependencies, zones, resources, artifacts, manual layout, and progress live on the same surface.
 - `AI proposals instead of silent edits`: ingest, expand, audit, review, apply, and roll back through snapshots.
 - `Obsidian bridge`: import a vault into a graph, or export a graph back into an Obsidian-ready folder.
+- `Obsidian-to-Clew import skill`: a packaged skill for Claude Code and Codex that audits an Obsidian vault, flags what blocks a clean import, and shapes the vault into a validated Clew package.
 - `MCP context bridge`: let an external assistant read your Clew graphs and progress without copy-paste.
 - `Study loop`: topic sessions, assistant help, inline quizzes, closure quizzes, and manual completion when strict gating is disabled.
 - `Local control`: SQLite workspace, provider keys, Gemini/OpenAI support, OpenAI-compatible endpoint option, memory/persona/thinking settings.
@@ -103,6 +104,7 @@ Clew uses AI because building that graph manually is too expensive. The model do
 - [Obsidian and MCP integrations](docs/site_faq/integrations.md)
 - [Latest release notes](docs/RELEASE_0_2_0.md)
 - [Connect to Claude Desktop / Claude Code / Cursor (MCP)](docs/MCP_SETUP.md)
+- [Obsidian-to-Clew import skill (Claude Code / Codex)](.claude/skills/obsidian-to-clew-import/SKILL.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Engineering docs index](docs/README.md)
 
@@ -115,6 +117,7 @@ Clew uses AI because building that graph manually is too expensive. The model do
 | `contracts/` | JSON contracts and transport surfaces used by graph mutation flows |
 | `docs/` | engineering docs, ADRs, release notes, and site FAQ source |
 | `scripts/` | local development helpers such as boot, stop, and reset |
+| `.claude/skills/obsidian-to-clew-import/`, `.agents/skills/obsidian-to-clew-import/` | packaged agent skill that shapes an Obsidian vault into a validated Clew import package (Claude Code and Codex) |
 
 ## Development Checks
 

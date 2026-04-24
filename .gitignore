@@ -36,6 +36,12 @@ tmp-layout-check.png
 README.archive.local.md
 references/
 logs/
-.agents/
-.claude/
+.agents/*
+!.agents/skills
+.agents/skills/*
+!.agents/skills/obsidian-to-clew-import
+.claude/*
+!.claude/skills
+.claude/skills/*
+!.claude/skills/obsidian-to-clew-import
 .playwright-cli/
