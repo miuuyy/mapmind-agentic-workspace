@@ -69,7 +69,7 @@ It has:
 - review before graph mutation
 - rollback after accepted changes
 
-That is enough to describe Clew honestly as an **agentic learning loop** without pretending it is a broad autonomous agent platform.
+That is what makes this an **agentic learning loop** — not an autonomous agent platform, just a model with persistent state and a review gate.
 
 ## The five most important invariants
 

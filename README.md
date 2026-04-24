@@ -4,12 +4,21 @@
   <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-111111?style=flat-square"></a>
   <a href="https://github.com/miuuyy/Clew/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/miuuyy/Clew/ci.yml?branch=main&style=flat-square&label=build"></a>
   <a href="https://clew.my/how-to-use"><img alt="Docs" src="https://img.shields.io/badge/docs-live-111111?style=flat-square"></a>
-  <a href="https://clew.my"><img alt="Site" src="https://img.shields.io/badge/site-clew.my-111111?style=flat-square"></a>
-  <img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-111111?style=flat-square">
+  <a href="https://clew.my"><img alt="Demo" src="https://img.shields.io/badge/demo-live-111111?style=flat-square"></a>
+</p>
+<p>
+  <img alt="Generative Roadmap" src="https://img.shields.io/badge/generative-roadmap-111111?style=flat-square">
+  <img alt="Agentic Workspace" src="https://img.shields.io/badge/agentic-workspace-111111?style=flat-square">
+  <img alt="Knowledge Graph" src="https://img.shields.io/badge/knowledge-graph-111111?style=flat-square">
   <img alt="AI powered" src="https://img.shields.io/badge/AI-powered-111111?style=flat-square">
-  <img alt="Personal roadmap" src="https://img.shields.io/badge/personal-roadmap-111111?style=flat-square">
-  <img alt="Obsidian ready" src="https://img.shields.io/badge/Obsidian-ready-111111?style=flat-square">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-ready-111111?style=flat-square">
+</p>
+<p>
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-111111?style=flat-square">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-111111?style=flat-square">
+</p>
+<p>
+  <a href="https://github.com/miuuyy/Clew/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/miuuyy/Clew?style=flat-square&label=stars&color=111111"></a>
+  <img alt="Obsidian integration" src="https://img.shields.io/badge/Obsidian-integration-111111?style=flat-square">
 </p>
 
 **Clew gives you a thread through anything you're learning.**
@@ -81,15 +90,18 @@ Clew uses AI because building that graph manually is too expensive. The model do
 
 ## Visuals
 
-![Clew workspace overview](.github/readme-assets/asset2.jpeg)
+![Clew workspace overview](.github/readme-assets/asset11.png)
 
 <table>
   <tr>
-    <td width="50%">
-      <img alt="Clew topic view" src=".github/readme-assets/asset3.png">
+    <td width="33%">
+      <img alt="Clew topic view" src=".github/readme-assets/asset12.png">
     </td>
-    <td width="50%">
-      <img alt="Clew proposal flow" src=".github/readme-assets/asset4.png">
+    <td width="33%">
+      <img alt="Clew proposal flow" src=".github/readme-assets/asset13.png">
+    </td>
+    <td width="33%">
+      <img alt="Clew path highlight" src=".github/readme-assets/asset14.png">
     </td>
   </tr>
 </table>

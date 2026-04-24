@@ -69,13 +69,13 @@ Pay attention to:
 
 This is where Clew becomes different from a static roadmap. You are not just viewing the path. You are operating on it.
 
-## 6. Close Topics Honestly
+## 6. Close Topics Only When Done
 
 If closure tests are enabled, use the quiz flow to close a topic.
 
 If you want a lighter workflow, disable closure tests and mark topics finished manually.
 
-Either way, progress belongs on the graph. That way the next AI request can see what you actually studied.
+Either way, progress belongs on the graph — the next AI request sees what you actually studied.
 
 ## 7. Keep Your Notes Connected
 
