@@ -150,4 +150,3 @@ Useful helpers:
 
 - Email: [johnymaarrete@gmail.com](mailto:johnymaarrete@gmail.com)
 - LinkedIn: [aleksandr-vechenkov-037b00377](https://www.linkedin.com/in/aleksandr-vechenkov-037b00377/)
-- Security-sensitive bugs: email privately instead of opening a public issue.
