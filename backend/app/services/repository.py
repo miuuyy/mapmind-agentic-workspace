@@ -42,6 +42,8 @@ class GraphRepository:
     def __init__(self, db_path: Path):
         self._db_path = db_path
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._cached_envelope: WorkspaceEnvelope | None = None
+        self._graph_index: dict[str, StudyGraph] | None = None
         self._init_db()
         self._ensure_seed()
 
@@ -63,6 +65,10 @@ class GraphRepository:
         with self._connect() as conn:
             ensure_seed_snapshot(conn)
 
+    def _invalidate_workspace_cache(self) -> None:
+        self._cached_envelope = None
+        self._graph_index = None
+
     def _insert_snapshot(
         self,
         conn: sqlite3.Connection,
@@ -72,24 +78,32 @@ class GraphRepository:
         reason: str | None,
         parent_snapshot_id: int | None,
     ) -> int:
-        return insert_snapshot(
+        snapshot_id = insert_snapshot(
             conn,
             workspace,
             source=source,
             reason=reason,
             parent_snapshot_id=parent_snapshot_id,
         )
+        self._invalidate_workspace_cache()
+        return snapshot_id
 
     def current(self) -> WorkspaceEnvelope:
-        with self._connect() as conn:
-            return load_current_workspace(conn)
+        if self._cached_envelope is None:
+            with self._connect() as conn:
+                envelope = load_current_workspace(conn)
+            self._cached_envelope = envelope
+            self._graph_index = {graph.graph_id: graph for graph in envelope.workspace.graphs}
+        return self._cached_envelope
 
     def graph(self, graph_id: str) -> StudyGraph:
-        workspace = self.current().workspace
-        for graph in workspace.graphs:
-            if graph.graph_id == graph_id:
-                return graph
-        raise KeyError(graph_id)
+        if self._cached_envelope is None:
+            self.current()
+        assert self._graph_index is not None
+        graph = self._graph_index.get(graph_id)
+        if graph is None:
+            raise KeyError(graph_id)
+        return graph
 
     def graph_summaries(self) -> list[GraphSummary]:
         workspace = self.current().workspace

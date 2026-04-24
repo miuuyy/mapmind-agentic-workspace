@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from fastapi import Depends, HTTPException
@@ -17,8 +18,16 @@ if TYPE_CHECKING:
     from app.services.study_assistant import StudyAssistantService
 
 
+_repository_instance: GraphRepository | None = None
+_repository_db_path: Path | None = None
+
+
 def get_repository(settings: Settings = Depends(get_settings)) -> GraphRepository:
-    return GraphRepository(settings.db_path)
+    global _repository_instance, _repository_db_path
+    if _repository_instance is None or _repository_db_path != settings.db_path:
+        _repository_instance = GraphRepository(settings.db_path)
+        _repository_db_path = settings.db_path
+    return _repository_instance
 
 
 def get_effective_settings(

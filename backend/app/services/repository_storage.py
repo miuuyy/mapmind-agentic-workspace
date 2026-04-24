@@ -80,6 +80,10 @@ def init_repository_storage(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_chat_messages_graph ON chat_messages(graph_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_chat_sessions_graph ON chat_sessions(graph_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_quiz_sessions_graph_topic ON quiz_sessions(graph_id, topic_id)")
     _migrate_chat_sessions_schema(conn)
     migrate_workspace_secrets(conn)
     migrate_zone_styles(conn)
