@@ -21,28 +21,6 @@ The goal is not to create “agent magic”. The goal is to make the repository 
 - [Architecture](../ARCHITECTURE.md)
 - [ADR index](../adr/README.md)
 
-## Claude-specific assets
-
-Repo-local Claude assets live here:
-
-- `../../.claude/skills/`
-
-They exist to reduce repetitive prompt setup for common Clew work, especially:
-
-- graph/product reviews
-- docs work
-- agent-boundary work
-
-Current repo-local skills:
-
-- `mapmind-product-guard`: protects graph-first product and UX decisions
-- `mapmind-agent-boundaries`: protects model primacy, proposal review, and explicit validation boundaries
-- `obsidian-to-clew-import`: converts an Obsidian vault or markdown graph into a validated Clew import package with fail-closed defaults
-
-Each skill is intentionally compact and may point to local `references/` files for deeper checklists so contributors can extend the guidance without turning the main skill file into a wall of text.
-
-Skills load automatically at session start from `.claude/skills/` (Claude Code) or `.agents/skills/` (Codex). If you add or rename a skill while a session is running, restart the session for the agent to pick it up.
-
 ## What this layer is not
 
 It is not:

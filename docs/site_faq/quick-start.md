@@ -29,8 +29,8 @@ The first screen is the graph because the graph is the product. Chat supports it
 Use the local edition if you want your own provider keys, local SQLite state, MCP, and graph files.
 
 ```bash
-git clone https://github.com/miuuyy/mapmind-agentic-workspace.git
-cd mapmind-agentic-workspace
+git clone https://github.com/miuuyy/Clew.git
+cd Clew
 cp .env.example .env
 ./scripts/dev.sh
 ```

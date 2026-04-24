@@ -2,7 +2,7 @@
 
 <p>
   <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-111111?style=flat-square"></a>
-  <a href="https://github.com/miuuyy/mapmind-agentic-workspace/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/miuuyy/mapmind-agentic-workspace/ci.yml?branch=main&style=flat-square&label=build"></a>
+  <a href="https://github.com/miuuyy/Clew/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/miuuyy/Clew/ci.yml?branch=main&style=flat-square&label=build"></a>
   <a href="https://clew.my/how-to-use"><img alt="Docs" src="https://img.shields.io/badge/docs-live-111111?style=flat-square"></a>
   <a href="https://clew.my"><img alt="Site" src="https://img.shields.io/badge/site-clew.my-111111?style=flat-square"></a>
   <img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-111111?style=flat-square">
@@ -24,8 +24,6 @@ You can ask AI to turn a messy topic dump, an Obsidian vault, or a goal like "ge
 
 This repository is the local, hackable edition of Clew. If you want the fastest first look, start at [clew.my](https://clew.my). If you want provider control, local state, MCP, and graph import/export, run this repo.
 
-> The repo is still named `mapmind-agentic-workspace` for URL stability; the product is Clew.
-
 ## Quick Look
 
 - `The product idea`: a clear path to anything you want to learn
@@ -37,8 +35,8 @@ This repository is the local, hackable edition of Clew. If you want the fastest 
 ## Quick Start
 
 ```bash
-git clone https://github.com/miuuyy/mapmind-agentic-workspace.git
-cd mapmind-agentic-workspace
+git clone https://github.com/miuuyy/Clew.git
+cd Clew
 cp .env.example .env
 ./scripts/dev.sh
 ```
@@ -74,6 +72,7 @@ Clew uses AI because building that graph manually is too expensive. The model do
 ## Example Use Cases
 
 - Turn a giant math syllabus into the parts that matter for ML.
+- Skip ahead in a school subject by following only the prerequisite chain that actually leads to your target (exam topic, course goal, olympiad).
 - Build a Python or cybersecurity path with visible prerequisites instead of a vague checklist.
 - Import an Obsidian vault and see whether your notes actually form a usable learning structure.
 - Ask Claude/Cursor about your current learning path through MCP without pasting graph state.
@@ -116,7 +115,6 @@ Clew uses AI because building that graph manually is too expensive. The model do
 | `contracts/` | JSON contracts and transport surfaces used by graph mutation flows |
 | `docs/` | engineering docs, ADRs, release notes, and site FAQ source |
 | `scripts/` | local development helpers such as boot, stop, and reset |
-| `.claude/skills/`, `.agents/skills/` | project-specific agent skills: `mapmind-product-guard`, `mapmind-agent-boundaries`, `obsidian-to-clew-import` |
 
 ## Development Checks
 

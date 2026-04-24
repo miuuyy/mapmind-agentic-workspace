@@ -39,8 +39,8 @@ Less useful contributions usually push the repository toward:
 Clone the repository and start the local stack:
 
 ```bash
-git clone https://github.com/miuuyy/mapmind-agentic-workspace.git
-cd mapmind-agentic-workspace
+git clone https://github.com/miuuyy/Clew.git
+cd Clew
 cp .env.example .env
 ./scripts/dev.sh
 ```

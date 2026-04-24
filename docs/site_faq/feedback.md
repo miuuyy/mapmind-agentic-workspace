@@ -12,16 +12,16 @@ Short, specific reports:
 - what subjects or workflows you would want to use this for
 - what broke or behaved unexpectedly
 
-If you want to file something structured, [open an issue on GitHub](https://github.com/miuuyy/mapmind-agentic-workspace/issues). Otherwise email works.
+If you want to file something structured, [open an issue on GitHub](https://github.com/miuuyy/Clew/issues). Otherwise email works.
 
-Code contributions are welcome too — see [CONTRIBUTING.md](https://github.com/miuuyy/mapmind-agentic-workspace/blob/main/CONTRIBUTING.md) for the areas where contributions fit and the boundaries the product tries to preserve.
+Code contributions are welcome too — see [CONTRIBUTING.md](https://github.com/miuuyy/Clew/blob/main/CONTRIBUTING.md) for the areas where contributions fit and the boundaries the product tries to preserve.
 
 ## Contact
 
 - Email: [johnymaarrete@gmail.com](mailto:johnymaarrete@gmail.com)
 - Website: [clew.my](https://clew.my)
 - LinkedIn: [aleksandr-vechenkov-037b00377](https://www.linkedin.com/in/aleksandr-vechenkov-037b00377/)
-- Repository: [github.com/miuuyy/mapmind-agentic-workspace](https://github.com/miuuyy/mapmind-agentic-workspace) (the repo is still named `mapmind-agentic-workspace` for URL stability)
+- Repository: [github.com/miuuyy/Clew](https://github.com/miuuyy/Clew)
 
 ## Ways to support the project
 

@@ -20,8 +20,8 @@ If you want local control over the workspace, providers, and graph packs, use th
 ## Start the app
 
 ```bash
-git clone https://github.com/miuuyy/mapmind-agentic-workspace.git
-cd mapmind-agentic-workspace
+git clone https://github.com/miuuyy/Clew.git
+cd Clew
 cp .env.example .env
 ./scripts/dev.sh
 ```
