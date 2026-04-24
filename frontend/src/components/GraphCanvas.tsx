@@ -1274,6 +1274,12 @@ function GraphCanvasComponent({
         if (brightness > 0.06 && (selected || onPath)) {
           if (themeModeRef.current === "light" && highlightedZoneRgb) {
             ctx2.strokeStyle = rgbaString(highlightedZoneRgb, selected ? Math.max(0.72, haloPulse * brightness) : Math.max(0.52, 0.62 * brightness));
+          } else if (themeModeRef.current === "light") {
+            // No zone in light theme — inherit halo colour from the node fill so it reads as part of the point, not a grey ring.
+            const haloRgb = selected ? "217,119,87" : "128,104,78";
+            ctx2.strokeStyle = selected
+              ? `rgba(${haloRgb},${Math.max(0.72, haloPulse * brightness)})`
+              : `rgba(${haloRgb},${Math.max(0.52, 0.62 * brightness)})`;
           } else {
             ctx2.strokeStyle = selected
               ? `rgba(${paletteRef.current.edgeRgb},${haloPulse * brightness})`
@@ -1366,6 +1372,9 @@ function GraphCanvasComponent({
         const anchor = anchors.get(node.id);
         if (!position || !anchor) continue;
         const selected = selectedTopicIdRef.current === node.id;
+        // Skip canvas label for the selected topic — the popover already shows its title
+        // and a duplicated canvas label tends to collide with the popover body.
+        if (selected) continue;
         const onPath = pathNodeIdsRef.current.has(node.id);
         const contextual = ancestorIdsRef.current.has(node.id);
         const isRoot = rootIdsRef.current.has(node.id);

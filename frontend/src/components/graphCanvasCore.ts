@@ -146,7 +146,7 @@ export function graphCanvasPalette(themeMode: GraphCanvasThemeMode): GraphCanvas
       gridStroke: "rgba(45,43,40,0.05)",
       edgeRgb: "45,43,40",
       nodeBaseFill: "rgba(250,249,246,0.98)",
-      nodeSelectedFill: "rgba(101,82,62,0.88)",
+      nodeSelectedFill: "rgba(217,119,87,0.92)",
       nodePathFill: "rgba(128,104,78,0.82)",
       nodeStableFill: "rgba(158,138,112,0.74)",
       nodeLearningFill: "rgba(195,178,156,0.66)",

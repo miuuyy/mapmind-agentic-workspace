@@ -112,10 +112,21 @@ export function buildObsidianImportPreview(
   const notesByPath = new Map<string, ParsedNote>();
   const notesByBaseName = new Map<string, ParsedNote[]>();
 
+  const addLookupKey = (key: string, note: ParsedNote) => {
+    if (!key) return;
+    const existing = notesByBaseName.get(key) ?? [];
+    if (existing.includes(note)) return;
+    notesByBaseName.set(key, [...existing, note]);
+  };
+
   for (const note of notes) {
     notesByPath.set(note.path, note);
-    const baseNameKey = normalizeLookupKey(stripMdExtension(note.path).split("/").at(-1) ?? note.title);
-    notesByBaseName.set(baseNameKey, [...(notesByBaseName.get(baseNameKey) ?? []), note]);
+    const baseName = stripMdExtension(note.path).split("/").at(-1) ?? note.title;
+    addLookupKey(normalizeLookupKey(baseName), note);
+    addLookupKey(normalizeLookupKey(note.title), note);
+    for (const alias of note.aliases) {
+      addLookupKey(normalizeLookupKey(alias), note);
+    }
   }
 
   const topics = new Map<string, Topic>();
@@ -143,7 +154,7 @@ export function buildObsidianImportPreview(
 
       let target = resolved.note;
       if (!target && options.createPlaceholderTopics) {
-        target = makePlaceholderNote(link.target, options.autofillDescriptions, options.createArtifactsFromNotes);
+        target = makePlaceholderNote(link.target, options.autofillDescriptions, options.createArtifactsFromNotes, dirname(note.path));
         if (!topics.has(target.id)) {
           topics.set(target.id, noteToTopic(target, options.createArtifactsFromNotes));
         }
@@ -310,10 +321,10 @@ function parseNote(entry: ObsidianVaultEntry, autofillDescriptions: boolean, cre
   };
 }
 
-function makePlaceholderNote(rawLink: string, autofillDescriptions: boolean, createArtifactsFromNotes: boolean): ParsedNote {
+function makePlaceholderNote(rawLink: string, autofillDescriptions: boolean, createArtifactsFromNotes: boolean, sourceFolderPath?: string): ParsedNote {
   const target = normalizeLinkTarget(rawLink);
   const title = stripMdExtension(target.split("/").at(-1) ?? target) || "Missing note";
-  const folderPath = dirname(target);
+  const folderPath = sourceFolderPath || dirname(target);
   const placeholderBody = "";
   return {
     id: `obsidian-topic-${stableHash(`placeholder:${target}`)}`,
@@ -577,7 +588,7 @@ function stripMdExtension(path: string): string {
 }
 
 function normalizeLookupKey(value: string): string {
-  return value.trim().toLowerCase();
+  return value.trim().toLowerCase().replace(/[\s-]+/g, "-");
 }
 
 function joinPath(left: string, right: string): string {

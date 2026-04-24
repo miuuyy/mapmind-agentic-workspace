@@ -1167,10 +1167,6 @@
   box-shadow: 0 18px 40px var(--shadow-soft);
 }
 
-:root[data-theme="light"] .topicPopover {
-  background: rgba(255, 255, 255, 0.958);
-}
-
 :root[data-theme="light"] .card {
   background: var(--surface-0);
   border: 1px solid var(--border);
