@@ -5,20 +5,14 @@
   <a href="https://github.com/miuuyy/Clew/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/miuuyy/Clew/ci.yml?branch=main&style=flat-square&label=build"></a>
   <a href="https://clew.my/how-to-use"><img alt="Docs" src="https://img.shields.io/badge/docs-live-111111?style=flat-square"></a>
   <a href="https://clew.my"><img alt="Demo" src="https://img.shields.io/badge/demo-live-111111?style=flat-square"></a>
-</p>
-<p>
+  <a href="https://github.com/miuuyy/Clew/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/miuuyy/Clew?style=flat-square&label=stars&color=111111"></a>
   <img alt="Generative Roadmap" src="https://img.shields.io/badge/generative-roadmap-111111?style=flat-square">
   <img alt="Agentic Workspace" src="https://img.shields.io/badge/agentic-workspace-111111?style=flat-square">
   <img alt="Knowledge Graph" src="https://img.shields.io/badge/knowledge-graph-111111?style=flat-square">
   <img alt="AI powered" src="https://img.shields.io/badge/AI-powered-111111?style=flat-square">
-</p>
-<p>
+  <img alt="Obsidian integration" src="https://img.shields.io/badge/Obsidian-integration-111111?style=flat-square">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-111111?style=flat-square">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-111111?style=flat-square">
-</p>
-<p>
-  <a href="https://github.com/miuuyy/Clew/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/miuuyy/Clew?style=flat-square&label=stars&color=111111"></a>
-  <img alt="Obsidian integration" src="https://img.shields.io/badge/Obsidian-integration-111111?style=flat-square">
 </p>
 
 **Clew gives you a thread through anything you're learning.**
