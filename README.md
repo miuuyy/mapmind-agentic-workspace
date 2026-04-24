@@ -116,6 +116,7 @@ Clew uses AI because building that graph manually is too expensive. The model do
 | `contracts/` | JSON contracts and transport surfaces used by graph mutation flows |
 | `docs/` | engineering docs, ADRs, release notes, and site FAQ source |
 | `scripts/` | local development helpers such as boot, stop, and reset |
+| `.claude/skills/`, `.agents/skills/` | project-specific agent skills: `mapmind-product-guard`, `mapmind-agent-boundaries`, `obsidian-to-clew-import` |
 
 ## Development Checks
 

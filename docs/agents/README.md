@@ -37,8 +37,11 @@ Current repo-local skills:
 
 - `mapmind-product-guard`: protects graph-first product and UX decisions
 - `mapmind-agent-boundaries`: protects model primacy, proposal review, and explicit validation boundaries
+- `obsidian-to-clew-import`: converts an Obsidian vault or markdown graph into a validated Clew import package with fail-closed defaults
 
 Each skill is intentionally compact and may point to local `references/` files for deeper checklists so contributors can extend the guidance without turning the main skill file into a wall of text.
+
+Skills load automatically at session start from `.claude/skills/` (Claude Code) or `.agents/skills/` (Codex). If you add or rename a skill while a session is running, restart the session for the agent to pick it up.
 
 ## What this layer is not
 

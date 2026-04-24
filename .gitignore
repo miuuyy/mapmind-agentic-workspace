@@ -36,6 +36,8 @@ tmp-layout-check.png
 README.archive.local.md
 references/
 logs/
-.agents/
-.claude/
+.agents/*
+!.agents/skills/
+.claude/*
+!.claude/skills/
 .playwright-cli/
