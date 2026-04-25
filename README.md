@@ -9,7 +9,7 @@
   <img alt="Obsidian integration" src="https://img.shields.io/badge/Obsidian-integration-111111?style=flat-square">
 </p>
 
-**Generate a learning map. Click any topic. Follow the thread back to its foundations.**
+**Generate a learning map. Click any topic. Follow the thread.**
 
 ![Clew walkthrough](.github/readme-assets/walkthrough.gif)
 
