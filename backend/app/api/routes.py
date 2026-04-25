@@ -1,166 +1,46 @@
+from __future__ import annotations
+
 import json
-from datetime import datetime, timezone
 from hashlib import sha1
 from typing import TYPE_CHECKING
-from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel as PydanticBaseModel
 
+from app.api.deps import (
+    ensure_debug_logs_enabled,
+    get_assessment_service,
+    get_chat_orchestrator,
+    get_debug_logs,
+    get_normalizer,
+    get_planner,
+    get_quiz_service,
+    get_repository,
+    get_study_assistant,
+)
+from app.api.route_helpers import (
+    assistant_persona_rules as _assistant_persona_rules,
+    local_user as _local_user,
+    local_workspace_surface as _local_workspace_surface,
+    normalize_resource_url as _normalize_resource_url,
+    proposal_failure_diagnostics_payload as _proposal_failure_diagnostics_payload,
+    resource_label_from_url as _resource_label_from_url,
+    workspace_config_payload as _workspace_config_payload,
+)
 from app.core.config import Settings, get_settings
 from app.models.api import GraphExportRequest, GraphImportRequest, GraphLayoutPositionRequest, RenameGraphRequest, TopicArtifactInput, TopicResourceInput, UpdateGraphLayoutRequest
 from app.models.domain import Artifact, ChatMessage, CreateGraphRequest, GraphChatRequest, GraphProposal, GraphProposalEnvelope, InlineChatQuiz, ProposalGenerateRequest, QuizQuestionPublic, QuizStartRequest, QuizStartResponse, QuizSubmitRequest, QuizSubmitResponse, ResourceLink, StudyAssistantRequest, StudyAssistantResponse, TopicQuizSessionPublic, UpdateWorkspaceConfigRequest
-from app.services.assessment_service import AssessmentService
 from app.services.debug_log_service import DebugClientLogRequest, get_debug_log_service
 from app.services.proposal_normalizer import ProposalNormalizer
 from app.services.repository import ChatSessionDeletionError, ChatSessionNotFoundError, GraphRepository
 
 if TYPE_CHECKING:
     from app.services.chat_orchestrator import ChatOrchestratorService
-    from app.services.gemini_planner import GeminiPlanner
+    from app.services.proposal_planner import ProposalPlanner
     from app.services.quiz_service import QuizService
     from app.services.study_assistant import StudyAssistantService
 
 router = APIRouter()
-
-
-def get_repository(settings: Settings = Depends(get_settings)) -> GraphRepository:
-    return GraphRepository(settings.db_path)
-
-
-def get_effective_settings(
-    settings: Settings = Depends(get_settings),
-    repository: GraphRepository = Depends(get_repository),
-) -> Settings:
-    """Merge workspace-level token limit overrides into base settings."""
-    workspace_config = repository.current().workspace.config
-    return settings.with_workspace_overrides(workspace_config)
-
-
-def get_planner(settings: Settings = Depends(get_effective_settings)) -> "GeminiPlanner":
-    from app.services.gemini_planner import GeminiPlanner, GeminiPlannerError
-
-    try:
-        return GeminiPlanner(settings)
-    except GeminiPlannerError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-
-
-def get_normalizer() -> ProposalNormalizer:
-    return ProposalNormalizer()
-
-
-def get_quiz_service(settings: Settings = Depends(get_effective_settings)) -> "QuizService":
-    from app.services.quiz_service import QuizService
-
-    return QuizService(settings)
-
-
-def get_assessment_service() -> AssessmentService:
-    return AssessmentService()
-
-
-def get_study_assistant(settings: Settings = Depends(get_effective_settings)) -> "StudyAssistantService":
-    from app.services.study_assistant import StudyAssistantService
-
-    return StudyAssistantService(settings)
-
-
-def get_chat_orchestrator(
-    settings: Settings = Depends(get_effective_settings),
-    planner: "GeminiPlanner" = Depends(get_planner),
-) -> "ChatOrchestratorService":
-    from app.services.chat_orchestrator import ChatOrchestratorService
-
-    return ChatOrchestratorService(settings, planner)
-
-
-def get_debug_logs(settings: Settings = Depends(get_settings)):
-    return get_debug_log_service(settings.root_dir)
-
-
-def ensure_debug_logs_enabled(repository: GraphRepository = Depends(get_repository)) -> None:
-    if not repository.current().workspace.config.debug_mode_enabled:
-        raise HTTPException(status_code=403, detail="debug logs are disabled")
-
-
-def _local_workspace_surface(repository: GraphRepository) -> dict:
-    workspace = repository.current().workspace
-    graph_count = len(workspace.graphs)
-    demo_graph_count = sum(1 for graph in workspace.graphs if bool(graph.metadata.get("demo")))
-    personal_graph_count = max(0, graph_count - demo_graph_count)
-    active_graph_id = workspace.active_graph_id or (workspace.graphs[0].graph_id if workspace.graphs else None)
-    return {
-        "onboarding_state": "active_workspace" if graph_count > 0 else "needs_first_graph",
-        "active_graph_id": active_graph_id,
-        "graph_count": graph_count,
-        "personal_graph_count": personal_graph_count,
-        "demo_graph_count": demo_graph_count,
-        "graph_limit": 9999,
-        "library_post_count": 0,
-        "demo_library_post_id": None,
-        "primary_action": "resume_workspace" if graph_count > 0 else "create_graph",
-        "recommended_actions": ["resume_workspace"] if graph_count > 0 else ["create_graph"],
-        "can_create_graph": True,
-        "can_import_from_library": False,
-        "grounding_default_enabled": workspace.config.use_google_search_grounding,
-    }
-
-def _local_user(settings: Settings) -> dict:
-    now = datetime.now(timezone.utc).isoformat()
-    return {
-        "id": "local-user",
-        "name": settings.local_user_name,
-        "email": settings.local_user_email,
-        "avatar_url": None,
-        "ui_language": "en",
-        "created_at": now,
-        "last_login_at": now,
-        "active_workspace_id": "default",
-    }
-
-
-def _workspace_config_payload(envelope, settings: Settings) -> dict:
-    payload = envelope.model_dump(mode="json")
-    config = payload["workspace"]["config"]
-    config["gemini_api_key_source"] = "env" if settings.gemini_api_key_from_env else ("workspace" if config.get("gemini_api_key") else "unset")
-    config["openai_api_key_source"] = "env" if settings.openai_api_key_from_env else ("workspace" if config.get("openai_api_key") else "unset")
-    config["openai_base_url_source"] = "env" if settings.openai_base_url_from_env else "workspace"
-    if settings.gemini_api_key_from_env:
-        config["gemini_api_key"] = None
-    if settings.openai_api_key_from_env:
-        config["openai_api_key"] = None
-    if settings.openai_base_url_from_env:
-        config["openai_base_url"] = settings.openai_base_url
-    return payload
-
-
-def _resource_label_from_url(url: str) -> str:
-    parsed = urlparse(url.strip())
-    host = parsed.netloc.replace("www.", "") if parsed.netloc else ""
-    path = parsed.path.rstrip("/")
-    tail = path.split("/")[-1] if path else ""
-    if host and tail:
-        return f"{host}/{tail}"
-    if host:
-        return host
-    return url.strip()
-
-
-def _normalize_resource_url(raw: str) -> str:
-    value = raw.strip()
-    if not value:
-        return ""
-    parsed = urlparse(value)
-    if not parsed.scheme:
-        value = f"https://{value}"
-        parsed = urlparse(value)
-    if parsed.scheme not in {"http", "https"}:
-        return ""
-    if not parsed.netloc:
-        return ""
-    return value
 
 
 @router.get("/healthz")
@@ -350,11 +230,19 @@ def export_workspace_graph(
     repository: GraphRepository = Depends(get_repository),
 ) -> dict:
     try:
-        package = repository.export_graph_package(
-            graph_id,
-            title=request.title,
-            include_progress=request.include_progress,
-        )
+        if request.format == "mapmind_obsidian_export":
+            package = repository.export_graph_to_obsidian(
+                graph_id,
+                title=request.title,
+                include_progress=request.include_progress,
+                options=request.obsidian,
+            )
+        else:
+            package = repository.export_graph_package(
+                graph_id,
+                title=request.title,
+                include_progress=request.include_progress,
+            )
     except (ValueError, KeyError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return package.model_dump(mode="json")
@@ -451,16 +339,16 @@ def propose_graph_changes(
     graph_id: str,
     request: ProposalGenerateRequest,
     repository: GraphRepository = Depends(get_repository),
-    planner: "GeminiPlanner" = Depends(get_planner),
+    planner: "ProposalPlanner" = Depends(get_planner),
 ) -> dict:
-    from app.services.gemini_planner import GeminiPlannerError
+    from app.services.proposal_planner import ProposalPlannerError
 
     try:
         graph = repository.graph(graph_id)
         result = planner.generate_proposal(graph, request)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"graph {graph_id} not found") from exc
-    except GeminiPlannerError as exc:
+    except ProposalPlannerError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     repository.append_event(
         "graph.proposal.generated",
@@ -480,9 +368,9 @@ def propose_graph_changes_stream(
     graph_id: str,
     request: ProposalGenerateRequest,
     repository: GraphRepository = Depends(get_repository),
-    planner: "GeminiPlanner" = Depends(get_planner),
+    planner: "ProposalPlanner" = Depends(get_planner),
 ) -> StreamingResponse:
-    from app.services.gemini_planner import GeminiPlannerError
+    from app.services.proposal_planner import ProposalPlannerError
 
     try:
         graph = repository.graph(graph_id)
@@ -507,7 +395,7 @@ def propose_graph_changes_stream(
                         "model": (((result_payload.get("trace") or {}).get("model")) or ""),
                     },
                 )
-        except GeminiPlannerError as exc:
+        except ProposalPlannerError as exc:
             yield json.dumps({"type": "error", "detail": str(exc)}, ensure_ascii=False) + "\n"
         except Exception as exc:
             yield json.dumps({"type": "error", "detail": str(exc)}, ensure_ascii=False) + "\n"
@@ -522,7 +410,10 @@ def start_topic_quiz(
     request: QuizStartRequest,
     repository: GraphRepository = Depends(get_repository),
     quiz_service: "QuizService" = Depends(get_quiz_service),
+    settings: Settings = Depends(get_settings),
 ) -> dict:
+    from app.services.quiz_service import QuizGenerationError
+
     try:
         graph = repository.graph(graph_id)
     except KeyError as exc:
@@ -560,6 +451,26 @@ def start_topic_quiz(
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"topic {topic_id} not found") from exc
+    except QuizGenerationError as exc:
+        get_debug_log_service(settings.root_dir).log_server_error(
+            title=f"POST /api/v1/graphs/{graph_id}/topics/{topic_id}/quiz/start",
+            message="Closure quiz generation failed",
+            method="POST",
+            path=f"/api/v1/graphs/{graph_id}/topics/{topic_id}/quiz/start",
+            status_code=502,
+            request_payload={
+                "graph_id": graph_id,
+                "topic_id": topic_id,
+                "requested_question_count": request.question_count,
+                "requested_model": request.model,
+            },
+            response_payload={
+                "detail": str(exc),
+                "diagnostics": exc.diagnostics,
+            },
+            preserve_private_payload=True,
+        )
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     repository.save_quiz_session(session)
@@ -692,287 +603,13 @@ def graph_study_assistant(
         graph = repository.graph(graph_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"graph {graph_id} not found") from exc
-    persona_rules = repository.current().workspace.config.persona_rules
+    persona_rules = _assistant_persona_rules(repository.current().workspace.config)
     try:
         return assistant.answer(graph, request, persona_rules=persona_rules).model_dump(mode="json")
     except StudyAssistantError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
-@router.get("/api/v1/graphs/{graph_id}/chat")
-def graph_chat_thread(graph_id: str, session_id: str | None = None, repository: GraphRepository = Depends(get_repository)) -> dict:
-    try:
-        repository.graph(graph_id)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=f"graph {graph_id} not found") from exc
-    try:
-        return repository.chat_thread(graph_id, session_id=session_id).model_dump(mode="json")
-    except ChatSessionNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=f"chat session {exc.session_id} not found") from exc
-
-
-@router.get("/api/v1/graphs/{graph_id}/chat/sessions")
-def list_chat_sessions(graph_id: str, repository: GraphRepository = Depends(get_repository)) -> list[dict]:
-    try:
-        repository.graph(graph_id)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=f"graph {graph_id} not found") from exc
-    return [s.model_dump(mode="json") for s in repository.list_chat_sessions(graph_id)]
-
-
-class CreateSessionRequest(PydanticBaseModel):
-    topic_id: str | None = None
-    title: str | None = None
-
-
-@router.post("/api/v1/graphs/{graph_id}/chat/sessions")
-def create_chat_session(graph_id: str, body: CreateSessionRequest, repository: GraphRepository = Depends(get_repository)) -> dict:
-    try:
-        repository.graph(graph_id)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=f"graph {graph_id} not found") from exc
-    try:
-        session = repository.create_chat_session(graph_id, topic_id=body.topic_id, title=body.title)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return session.model_dump(mode="json")
-
-
-@router.delete("/api/v1/graphs/{graph_id}/chat/sessions/{session_id}")
-def delete_chat_session(graph_id: str, session_id: str, repository: GraphRepository = Depends(get_repository)) -> dict:
-    try:
-        repository.graph(graph_id)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=f"graph {graph_id} not found") from exc
-    try:
-        repository.delete_chat_session(graph_id, session_id)
-    except ChatSessionNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=f"chat session {exc.session_id} not found") from exc
-    except ChatSessionDeletionError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"ok": True}
-
-
-@router.post("/api/v1/graphs/{graph_id}/chat")
-def graph_chat(
-    graph_id: str,
-    request: GraphChatRequest,
-    repository: GraphRepository = Depends(get_repository),
-    orchestrator: "ChatOrchestratorService" = Depends(get_chat_orchestrator),
-) -> dict:
-    from app.services.chat_orchestrator import ChatOrchestratorError
-
-    try:
-        graph = repository.graph(graph_id)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=f"graph {graph_id} not found") from exc
-    try:
-        existing_thread = repository.chat_thread(graph_id, session_id=request.session_id)
-    except ChatSessionNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=f"chat session {exc.session_id} not found") from exc
-    user_message = ChatMessage(
-        role="user",
-        content=request.prompt,
-        hidden=request.hidden_user_message,
-    )
-    # For topic sessions, use the session's topic_id as context
-    effective_topic_id = request.selected_topic_id or existing_thread.topic_id
-    effective_request = GraphChatRequest(
-        prompt=request.prompt,
-        messages=[*existing_thread.messages, user_message],
-        selected_topic_id=effective_topic_id,
-        session_id=request.session_id,
-        model=request.model,
-        use_grounding=request.use_grounding,
-    )
-    workspace_config = repository.current().workspace.config
-    persona_rules = workspace_config.persona_rules
-    if not orchestrator.has_live_provider():
-        raise HTTPException(status_code=503, detail="The selected AI provider is unavailable: missing API key")
-    try:
-        response = orchestrator.respond(graph, effective_request, persona_rules=persona_rules, workspace_config=workspace_config)
-    except ChatOrchestratorError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
-    repository.append_chat_message(graph_id, user_message, session_id=request.session_id)
-    assistant_thread = repository.append_chat_message(
-        graph_id,
-        ChatMessage(
-            role="assistant",
-            content=response.message,
-            model=response.model,
-            fallback_used=response.fallback_used,
-            action=response.action,
-            proposal=response.proposal,
-        ),
-        session_id=request.session_id,
-    )
-    response.session_id = assistant_thread.session_id
-    response.graph_id = graph_id
-    response.messages = assistant_thread.messages
-    return response.model_dump(mode="json")
-
-
-@router.post("/api/v1/graphs/{graph_id}/chat/stream")
-def graph_chat_stream(
-    graph_id: str,
-    request: GraphChatRequest,
-    repository: GraphRepository = Depends(get_repository),
-    orchestrator: "ChatOrchestratorService" = Depends(get_chat_orchestrator),
-) -> StreamingResponse:
-    from app.services.chat_orchestrator import ChatOrchestratorError
-
-    try:
-        graph = repository.graph(graph_id)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=f"graph {graph_id} not found") from exc
-    try:
-        existing_thread = repository.chat_thread(graph_id, session_id=request.session_id)
-    except ChatSessionNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=f"chat session {exc.session_id} not found") from exc
-    if not orchestrator.has_live_provider():
-        raise HTTPException(status_code=503, detail="The selected AI provider is unavailable: missing API key")
-
-    def event_stream():
-        workspace_config = repository.current().workspace.config
-        model_name = request.model or workspace_config.default_model
-        persona_rules = workspace_config.persona_rules
-        user_message = ChatMessage(role="user", content=request.prompt)
-        user_message.hidden = request.hidden_user_message
-        effective_topic_id = request.selected_topic_id or existing_thread.topic_id
-        effective_request = GraphChatRequest(
-            prompt=request.prompt,
-            messages=[*existing_thread.messages, user_message],
-            selected_topic_id=effective_topic_id,
-            session_id=request.session_id,
-            model=request.model,
-            use_grounding=request.use_grounding,
-        )
-
-        try:
-            try:
-                decision = orchestrator.decide(graph, effective_request, persona_rules=persona_rules, workspace_config=workspace_config)
-            except ChatOrchestratorError as exc:
-                yield json.dumps({"type": "error", "detail": str(exc)}, ensure_ascii=False) + "\n"
-                return
-
-            repository.append_chat_message(graph_id, user_message, session_id=request.session_id)
-
-            inline_quiz = None
-            if decision.inline_quiz is not None:
-                inline_quiz = InlineChatQuiz(
-                    question=decision.inline_quiz.question,
-                    choices=decision.inline_quiz.choices[:4],
-                    correct_index=max(0, min(3, decision.inline_quiz.correct_index)),
-                )
-
-            assistant_thread = repository.append_chat_message(
-                graph_id,
-                ChatMessage(
-                    role="assistant",
-                    content=orchestrator.reply_for_decision(decision),
-                    model=model_name,
-                    action=decision.action,
-                    inline_quiz=inline_quiz,
-                ),
-                session_id=request.session_id,
-            )
-            assistant_message = assistant_thread.messages[-1]
-            yield json.dumps(
-                {
-                    "type": "assistant_message",
-                    "message": assistant_message.model_dump(mode="json"),
-                    "messages": [message.model_dump(mode="json") for message in assistant_thread.messages],
-                },
-                ensure_ascii=False,
-            ) + "\n"
-
-            if decision.action == "answer":
-                return
-
-            assistant_thread = repository.update_chat_message(
-                graph_id,
-                ChatMessage.model_validate(
-                    {
-                        **assistant_message.model_dump(mode="json"),
-                        "planning_status": "Creating graph proposal",
-                        "planning_error": None,
-                    }
-                ),
-                session_id=request.session_id,
-            )
-            assistant_message = next(
-                message
-                for message in assistant_thread.messages
-                if message.id == assistant_message.id
-            )
-            yield json.dumps(
-                {
-                    "type": "planning_status",
-                    "message_id": assistant_message.id,
-                    "label": "Creating graph proposal",
-                },
-                ensure_ascii=False,
-            ) + "\n"
-
-            proposal_request = orchestrator.proposal_request_for_decision(decision, effective_request, model_name=model_name)
-            try:
-                result_payload = orchestrator.stream_proposal_result(graph, proposal_request)
-            except Exception as exc:
-                updated_thread = repository.update_chat_message(
-                    graph_id,
-                    ChatMessage.model_validate(
-                        {
-                            **assistant_message.model_dump(mode="json"),
-                            "planning_status": None,
-                            "planning_error": f"proposal generation failed: {exc}",
-                        }
-                    ),
-                    session_id=request.session_id,
-                )
-                assistant_message = next(
-                    message
-                    for message in updated_thread.messages
-                    if message.id == assistant_message.id
-                )
-                yield json.dumps(
-                    {
-                        "type": "planning_error",
-                        "message_id": assistant_message.id,
-                        "detail": f"proposal generation failed: {exc}",
-                    },
-                    ensure_ascii=False,
-                ) + "\n"
-                return
-
-            updated_thread = repository.update_chat_message(
-                graph_id,
-                ChatMessage.model_validate(
-                    {
-                        **assistant_message.model_dump(mode="json"),
-                        "planning_status": None,
-                        "planning_error": None,
-                        "proposal": result_payload,
-                    }
-                ),
-                session_id=request.session_id,
-            )
-            yield json.dumps(
-                {
-                    "type": "proposal_ready",
-                    "message_id": assistant_message.id,
-                    "message": next(
-                        message.model_dump(mode="json")
-                        for message in updated_thread.messages
-                        if message.id == assistant_message.id
-                    ),
-                    "messages": [message.model_dump(mode="json") for message in updated_thread.messages],
-                },
-                ensure_ascii=False,
-            ) + "\n"
-        except Exception as exc:
-            yield json.dumps({"type": "error", "detail": str(exc)}, ensure_ascii=False) + "\n"
-
-    return StreamingResponse(event_stream(), media_type="application/x-ndjson")
 
 
 @router.post("/api/v1/graphs/{graph_id}/normalize")
@@ -1015,32 +652,6 @@ def apply_graph_proposal(
     return _workspace_config_payload(applied, get_settings())
 
 
-@router.post("/api/v1/graphs/{graph_id}/chat/messages/{message_id}/applied")
-def mark_chat_message_applied(
-    graph_id: str,
-    message_id: str,
-    session_id: str | None = None,
-    repository: GraphRepository = Depends(get_repository),
-) -> dict:
-    try:
-        repository.graph(graph_id)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=f"graph {graph_id} not found") from exc
-    try:
-        thread = repository.chat_thread(graph_id, session_id=session_id)
-    except ChatSessionNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=f"chat session {exc.session_id} not found") from exc
-    target = next((message for message in thread.messages if message.id == message_id), None)
-    if target is None:
-        raise HTTPException(status_code=404, detail=f"chat message {message_id} not found")
-    target.proposal_applied = True
-    try:
-        updated = repository.update_chat_message(graph_id, target, session_id=session_id)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=f"chat message {message_id} not found") from exc
-    return updated.model_dump(mode="json")
-
-
 @router.post("/api/v1/graph/rollback/{snapshot_id}")
 def rollback_graph(snapshot_id: int, repository: GraphRepository = Depends(get_repository)) -> dict:
     try:
@@ -1048,3 +659,8 @@ def rollback_graph(snapshot_id: int, repository: GraphRepository = Depends(get_r
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"snapshot {snapshot_id} not found") from exc
     return _workspace_config_payload(envelope, get_settings())
+
+
+from app.api.chat_routes import router as chat_router
+
+router.include_router(chat_router)

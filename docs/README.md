@@ -2,7 +2,9 @@
 
 This directory contains the engineering-facing markdown for the public `main` branch.
 
-These docs are for people who want to run, inspect, modify, or extend the local edition. They are not the same thing as the product-facing docs in [`documentation/`](../documentation/README.md).
+These docs are for people who want to run, inspect, modify, or extend the local edition.
+
+Product-facing website/FAQ source lives in [`site_faq/`](site_faq/README.md). It is grouped here to keep markdown docs in one place, but it is not the same thing as the engineering docs below.
 
 ## Recommended reading order
 
@@ -11,7 +13,11 @@ These docs are for people who want to run, inspect, modify, or extend the local 
 3. [Agentic Loop](AGENTIC_LOOP.md)
 4. [Provider Guide](PROVIDER_GUIDE.md)
 5. [Usage Guide](USAGE_GUIDE.md)
-6. [Architecture Decision Records](adr/README.md)
+6. [Obsidian Bridge](OBSIDIAN.md)
+7. [MCP Setup](MCP_SETUP.md)
+8. [Latest release](https://github.com/miuuyy/Clew/releases/latest)
+9. [Architecture Decision Records](adr/README.md)
+10. [Site FAQ source](site_faq/README.md)
 
 ## What each file is for
 
@@ -20,7 +26,11 @@ These docs are for people who want to run, inspect, modify, or extend the local 
 - [Agentic Loop](AGENTIC_LOOP.md): the decision and apply loop behind chat, proposals, quizzes, and rollback
 - [Provider Guide](PROVIDER_GUIDE.md): built-in providers, model config, and how to add another provider cleanly
 - [Usage Guide](USAGE_GUIDE.md): source-material guidance for generating high-quality ingest input
-- [ADR index](adr/README.md): long-lived decisions that protect the product from drifting into weaker shapes
+- [Obsidian Bridge](OBSIDIAN.md): import an Obsidian vault into Clew or export a graph back into Markdown
+- [MCP Setup](MCP_SETUP.md): connect Clew Study Assist to Claude Desktop, Claude Code, or Cursor via the built-in MCP server
+- [Latest release](https://github.com/miuuyy/Clew/releases/latest): release notes live on GitHub
+- [ADR index](adr/README.md): long-lived decisions, including why external bridges must preserve the graph boundary
+- [Site FAQ source](site_faq/README.md): product-facing pages used by the hosted docs/site surface
 
 ## What is intentionally not here
 

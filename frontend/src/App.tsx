@@ -4,79 +4,61 @@ import { AppDialogs } from "./components/AppDialogs";
 import { DebugLogsModal } from "./components/DebugLogsModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { WorkspaceShell } from "./components/WorkspaceShell";
+import { ClewLoader } from "./components/ClewLoader";
 import type { TopicAnchorPoint } from "./components/GraphCanvas";
 import { API_BASE } from "./lib/api";
 import { APP_COPY } from "./lib/appCopy";
 import { setDebugModeEnabled } from "./lib/debugLogs";
 import {
-  ASSISTANT_WIDTH_STORAGE_KEY,
   ASSISTANT_COLLAPSE_THRESHOLD,
   ASSISTANT_MAX_WIDTH,
   ASSISTANT_MIN_WIDTH,
-  MEMORY_MODE_OPTIONS,
-  THINKING_MODE_OPTIONS,
   type AuthSessionPayload,
-  type GraphChatState,
-  type MemoryMode,
-  type ThemeMode,
-  type ThinkingMode,
   type WorkspaceSurfacePayload,
 } from "./lib/appContracts";
-import {
-  COMPACT_TOP_OVERLAY_THRESHOLD,
-  STRAIGHT_EDGE_LINES_STORAGE_KEY,
-  LEFT_SIDEBAR_OPEN_STORAGE_KEY,
-  LOGS_OPEN_STORAGE_KEY,
-  MOBILE_LAYOUT_BREAKPOINT,
-  SETTINGS_OPEN_STORAGE_KEY,
-  THEME_MODE_STORAGE_KEY,
-  VIEWPORT_CENTERED_ZOOM_STORAGE_KEY,
-  activeChatSessionStorageKey,
-  readInitialThemeMode,
-  readStoredActiveChatSession,
-  readStoredAssistantWidth,
-  readStoredBoolean,
-  readStoredStraightEdgeLines,
-  readStoredViewportCenteredZoom,
-} from "./lib/appStatePersistence";
-import { usePersistedBoolean, usePersistedNumber, usePersistedString } from "./lib/usePersistedState";
+import { COMPACT_TOP_OVERLAY_THRESHOLD } from "./lib/appStatePersistence";
 import {
   apiFetch,
   computePopoverPosition,
-  makeMessageId,
   type ManualLayoutPositions,
   readErrorMessage,
   readManualLayoutPositions,
-  renderDisplayText,
   requiredCorrectAnswers,
   samePopoverPosition,
   shouldCommitAnchorUpdate,
   shouldKeepCurrentAnchor,
   type PopoverPosition,
 } from "./lib/appUiHelpers";
-import { fetchChatSessions, markChatProposalApplied, reconcileThreadMessages } from "./lib/chatRequests";
+import { canPlaceFloatingRect, toFloatingRect, type FloatingRect } from "./lib/floatingDesktopLayout";
+import { markChatProposalApplied } from "./lib/chatRequests";
 import {
   buildFallbackAssessment,
   computeClosureStatus,
   computeFocusData,
   computeGraphSummary,
   firstProposedTopicId,
-  recentMessagesForContext,
-  summarizePreviewCounts,
-  summarizeTopOperations,
   templatePrompt,
 } from "./lib/graph";
+import { supportsObsidianDirectoryExport, writeObsidianExportPackageToDirectory } from "./lib/obsidianExport";
+import {
+  buildObsidianImportPreview,
+  type ObsidianImportOptions,
+  type ObsidianVaultEntry,
+} from "./lib/obsidianImport";
+import { useChatModelSelection } from "./hooks/useChatModelSelection";
+import { useGraphChatController } from "./hooks/useGraphChatController";
+import { useWorkspaceSettings } from "./hooks/useWorkspaceSettings";
+import { useWorkspaceChromeState } from "./hooks/useWorkspaceChromeState";
+import { useTopicPopover } from "./hooks/useTopicPopover";
 import { useModalAccessibility } from "./lib/useModalAccessibility";
 import type {
-  Artifact,
-  ChatMessage,
-  ChatSessionSummary,
   CreateGraphRequest,
   GraphEnvelope,
   GraphAssessment,
-  GraphChatStreamEvent,
-  GraphChatThread,
+  GraphExportFormat,
   GraphExportPackagePayload,
+  ObsidianExportOptions,
+  ObsidianGraphExportPackagePayload,
   ProposalGenerateResponse,
   QuizQuestionReview,
   QuizStartResponse,
@@ -87,6 +69,17 @@ import type {
   TopicQuizSession,
   WorkspaceEnvelope,
 } from "./lib/types";
+
+const ACTIVE_GRAPH_STORAGE_KEY = "knowledge_graph_active_graph_v1";
+
+function defaultObsidianExportOptions(): ObsidianExportOptions {
+  return {
+    use_folders_as_zones: true,
+    include_descriptions: true,
+    include_resources: true,
+    include_artifacts: true,
+  };
+}
 
 export default function App(): React.JSX.Element {
   const copy = APP_COPY;
@@ -115,11 +108,28 @@ export default function App(): React.JSX.Element {
   const [importGraphPayload, setImportGraphPayload] = useState<GraphExportPackagePayload | null>(null);
   const [importGraphTitleDraft, setImportGraphTitleDraft] = useState("");
   const [importGraphIncludeProgressDraft, setImportGraphIncludeProgressDraft] = useState(true);
+  const [importObsidianOpen, setImportObsidianOpen] = useState(false);
+  const [importObsidianLoading, setImportObsidianLoading] = useState(false);
+  const [importObsidianError, setImportObsidianError] = useState<string | null>(null);
+  const [obsidianVaultName, setObsidianVaultName] = useState<string | null>(null);
+  const [obsidianVaultEntries, setObsidianVaultEntries] = useState<ObsidianVaultEntry[] | null>(null);
+  const [obsidianImportDraft, setObsidianImportDraft] = useState<Omit<ObsidianImportOptions, "vaultName">>({
+    graphTitle: "",
+    subject: "",
+    language: "en",
+    relation: "bridges",
+    useFoldersAsZones: true,
+    autofillDescriptions: true,
+    createArtifactsFromNotes: false,
+    createPlaceholderTopics: false,
+  });
   const [exportGraphTarget, setExportGraphTarget] = useState<GraphEnvelope | null>(null);
   const [exportGraphLoading, setExportGraphLoading] = useState(false);
   const [exportGraphError, setExportGraphError] = useState<string | null>(null);
   const [exportGraphTitleDraft, setExportGraphTitleDraft] = useState("");
   const [exportGraphIncludeProgressDraft, setExportGraphIncludeProgressDraft] = useState(true);
+  const [exportGraphFormatDraft, setExportGraphFormatDraft] = useState<GraphExportFormat>("mapmind_graph_export");
+  const [exportGraphObsidianOptionsDraft, setExportGraphObsidianOptionsDraft] = useState<ObsidianExportOptions>(defaultObsidianExportOptions);
   const [deleteConfirm, setDeleteConfirm] = useState<{ graphId: string; title: string } | null>(null);
   const [sessionDeleteConfirm, setSessionDeleteConfirm] = useState<{ sessionId: string; title: string } | null>(null);
   const [graphLayoutEditing, setGraphLayoutEditing] = useState(false);
@@ -128,57 +138,18 @@ export default function App(): React.JSX.Element {
   const [renamingGraphId, setRenamingGraphId] = useState<string | null>(null);
   const [renameGraphDraft, setRenameGraphDraft] = useState("");
   const [renameGraphSaving, setRenameGraphSaving] = useState(false);
-  const [activeGraphId, setActiveGraphId] = useState<string | null>(null);
-  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
-  const [selectedTopicAnchor, setSelectedTopicAnchor] = useState<TopicAnchorPoint | null>(null);
-  const [popoverPosition, setPopoverPosition] = useState<PopoverPosition | null>(null);
-  const [popoverDragOffset, setPopoverDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [popoverFollowAnchor, setPopoverFollowAnchor] = useState(true);
-  const [chatByGraph, setChatByGraph] = useState<Record<string, GraphChatState>>({});
-  const [chatLoading, setChatLoading] = useState(false);
-  const [chatThreadLoading, setChatThreadLoading] = useState(false);
-  const [chatError, setChatError] = useState<string | null>(null);
-  const [chatSessionsError, setChatSessionsError] = useState<string | null>(null);
-  const [chatSessions, setChatSessions] = useState<ChatSessionSummary[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeGraphId, setActiveGraphId] = useState<string | null>(() => {
+    try {
+      const raw = localStorage.getItem(ACTIVE_GRAPH_STORAGE_KEY);
+      return raw && raw.trim() ? raw : null;
+    } catch {
+      return null;
+    }
+  });
   const [applyLoadingMessageId, setApplyLoadingMessageId] = useState<string | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [assistantWidth, setAssistantWidth] = useState<number>(readStoredAssistantWidth);
   const [assistantResizing, setAssistantResizing] = useState(false);
-  const [isMobileViewport, setIsMobileViewport] = useState(false);
-  const [viewportWidth, setViewportWidth] = useState<number>(() => (typeof window === "undefined" ? 1440 : window.innerWidth));
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(() => readStoredBoolean(LEFT_SIDEBAR_OPEN_STORAGE_KEY, true));
-  const [leftSidebarClosing, setLeftSidebarClosing] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isSettingsOpen, setSettingsOpen] = useState(() => readStoredBoolean(SETTINGS_OPEN_STORAGE_KEY, false));
-  const [isLogsOpen, setLogsOpen] = useState(() => readStoredBoolean(LOGS_OPEN_STORAGE_KEY, false));
   const [configSaving, setConfigSaving] = useState(false);
-  const [providerDraft, setProviderDraft] = useState("gemini");
-  const [modelDraft, setModelDraft] = useState("gemini-2.5-pro");
-  const [modelPresetDraft, setModelPresetDraft] = useState("gemini-2.5-pro");
-  const [geminiApiKeyDraft, setGeminiApiKeyDraft] = useState("");
-  const [openaiApiKeyDraft, setOpenaiApiKeyDraft] = useState("");
-  const [openaiBaseUrlDraft, setOpenaiBaseUrlDraft] = useState("https://api.openai.com/v1");
-  const [showOpenAIEndpointDraft, setShowOpenAIEndpointDraft] = useState(false);
-  const [personaDraft, setPersonaDraft] = useState("");
-  const [thinkingModeDraft, setThinkingModeDraft] = useState<ThinkingMode>("default");
-  const [memoryModeDraft, setMemoryModeDraft] = useState<MemoryMode>("balanced");
-  const [plannerMaxTokensDraft, setPlannerMaxTokensDraft] = useState(200000);
-  const [plannerThinkingBudgetDraft, setPlannerThinkingBudgetDraft] = useState(12288);
-  const [orchestratorMaxTokensDraft, setOrchestratorMaxTokensDraft] = useState(16384);
-  const [quizMaxTokensDraft, setQuizMaxTokensDraft] = useState(4096);
-  const [assistantMaxTokensDraft, setAssistantMaxTokensDraft] = useState(800);
-  const [disableIdleAnimationsDraft, setDisableIdleAnimationsDraft] = useState(false);
-  const [enableClosureTestsDraft, setEnableClosureTestsDraft] = useState(true);
-  const [debugModeEnabledDraft, setDebugModeEnabledDraft] = useState(false);
-  const [memoryHistoryLimitDraft, setMemoryHistoryLimitDraft] = useState(32);
-  const [memoryIncludeGraphContextDraft, setMemoryIncludeGraphContextDraft] = useState(true);
-  const [memoryIncludeProgressContextDraft, setMemoryIncludeProgressContextDraft] = useState(true);
-  const [memoryIncludeQuizContextDraft, setMemoryIncludeQuizContextDraft] = useState(true);
-  const [memoryIncludeFrontierContextDraft, setMemoryIncludeFrontierContextDraft] = useState(true);
-  const [memoryIncludeSelectedTopicContextDraft, setMemoryIncludeSelectedTopicContextDraft] = useState(true);
-  const [quizQuestionCountDraft, setQuizQuestionCountDraft] = useState(12);
-  const [quizPassCountDraft, setQuizPassCountDraft] = useState(9);
   const [quizSession, setQuizSession] = useState<TopicQuizSession | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
   const [quizLoading, setQuizLoading] = useState(false);
@@ -191,12 +162,30 @@ export default function App(): React.JSX.Element {
   const [debugLogsLoading, setDebugLogsLoading] = useState(false);
   const [debugLogsError, setDebugLogsError] = useState<string | null>(null);
   const [composerUseGrounding, setComposerUseGrounding] = useState(true);
-  const [viewportCenteredZoom, setViewportCenteredZoom] = useState(readStoredViewportCenteredZoom);
-  const [straightEdgeLinesEnabled, setStraightEdgeLinesEnabled] = useState<boolean>(readStoredStraightEdgeLines);
-  const [straightEdgeLinesDraft, setStraightEdgeLinesDraft] = useState<boolean>(readStoredStraightEdgeLines);
-  const [themeModeDraft, setThemeModeDraft] = useState<ThemeMode>(readInitialThemeMode);
+  const {
+    assistantWidth,
+    setAssistantWidth,
+    isMobileViewport,
+    viewportWidth,
+    leftSidebarOpen,
+    setLeftSidebarOpen,
+    leftSidebarClosing,
+    setLeftSidebarClosing,
+    mobileMenuOpen,
+    setMobileMenuOpen,
+    isSettingsOpen,
+    setSettingsOpen,
+    isLogsOpen,
+    setLogsOpen,
+    viewportCenteredZoom,
+    setViewportCenteredZoom,
+    straightEdgeLinesEnabled,
+    setStraightEdgeLinesEnabled,
+    initialThemeMode,
+    themeModeDraft,
+    setThemeModeDraft,
+  } = useWorkspaceChromeState();
   const graphShellRef = useRef<HTMLDivElement | null>(null);
-  const topicPopoverRef = useRef<HTMLDivElement | null>(null);
   const deleteGraphModalRef = useRef<HTMLDivElement | null>(null);
   const deleteGraphCancelButtonRef = useRef<HTMLButtonElement | null>(null);
   const sessionDeleteModalRef = useRef<HTMLDivElement | null>(null);
@@ -205,12 +194,14 @@ export default function App(): React.JSX.Element {
   const createGraphTitleInputRef = useRef<HTMLInputElement | null>(null);
   const importGraphModalRef = useRef<HTMLDivElement | null>(null);
   const importGraphFileButtonRef = useRef<HTMLButtonElement | null>(null);
+  const importObsidianModalRef = useRef<HTMLDivElement | null>(null);
+  const importObsidianFolderButtonRef = useRef<HTMLButtonElement | null>(null);
   const exportGraphModalRef = useRef<HTMLDivElement | null>(null);
   const exportGraphTitleInputRef = useRef<HTMLInputElement | null>(null);
   const importGraphFileInputRef = useRef<HTMLInputElement | null>(null);
+  const importObsidianFolderInputRef = useRef<HTMLInputElement | null>(null);
   const quizModalRef = useRef<HTMLDivElement | null>(null);
   const quizCloseButtonRef = useRef<HTMLButtonElement | null>(null);
-  const popoverDragRef = useRef<{ pointerX: number; pointerY: number; startX: number; startY: number } | null>(null);
   const chatViewportRef = useRef<HTMLDivElement | null>(null);
   const chatComposerRef = useRef<HTMLTextAreaElement | null>(null);
   const sessionListRef = useRef<HTMLDivElement | null>(null);
@@ -234,22 +225,48 @@ export default function App(): React.JSX.Element {
     setImportGraphTitleDraft("");
     setImportGraphIncludeProgressDraft(true);
   }, []);
+  const closeImportObsidianModal = useCallback(() => {
+    setImportObsidianOpen(false);
+    setImportObsidianError(null);
+    setImportObsidianLoading(false);
+    setObsidianVaultName(null);
+    setObsidianVaultEntries(null);
+    setObsidianImportDraft({
+      graphTitle: "",
+      subject: "",
+      language: "en",
+      relation: "bridges",
+      useFoldersAsZones: true,
+      autofillDescriptions: true,
+      createArtifactsFromNotes: false,
+      createPlaceholderTopics: false,
+    });
+  }, []);
   const closeExportGraphModal = useCallback(() => {
     setExportGraphTarget(null);
     setExportGraphError(null);
     setExportGraphLoading(false);
     setExportGraphTitleDraft("");
     setExportGraphIncludeProgressDraft(true);
+    setExportGraphFormatDraft("mapmind_graph_export");
+    setExportGraphObsidianOptionsDraft(defaultObsidianExportOptions());
   }, []);
   const openImportGraphModal = useCallback(() => {
     setCreateGraphOpen(false);
     setImportGraphOpen(true);
     setImportGraphError(null);
   }, []);
+  const openImportObsidianModal = useCallback(() => {
+    setCreateGraphOpen(false);
+    setImportObsidianOpen(true);
+    setImportObsidianError(null);
+  }, []);
   const openExportGraphModal = useCallback((graph: GraphEnvelope) => {
     setExportGraphTarget(graph);
     setExportGraphTitleDraft(graph.title);
     setExportGraphIncludeProgressDraft(true);
+    setExportGraphFormatDraft("mapmind_graph_export");
+    setExportGraphObsidianOptionsDraft(defaultObsidianExportOptions());
     setExportGraphError(null);
   }, []);
   const closeQuizModal = useCallback(() => {
@@ -282,6 +299,12 @@ export default function App(): React.JSX.Element {
     initialFocusRef: importGraphFileButtonRef,
   });
   useModalAccessibility({
+    isOpen: importObsidianOpen,
+    modalRef: importObsidianModalRef,
+    onClose: closeImportObsidianModal,
+    initialFocusRef: importObsidianFolderButtonRef,
+  });
+  useModalAccessibility({
     isOpen: Boolean(exportGraphTarget),
     modalRef: exportGraphModalRef,
     onClose: closeExportGraphModal,
@@ -293,6 +316,26 @@ export default function App(): React.JSX.Element {
     onClose: closeQuizModal,
     initialFocusRef: quizCloseButtonRef,
   });
+
+  useEffect(() => {
+    try {
+      if (activeGraphId) {
+        localStorage.setItem(ACTIVE_GRAPH_STORAGE_KEY, activeGraphId);
+      } else {
+        localStorage.removeItem(ACTIVE_GRAPH_STORAGE_KEY);
+      }
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [activeGraphId]);
+
+  useEffect(() => {
+    const input = importObsidianFolderInputRef.current;
+    if (!input) return;
+    input.setAttribute("webkitdirectory", "");
+    input.setAttribute("directory", "");
+    input.multiple = true;
+  }, [importObsidianOpen]);
 
   useEffect(() => {
     if (bootstrapStartedRef.current) return;
@@ -315,6 +358,14 @@ export default function App(): React.JSX.Element {
     void loadSnapshots();
   }, []);
 
+  const obsidianImportPreview = useMemo(() => {
+    if (!obsidianVaultEntries || !obsidianVaultName) return null;
+    return buildObsidianImportPreview(obsidianVaultEntries, {
+      vaultName: obsidianVaultName,
+      ...obsidianImportDraft,
+    });
+  }, [obsidianImportDraft, obsidianVaultEntries, obsidianVaultName]);
+
   useEffect(() => {
     return () => {
       if (sidebarCloseTimerRef.current) {
@@ -323,84 +374,24 @@ export default function App(): React.JSX.Element {
     };
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const media = window.matchMedia(`(max-width: ${MOBILE_LAYOUT_BREAKPOINT}px)`);
-    const sync = () => {
-      setIsMobileViewport(media.matches);
-      setViewportWidth(window.innerWidth);
-    };
-    sync();
-    media.addEventListener("change", sync);
-    window.addEventListener("resize", sync);
-    return () => {
-      media.removeEventListener("change", sync);
-      window.removeEventListener("resize", sync);
-    };
-  }, []);
-
-  const wasMobileViewportRef = useRef(false);
-
-  useEffect(() => {
-    if (wasMobileViewportRef.current && !isMobileViewport) {
-      setLeftSidebarOpen(true);
-      setLeftSidebarClosing(false);
-      setAssistantWidth((current) => (current < ASSISTANT_MIN_WIDTH ? 390 : current));
-    }
-    wasMobileViewportRef.current = isMobileViewport;
-  }, [isMobileViewport]);
-
-  usePersistedNumber(ASSISTANT_WIDTH_STORAGE_KEY, assistantWidth);
-  usePersistedBoolean(LEFT_SIDEBAR_OPEN_STORAGE_KEY, leftSidebarOpen);
-  usePersistedBoolean(SETTINGS_OPEN_STORAGE_KEY, isSettingsOpen);
-  usePersistedBoolean(LOGS_OPEN_STORAGE_KEY, isLogsOpen);
-  usePersistedBoolean(VIEWPORT_CENTERED_ZOOM_STORAGE_KEY, viewportCenteredZoom);
-  usePersistedBoolean(STRAIGHT_EDGE_LINES_STORAGE_KEY, straightEdgeLinesEnabled);
-  usePersistedString(THEME_MODE_STORAGE_KEY, themeModeDraft);
-  useEffect(() => {
-    document.documentElement.dataset.theme = themeModeDraft;
-  }, [themeModeDraft]);
-
   const availableGraphs = useMemo(() => data?.workspace.graphs ?? [], [data]);
   const activeGraph = useMemo(
     () => availableGraphs.find((graph) => graph.graph_id === activeGraphId) ?? availableGraphs[0] ?? null,
     [activeGraphId, availableGraphs],
   );
   const activeGraphManualLayout = useMemo(() => readManualLayoutPositions(activeGraph), [activeGraph]);
-  const currentChatState = useMemo<GraphChatState>(
-    () => {
-      if (!activeGraph) return { input: "", messages: [] };
-      const stateKey = `${activeGraph.graph_id}:${activeSessionId ?? "general"}`;
-      return chatByGraph[stateKey] ?? { input: "", messages: [] };
-    },
-    [activeGraph, chatByGraph, activeSessionId],
-  );
-
-  useEffect(() => {
-    if (!activeGraph?.graph_id) return;
-    try {
-      if (activeSessionId) {
-        localStorage.setItem(activeChatSessionStorageKey(activeGraph.graph_id), activeSessionId);
-      } else {
-        localStorage.removeItem(activeChatSessionStorageKey(activeGraph.graph_id));
-      }
-    } catch {
-      // Ignore localStorage write failures.
-    }
-  }, [activeGraph?.graph_id, activeSessionId]);
-
-  useEffect(() => {
-    if (!activeGraph) {
-      setSelectedTopicId(null);
-      setSelectedTopicAnchor(null);
-      return;
-    }
-    setSelectedTopicId((previous) => {
-      const stillExists = activeGraph.topics.some((topic) => topic.id === previous);
-      return stillExists ? previous : null;
-    });
-  }, [activeGraph]);
-
+  const {
+    selectedTopicId,
+    setSelectedTopicId,
+    selectedTopicAnchor,
+    setSelectedTopicAnchor,
+    selectedTopic,
+    popoverPosition,
+    topicPopoverRef,
+    popoverDragRef,
+    handleSelectedTopicAnchorChange,
+    handleSelectTopic,
+  } = useTopicPopover({ activeGraph, isMobileViewport, graphShellRef });
   useEffect(() => {
     setQuizSuccess(null);
   }, [selectedTopicId]);
@@ -416,36 +407,125 @@ export default function App(): React.JSX.Element {
     setGraphLayoutDraft(null);
   }, [activeGraph?.graph_id]);
 
-  useEffect(() => {
-    const c = data?.workspace.config;
-    if (!c) return;
-    setProviderDraft(c.ai_provider ?? "gemini");
-    setModelDraft(c.default_model);
-    setModelPresetDraft(c.model_options.includes(c.default_model) ? c.default_model : "__custom__");
-    setGeminiApiKeyDraft(c.gemini_api_key ?? "");
-    setOpenaiApiKeyDraft(c.openai_api_key ?? "");
-    setOpenaiBaseUrlDraft(c.openai_base_url ?? "https://api.openai.com/v1");
-    setShowOpenAIEndpointDraft((c.openai_base_url ?? "https://api.openai.com/v1") !== "https://api.openai.com/v1" || c.openai_base_url_source === "env");
-    setPersonaDraft(c.persona_rules ?? "");
-    setThinkingModeDraft(c.thinking_mode ?? "default");
-    setMemoryModeDraft(c.memory_mode ?? "balanced");
-    setPlannerMaxTokensDraft(c.planner_max_output_tokens);
-    setPlannerThinkingBudgetDraft(c.planner_thinking_budget);
-    setOrchestratorMaxTokensDraft(c.orchestrator_max_output_tokens);
-    setQuizMaxTokensDraft(c.quiz_max_output_tokens);
-    setAssistantMaxTokensDraft(c.assistant_max_output_tokens);
-    setDisableIdleAnimationsDraft(c.disable_idle_animations ?? false);
-    setEnableClosureTestsDraft(c.enable_closure_tests ?? true);
-    setDebugModeEnabledDraft(c.debug_mode_enabled ?? false);
-    setMemoryHistoryLimitDraft(c.memory_history_message_limit ?? 32);
-    setMemoryIncludeGraphContextDraft(c.memory_include_graph_context ?? true);
-    setMemoryIncludeProgressContextDraft(c.memory_include_progress_context ?? true);
-    setMemoryIncludeQuizContextDraft(c.memory_include_quiz_context ?? true);
-    setMemoryIncludeFrontierContextDraft(c.memory_include_frontier_context ?? true);
-    setMemoryIncludeSelectedTopicContextDraft(c.memory_include_selected_topic_context ?? true);
-    setQuizQuestionCountDraft(c.quiz_question_count);
-    setQuizPassCountDraft(requiredCorrectAnswers(c.pass_threshold, c.quiz_question_count));
-  }, [data?.workspace.config]);
+  const currentConfig = data?.workspace.config ?? null;
+  const settingsState = useWorkspaceSettings({
+    config: currentConfig,
+    updateWorkspaceConfig: async (patch) => {
+      setConfigSaving(true);
+      setError(null);
+      try {
+        const response = await apiFetch(`${API_BASE}/api/v1/workspace/config`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(patch),
+        });
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
+          throw new Error(payload?.detail ?? `config update failed with ${response.status}`);
+        }
+        const payload = (await response.json()) as WorkspaceEnvelope;
+        setData(payload);
+        void loadSnapshots();
+        void loadWorkspaceSurface();
+      } catch (updateError) {
+        setError(updateError instanceof Error ? updateError.message : copy.errors.updateConfig);
+      } finally {
+        setConfigSaving(false);
+      }
+    },
+    straightEdgeLinesEnabled,
+    setStraightEdgeLinesEnabled,
+    initialThemeMode,
+  });
+  const {
+    provider: providerDraft,
+    model: modelDraft,
+    modelPreset: modelPresetDraft,
+    geminiApiKey: geminiApiKeyDraft,
+    openaiApiKey: openaiApiKeyDraft,
+    openaiBaseUrl: openaiBaseUrlDraft,
+    showOpenAIEndpoint: showOpenAIEndpointDraft,
+    thinkingMode: thinkingModeDraft,
+    plannerMaxTokens: plannerMaxTokensDraft,
+    plannerThinkingBudget: plannerThinkingBudgetDraft,
+    orchestratorMaxTokens: orchestratorMaxTokensDraft,
+    quizMaxTokens: quizMaxTokensDraft,
+    assistantMaxTokens: assistantMaxTokensDraft,
+    assistantNickname: assistantNicknameDraft,
+    persona: personaDraft,
+    disableIdleAnimations: disableIdleAnimationsDraft,
+    memoryMode: memoryModeDraft,
+    memoryHistoryLimit: memoryHistoryLimitDraft,
+    memoryIncludeGraphContext: memoryIncludeGraphContextDraft,
+    memoryIncludeProgressContext: memoryIncludeProgressContextDraft,
+    memoryIncludeQuizContext: memoryIncludeQuizContextDraft,
+    memoryIncludeFrontierContext: memoryIncludeFrontierContextDraft,
+    memoryIncludeSelectedTopicContext: memoryIncludeSelectedTopicContextDraft,
+    enableClosureTests: enableClosureTestsDraft,
+    debugModeEnabled: debugModeEnabledDraft,
+    straightEdgeLines: straightEdgeLinesDraft,
+    quizQuestionCount: quizQuestionCountDraft,
+    quizPassCount: quizPassCountDraft,
+  } = settingsState.drafts;
+  const {
+    provider: setProviderDraft,
+    model: setModelDraft,
+    modelPreset: setModelPresetDraft,
+    geminiApiKey: setGeminiApiKeyDraft,
+    openaiApiKey: setOpenaiApiKeyDraft,
+    openaiBaseUrl: setOpenaiBaseUrlDraft,
+    showOpenAIEndpoint: setShowOpenAIEndpointDraft,
+    thinkingMode: setThinkingModeDraft,
+    plannerMaxTokens: setPlannerMaxTokensDraft,
+    plannerThinkingBudget: setPlannerThinkingBudgetDraft,
+    orchestratorMaxTokens: setOrchestratorMaxTokensDraft,
+    quizMaxTokens: setQuizMaxTokensDraft,
+    assistantMaxTokens: setAssistantMaxTokensDraft,
+    assistantNickname: setAssistantNicknameDraft,
+    persona: setPersonaDraft,
+    disableIdleAnimations: setDisableIdleAnimationsDraft,
+    memoryMode: setMemoryModeDraft,
+    memoryHistoryLimit: setMemoryHistoryLimitDraft,
+    memoryIncludeGraphContext: setMemoryIncludeGraphContextDraft,
+    memoryIncludeProgressContext: setMemoryIncludeProgressContextDraft,
+    memoryIncludeQuizContext: setMemoryIncludeQuizContextDraft,
+    memoryIncludeFrontierContext: setMemoryIncludeFrontierContextDraft,
+    memoryIncludeSelectedTopicContext: setMemoryIncludeSelectedTopicContextDraft,
+    enableClosureTests: setEnableClosureTestsDraft,
+    debugModeEnabled: setDebugModeEnabledDraft,
+    straightEdgeLines: setStraightEdgeLinesDraft,
+    quizQuestionCount: setQuizQuestionCountDraft,
+    quizPassCount: setQuizPassCountDraft,
+  } = settingsState.setDrafts;
+
+  const { chatModelOptions, selectedChatModel, setSelectedChatModel } = useChatModelSelection(
+    currentConfig,
+    activeGraph?.graph_id ?? null,
+  );
+  const {
+    activeSessionId,
+    setActiveSessionId,
+    chatSessions,
+    currentChatState,
+    chatLoading,
+    chatThreadLoading,
+    chatError,
+    chatSessionsError,
+    updateCurrentChatState,
+    clearChatStateForGraph,
+    loadSessions,
+    sendChat,
+  } = useGraphChatController({
+    activeGraph,
+    selectedTopicId,
+    selectedChatModel,
+    defaultModel: currentConfig?.default_model ?? null,
+    memoryHistoryMessageLimit: currentConfig?.memory_history_message_limit ?? 50,
+    composerUseGrounding,
+    largeGraphModelHint: copy.sessions.largeGraphModelHint,
+    loadChatError: copy.errors.loadChat,
+    loadChatSessionsError: copy.errors.loadChatSessions,
+  });
 
   useEffect(() => {
     if (!isSettingsOpen) return;
@@ -478,54 +558,6 @@ export default function App(): React.JSX.Element {
     setQuizPassCountDraft((current) => Math.min(current, quizQuestionCountDraft));
   }, [quizQuestionCountDraft]);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function loadChatThread(graphId: string): Promise<void> {
-      setChatThreadLoading(true);
-      setChatError(null);
-      try {
-        const sessionParam = activeSessionId ? `?session_id=${activeSessionId}` : "";
-        const response = await apiFetch(`${API_BASE}/api/v1/graphs/${graphId}/chat${sessionParam}`);
-        if (!response.ok) {
-          if (response.status === 404 && activeSessionId) {
-            setActiveSessionId(null);
-            return;
-          }
-          throw new Error(`chat thread failed with ${response.status}`);
-        }
-        const payload = (await response.json()) as GraphChatThread;
-        if (cancelled) return;
-        setChatByGraph((current) => {
-          const stateKey = `${graphId}:${activeSessionId ?? "general"}`;
-          const existing = current[stateKey] ?? { input: "", messages: [] };
-          return {
-            ...current,
-            [stateKey]: {
-              input: existing.input,
-              messages: reconcileThreadMessages(payload.messages, existing.messages),
-            },
-          };
-        });
-      } catch (loadError) {
-        if (cancelled) return;
-        setChatError(loadError instanceof Error ? loadError.message : copy.errors.loadChat);
-      } finally {
-        if (!cancelled) setChatThreadLoading(false);
-      }
-    }
-
-    if (!activeGraph?.graph_id) return;
-    void loadChatThread(activeGraph.graph_id);
-    return () => {
-      cancelled = true;
-    };
-  }, [activeGraph?.graph_id, activeSessionId]);
-
-  const selectedTopic: Topic | null = useMemo(() => {
-    if (!activeGraph || !selectedTopicId) return null;
-    return activeGraph.topics.find((topic) => topic.id === selectedTopicId) ?? null;
-  }, [activeGraph, selectedTopicId]);
-
   const focusData = useMemo(() => computeFocusData(activeGraph, selectedTopicId), [activeGraph, selectedTopicId]);
   const graphSummary = useMemo(() => computeGraphSummary(activeGraph), [activeGraph]);
   const fallbackAssessment = useMemo(() => buildFallbackAssessment(activeGraph, copy), [activeGraph, copy]);
@@ -545,17 +577,11 @@ export default function App(): React.JSX.Element {
   );
   const sessionUser = sessionInfo?.user ?? null;
   const onboardingNeedsFirstGraph = !activeGraph && workspaceSurface?.onboarding_state === "needs_first_graph";
-  const currentConfig = data?.workspace.config ?? null;
-  const geminiKeyLockedByEnv = currentConfig?.gemini_api_key_source === "env";
-  const openaiKeyLockedByEnv = currentConfig?.openai_api_key_source === "env";
-  const openaiBaseUrlLockedByEnv = currentConfig?.openai_base_url_source === "env";
+  const { geminiKeyLockedByEnv, openaiKeyLockedByEnv, openaiBaseUrlLockedByEnv } = settingsState.locks;
   const liveDisableIdleAnimations =
     isSettingsOpen
       ? disableIdleAnimationsDraft
       : Boolean(currentConfig?.disable_idle_animations);
-  const currentQuizPassCount = currentConfig
-    ? requiredCorrectAnswers(currentConfig.pass_threshold, currentConfig.quiz_question_count)
-    : 0;
   const closureTestsEnabled = currentConfig?.enable_closure_tests ?? true;
   const debugModeEnabled = currentConfig?.debug_mode_enabled ?? false;
   useEffect(() => {
@@ -564,192 +590,13 @@ export default function App(): React.JSX.Element {
       setLogsOpen(false);
     }
   }, [debugModeEnabled]);
-  const activeThinkingOption = THINKING_MODE_OPTIONS.find((option) => option.id === thinkingModeDraft) ?? THINKING_MODE_OPTIONS[1];
-  const activeMemoryOption = MEMORY_MODE_OPTIONS.find((option) => option.id === memoryModeDraft) ?? MEMORY_MODE_OPTIONS[1];
-  const activeThinkingValues =
-    thinkingModeDraft === "custom"
-      ? `Planner ${plannerMaxTokensDraft.toLocaleString()} · thinking ${plannerThinkingBudgetDraft.toLocaleString()} · orchestrator ${orchestratorMaxTokensDraft.toLocaleString()} · quiz ${quizMaxTokensDraft.toLocaleString()} · assistant ${assistantMaxTokensDraft.toLocaleString()}`
-      : activeThinkingOption.description;
-  const activeMemoryValues =
-    memoryModeDraft === "custom"
-      ? `${memoryHistoryLimitDraft} recent messages · graph ${memoryIncludeGraphContextDraft ? "on" : "off"} · progress ${memoryIncludeProgressContextDraft ? "on" : "off"} · quiz ${memoryIncludeQuizContextDraft ? "on" : "off"} · frontier ${memoryIncludeFrontierContextDraft ? "on" : "off"} · selected topic ${memoryIncludeSelectedTopicContextDraft ? "on" : "off"}`
-      : activeMemoryOption.description;
-  const settingsDirty = Boolean(
-    (currentConfig && (
-      providerDraft !== currentConfig.ai_provider ||
-      modelDraft !== currentConfig.default_model ||
-      (!geminiKeyLockedByEnv && geminiApiKeyDraft !== (currentConfig.gemini_api_key ?? "")) ||
-      (!openaiKeyLockedByEnv && openaiApiKeyDraft !== (currentConfig.openai_api_key ?? "")) ||
-      (!openaiBaseUrlLockedByEnv && openaiBaseUrlDraft !== currentConfig.openai_base_url) ||
-      thinkingModeDraft !== currentConfig.thinking_mode ||
-      memoryModeDraft !== (currentConfig.memory_mode ?? "balanced") ||
-      (
-        thinkingModeDraft === "custom" && (
-          plannerMaxTokensDraft !== currentConfig.planner_max_output_tokens ||
-          plannerThinkingBudgetDraft !== currentConfig.planner_thinking_budget ||
-          orchestratorMaxTokensDraft !== currentConfig.orchestrator_max_output_tokens ||
-          quizMaxTokensDraft !== currentConfig.quiz_max_output_tokens ||
-          assistantMaxTokensDraft !== currentConfig.assistant_max_output_tokens
-        )
-      ) ||
-      (
-        memoryModeDraft === "custom" && (
-          memoryHistoryLimitDraft !== (currentConfig.memory_history_message_limit ?? 32) ||
-          memoryIncludeGraphContextDraft !== (currentConfig.memory_include_graph_context ?? true) ||
-          memoryIncludeProgressContextDraft !== (currentConfig.memory_include_progress_context ?? true) ||
-          memoryIncludeQuizContextDraft !== (currentConfig.memory_include_quiz_context ?? true) ||
-          memoryIncludeFrontierContextDraft !== (currentConfig.memory_include_frontier_context ?? true) ||
-          memoryIncludeSelectedTopicContextDraft !== (currentConfig.memory_include_selected_topic_context ?? true)
-        )
-      ) ||
-      disableIdleAnimationsDraft !== (currentConfig.disable_idle_animations ?? false) ||
-      enableClosureTestsDraft !== (currentConfig.enable_closure_tests ?? true) ||
-      debugModeEnabledDraft !== (currentConfig.debug_mode_enabled ?? false) ||
-      personaDraft !== (currentConfig.persona_rules ?? "") ||
-      quizQuestionCountDraft !== currentConfig.quiz_question_count ||
-      quizPassCountDraft !== currentQuizPassCount
-    )) ||
-    straightEdgeLinesDraft !== straightEdgeLinesEnabled
-  );
+  const activeThinkingOption = settingsState.activeThinkingOption;
+  const activeMemoryOption = settingsState.activeMemoryOption;
+  const activeThinkingValues = settingsState.activeThinkingValues;
+  const activeMemoryValues = settingsState.activeMemoryValues;
+  const settingsDirty = settingsState.settingsDirty;
   const showGraphLoadingState = loading && !activeGraph;
   const showGraphEmptyState = !loading && !activeGraph;
-
-  useEffect(() => {
-    setPopoverFollowAnchor(true);
-    setPopoverDragOffset({ x: 0, y: 0 });
-    if (!selectedTopicId) {
-      setSelectedTopicAnchor(null);
-      setPopoverPosition(null);
-    }
-  }, [selectedTopicId]);
-
-  const selectedTopicAnchorRef = useRef(selectedTopicAnchor);
-  selectedTopicAnchorRef.current = selectedTopicAnchor;
-  const popoverDragOffsetRef = useRef(popoverDragOffset);
-  popoverDragOffsetRef.current = popoverDragOffset;
-  const lastAnchorCommitAtRef = useRef(0);
-  const handleSelectedTopicAnchorChange = useCallback((next: TopicAnchorPoint | null) => {
-    const current = selectedTopicAnchorRef.current;
-    if (isMobileViewport && current && next) return;
-    if (!popoverFollowAnchor && current && next) return;
-    if (shouldKeepCurrentAnchor(current, next)) return;
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
-    const elapsed = now - lastAnchorCommitAtRef.current;
-    if (!shouldCommitAnchorUpdate(current, next, elapsed)) return;
-    lastAnchorCommitAtRef.current = now;
-    if (!current && next) {
-      setSelectedTopicAnchor(next);
-      const base = computePopoverPosition(next, graphShellRef.current, topicPopoverRef.current);
-      if (base) {
-        const drag = popoverDragOffsetRef.current;
-        const positioned = {
-          left: base.left + drag.x,
-          top: base.top + drag.y,
-          side: base.side,
-        } satisfies PopoverPosition;
-        setPopoverPosition((existing) => (samePopoverPosition(existing, positioned) ? existing : positioned));
-      }
-      setPopoverFollowAnchor(false);
-      return;
-    }
-    setSelectedTopicAnchor(next);
-  }, [isMobileViewport, popoverFollowAnchor]);
-
-  useLayoutEffect(() => {
-    if (!popoverFollowAnchor) return;
-    if (!selectedTopic || !selectedTopicAnchor) {
-      setPopoverPosition(null);
-      return;
-    }
-
-    const updatePosition = () => {
-      const anchor = selectedTopicAnchorRef.current;
-      if (!anchor) {
-        setPopoverPosition(null);
-        return;
-      }
-      const base = computePopoverPosition(anchor, graphShellRef.current, topicPopoverRef.current);
-      if (!base) {
-        setPopoverPosition(null);
-        return;
-      }
-      const drag = popoverDragOffsetRef.current;
-      const next = {
-        left: base.left + drag.x,
-        top: base.top + drag.y,
-        side: base.side,
-      } satisfies PopoverPosition;
-      setPopoverPosition((current) => (samePopoverPosition(current, next) ? current : next));
-      setPopoverFollowAnchor(false);
-    };
-
-    const frame = window.requestAnimationFrame(updatePosition);
-    const shell = graphShellRef.current;
-    if (!shell) {
-      window.cancelAnimationFrame(frame);
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(() => updatePosition());
-    resizeObserver.observe(shell);
-    window.addEventListener("resize", updatePosition);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", updatePosition);
-    };
-    // Recreate the observer only when the selected topic changes.
-    // Anchor coordinates are read through refs inside the callback.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [popoverFollowAnchor, selectedTopic?.id]);
-
-  // Update the popover position without recreating the observer.
-  useEffect(() => {
-    if (!selectedTopic || !selectedTopicAnchor) return;
-    if (!popoverFollowAnchor) return;
-    const base = computePopoverPosition(selectedTopicAnchor, graphShellRef.current, topicPopoverRef.current);
-    if (!base) return;
-    const next = {
-      left: base.left + popoverDragOffset.x,
-      top: base.top + popoverDragOffset.y,
-      side: base.side,
-    } satisfies PopoverPosition;
-    setPopoverPosition((current) => (samePopoverPosition(current, next) ? current : next));
-  }, [popoverFollowAnchor, selectedTopic, selectedTopicAnchor, popoverDragOffset]);
-
-  useEffect(() => {
-    function stopDrag(): void {
-      popoverDragRef.current = null;
-    }
-
-    function onPointerMove(event: PointerEvent): void {
-      const drag = popoverDragRef.current;
-      const shell = graphShellRef.current;
-      const popover = topicPopoverRef.current;
-      if (!drag || !shell || !popover) return;
-      const shellRect = shell.getBoundingClientRect();
-      const nextLeft = drag.startX + (event.clientX - drag.pointerX);
-      const nextTop = drag.startY + (event.clientY - drag.pointerY);
-      const boundedLeft = Math.max(16, Math.min(shellRect.width - popover.offsetWidth - 16, nextLeft));
-      const boundedTop = Math.max(16, Math.min(shellRect.height - popover.offsetHeight - 16, nextTop));
-      setPopoverFollowAnchor(false);
-      setPopoverPosition((current) => {
-        const next = {
-          left: boundedLeft,
-          top: boundedTop,
-          side: current?.side ?? "right",
-        } satisfies PopoverPosition;
-        return samePopoverPosition(current, next) ? current : next;
-      });
-    }
-
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", stopDrag);
-    return () => {
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", stopDrag);
-    };
-  }, [selectedTopicAnchor]);
 
   useEffect(() => {
     let cancelled = false;
@@ -778,10 +625,17 @@ export default function App(): React.JSX.Element {
     };
   }, [activeGraph?.graph_id, data?.snapshot.id]);
 
+  // Auto-scroll only for new messages or active assistant loading.
+  const lastMessagesLengthRef = useRef(0);
   useEffect(() => {
     const viewport = chatViewportRef.current;
     if (!viewport) return;
-    viewport.scrollTop = viewport.scrollHeight;
+    const nextLength = currentChatState.messages.length;
+    const grew = nextLength > lastMessagesLengthRef.current;
+    lastMessagesLengthRef.current = nextLength;
+    if (grew || chatLoading) {
+      viewport.scrollTop = viewport.scrollHeight;
+    }
   }, [currentChatState.messages, chatLoading]);
 
   function handleAssistantResize(startX: number): void {
@@ -810,53 +664,6 @@ export default function App(): React.JSX.Element {
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
   }
-
-  function updateCurrentChatState(updater: (current: GraphChatState) => GraphChatState): void {
-    if (!activeGraph) return;
-    const stateKey = `${activeGraph.graph_id}:${activeSessionId ?? "general"}`;
-    setChatByGraph((current) => {
-      const graphState = current[stateKey] ?? { input: "", messages: [] };
-      return {
-        ...current,
-        [stateKey]: updater(graphState),
-      };
-    });
-  }
-
-  function clearChatStateForGraph(graphId: string | null | undefined): void {
-    if (!graphId) return;
-    setChatByGraph((current) => {
-      const next = { ...current };
-      for (const key of Object.keys(next)) {
-        if (key.startsWith(`${graphId}:`)) delete next[key];
-      }
-      return next;
-    });
-  }
-
-  async function loadSessions(): Promise<void> {
-    if (!activeGraph) return;
-    setChatSessionsError(null);
-    try {
-      const sessions = await fetchChatSessions(
-        apiFetch,
-        `${API_BASE}/api/v1/graphs/${activeGraph.graph_id}/chat/sessions`,
-        copy.errors.loadChatSessions,
-      );
-      setChatSessions(sessions);
-    } catch (loadError) {
-      setChatSessionsError(loadError instanceof Error ? loadError.message : copy.errors.loadChatSessions);
-    }
-  }
-
-  // Restore the last active chat session for the selected graph across reloads.
-  useEffect(() => {
-    setChatSessions([]);
-    setChatSessionsError(null);
-    if (!activeGraph) return;
-    setActiveSessionId(readStoredActiveChatSession(activeGraph.graph_id));
-    void loadSessions();
-  }, [activeGraph?.graph_id]);
 
   async function fetchWorkspace(): Promise<WorkspaceEnvelope> {
     const response = await apiFetch(`${API_BASE}/api/v1/workspace/current`);
@@ -1002,32 +809,121 @@ export default function App(): React.JSX.Element {
     }
   }
 
+  async function handleObsidianVaultFiles(files: FileList | null): Promise<void> {
+    const fileList = files ? Array.from(files) : [];
+    if (fileList.length === 0) return;
+    setImportObsidianLoading(true);
+    setImportObsidianError(null);
+    try {
+      const relativePaths = fileList
+        .map((file) => file.webkitRelativePath || file.name)
+        .filter(Boolean);
+      const vaultRoot = relativePaths[0]?.split("/")[0] ?? "Obsidian Vault";
+      const markdownFiles = fileList.filter((file) => {
+        const relativePath = file.webkitRelativePath || file.name;
+        return relativePath.toLowerCase().endsWith(".md");
+      });
+      const entries = await Promise.all(
+        markdownFiles.map(async (file) => {
+          const relativePath = file.webkitRelativePath || file.name;
+          const [, ...segments] = relativePath.split("/");
+          return {
+            path: segments.join("/") || file.name,
+            content: await file.text(),
+          } satisfies ObsidianVaultEntry;
+        }),
+      );
+      if (entries.length === 0) {
+        throw new Error(copy.dialogs.obsidianNoMarkdown);
+      }
+      setObsidianVaultName(vaultRoot);
+      setObsidianVaultEntries(entries);
+      setObsidianImportDraft((current) => ({
+        ...current,
+        graphTitle: vaultRoot,
+        subject: vaultRoot,
+      }));
+    } catch (loadError) {
+      setObsidianVaultName(null);
+      setObsidianVaultEntries(null);
+      setImportObsidianError(loadError instanceof Error ? loadError.message : copy.errors.importGraph);
+    } finally {
+      setImportObsidianLoading(false);
+    }
+  }
+
+  async function importGraphFromObsidian(): Promise<void> {
+    if (!obsidianImportPreview?.package) {
+      setImportObsidianError(copy.dialogs.obsidianImportBlocked);
+      return;
+    }
+    setImportObsidianLoading(true);
+    setImportObsidianError(null);
+    try {
+      const response = await apiFetch(`${API_BASE}/api/v1/workspace/graphs/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          package: obsidianImportPreview.package,
+          title: obsidianImportDraft.graphTitle.trim() || undefined,
+          include_progress: false,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response, copy.errors.importGraph));
+      }
+      const payload = (await response.json()) as WorkspaceEnvelope;
+      setData(payload);
+      clearChatStateForGraph(payload.workspace.active_graph_id ?? payload.workspace.graphs[0]?.graph_id ?? null);
+      setActiveGraphId(payload.workspace.active_graph_id ?? payload.workspace.graphs[0]?.graph_id ?? null);
+      setSelectedTopicId(null);
+      setSelectedTopicAnchor(null);
+      closeImportObsidianModal();
+      setCreateGraphOpen(false);
+      await Promise.all([loadSnapshots(), loadSessionInfo()]);
+    } catch (importError) {
+      setImportObsidianError(importError instanceof Error ? importError.message : copy.errors.importGraph);
+    } finally {
+      setImportObsidianLoading(false);
+    }
+  }
+
   async function exportGraph(graph: GraphEnvelope): Promise<void> {
     setExportGraphLoading(true);
     setExportGraphError(null);
     try {
+      if (exportGraphFormatDraft === "mapmind_obsidian_export" && !supportsObsidianDirectoryExport()) {
+        throw new Error(copy.errors.exportGraphObsidianUnsupported);
+      }
       const response = await apiFetch(`${API_BASE}/api/v1/workspace/graphs/${graph.graph_id}/export`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: exportGraphTitleDraft.trim() || graph.title,
           include_progress: exportGraphIncludeProgressDraft,
+          format: exportGraphFormatDraft,
+          obsidian: exportGraphFormatDraft === "mapmind_obsidian_export" ? exportGraphObsidianOptionsDraft : undefined,
         }),
       });
       if (!response.ok) {
         throw new Error(await readErrorMessage(response, copy.errors.exportGraph));
       }
-      const payload = (await response.json()) as GraphExportPackagePayload;
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      const safeBase = (exportGraphTitleDraft.trim() || graph.title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "graph";
-      link.href = objectUrl;
-      link.download = `${safeBase}.mapmind-graph.json`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(objectUrl);
+      if (exportGraphFormatDraft === "mapmind_obsidian_export") {
+        const payload = (await response.json()) as ObsidianGraphExportPackagePayload;
+        await writeObsidianExportPackageToDirectory(payload);
+      } else {
+        const payload = (await response.json()) as GraphExportPackagePayload;
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const safeBase = (exportGraphTitleDraft.trim() || graph.title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "graph";
+        link.href = objectUrl;
+        link.download = `${safeBase}.mapmind-graph.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(objectUrl);
+      }
       closeExportGraphModal();
     } catch (exportError) {
       setExportGraphError(exportError instanceof Error ? exportError.message : copy.errors.exportGraph);
@@ -1099,227 +995,6 @@ export default function App(): React.JSX.Element {
     setError(null);
     setGraphLayoutDraft(activeGraphManualLayout);
     setGraphLayoutEditing(true);
-  }
-
-  async function updateWorkspaceConfig(patch: {
-    ai_provider?: string;
-    default_model?: string;
-    gemini_api_key?: string;
-    openai_api_key?: string;
-    openai_base_url?: string;
-    thinking_mode?: ThinkingMode;
-    memory_mode?: MemoryMode;
-    planner_max_output_tokens?: number;
-    planner_thinking_budget?: number;
-    orchestrator_max_output_tokens?: number;
-    quiz_max_output_tokens?: number;
-    assistant_max_output_tokens?: number;
-    disable_idle_animations?: boolean;
-    persona_rules?: string;
-    quiz_question_count?: number;
-    pass_threshold?: number;
-    enable_closure_tests?: boolean;
-    debug_mode_enabled?: boolean;
-    memory_history_message_limit?: number;
-    memory_include_graph_context?: boolean;
-    memory_include_progress_context?: boolean;
-    memory_include_quiz_context?: boolean;
-    memory_include_frontier_context?: boolean;
-    memory_include_selected_topic_context?: boolean;
-  }): Promise<void> {
-    setConfigSaving(true);
-    setError(null);
-    try {
-      const response = await apiFetch(`${API_BASE}/api/v1/workspace/config`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      });
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
-        throw new Error(payload?.detail ?? `config update failed with ${response.status}`);
-      }
-      const payload = (await response.json()) as WorkspaceEnvelope;
-      setData(payload);
-      void loadSnapshots();
-      void loadWorkspaceSurface();
-    } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : copy.errors.updateConfig);
-    } finally {
-      setConfigSaving(false);
-    }
-  }
-
-  function saveSettings(): void {
-    if (!currentConfig) return;
-    const patch: Parameters<typeof updateWorkspaceConfig>[0] = {};
-    if (providerDraft !== currentConfig.ai_provider) patch.ai_provider = providerDraft;
-    if (modelDraft !== currentConfig.default_model) patch.default_model = modelDraft;
-    if (!geminiKeyLockedByEnv && geminiApiKeyDraft !== (currentConfig.gemini_api_key ?? "")) patch.gemini_api_key = geminiApiKeyDraft;
-    if (!openaiKeyLockedByEnv && openaiApiKeyDraft !== (currentConfig.openai_api_key ?? "")) patch.openai_api_key = openaiApiKeyDraft;
-    if (!openaiBaseUrlLockedByEnv && openaiBaseUrlDraft !== currentConfig.openai_base_url) patch.openai_base_url = openaiBaseUrlDraft;
-    if (thinkingModeDraft !== currentConfig.thinking_mode) patch.thinking_mode = thinkingModeDraft;
-    if (memoryModeDraft !== (currentConfig.memory_mode ?? "balanced")) patch.memory_mode = memoryModeDraft;
-    if (thinkingModeDraft === "custom") {
-      if (plannerMaxTokensDraft !== currentConfig.planner_max_output_tokens) patch.planner_max_output_tokens = plannerMaxTokensDraft;
-      if (plannerThinkingBudgetDraft !== currentConfig.planner_thinking_budget) patch.planner_thinking_budget = plannerThinkingBudgetDraft;
-      if (orchestratorMaxTokensDraft !== currentConfig.orchestrator_max_output_tokens) patch.orchestrator_max_output_tokens = orchestratorMaxTokensDraft;
-      if (quizMaxTokensDraft !== currentConfig.quiz_max_output_tokens) patch.quiz_max_output_tokens = quizMaxTokensDraft;
-      if (assistantMaxTokensDraft !== currentConfig.assistant_max_output_tokens) patch.assistant_max_output_tokens = assistantMaxTokensDraft;
-    }
-    if (memoryModeDraft === "custom") {
-      if (memoryHistoryLimitDraft !== (currentConfig.memory_history_message_limit ?? 32)) patch.memory_history_message_limit = memoryHistoryLimitDraft;
-      if (memoryIncludeGraphContextDraft !== (currentConfig.memory_include_graph_context ?? true)) patch.memory_include_graph_context = memoryIncludeGraphContextDraft;
-      if (memoryIncludeProgressContextDraft !== (currentConfig.memory_include_progress_context ?? true)) patch.memory_include_progress_context = memoryIncludeProgressContextDraft;
-      if (memoryIncludeQuizContextDraft !== (currentConfig.memory_include_quiz_context ?? true)) patch.memory_include_quiz_context = memoryIncludeQuizContextDraft;
-      if (memoryIncludeFrontierContextDraft !== (currentConfig.memory_include_frontier_context ?? true)) patch.memory_include_frontier_context = memoryIncludeFrontierContextDraft;
-      if (memoryIncludeSelectedTopicContextDraft !== (currentConfig.memory_include_selected_topic_context ?? true)) patch.memory_include_selected_topic_context = memoryIncludeSelectedTopicContextDraft;
-    }
-    if (disableIdleAnimationsDraft !== (currentConfig.disable_idle_animations ?? false)) {
-      patch.disable_idle_animations = disableIdleAnimationsDraft;
-    }
-    if (enableClosureTestsDraft !== (currentConfig.enable_closure_tests ?? true)) {
-      patch.enable_closure_tests = enableClosureTestsDraft;
-    }
-    if (debugModeEnabledDraft !== (currentConfig.debug_mode_enabled ?? false)) {
-      patch.debug_mode_enabled = debugModeEnabledDraft;
-    }
-    if (personaDraft !== (currentConfig.persona_rules ?? "")) patch.persona_rules = personaDraft;
-    if (quizQuestionCountDraft !== currentConfig.quiz_question_count) patch.quiz_question_count = quizQuestionCountDraft;
-    if (quizPassCountDraft !== currentQuizPassCount || quizQuestionCountDraft !== currentConfig.quiz_question_count) {
-      patch.pass_threshold = quizPassCountDraft / quizQuestionCountDraft;
-    }
-    if (straightEdgeLinesDraft !== straightEdgeLinesEnabled) {
-      setStraightEdgeLinesEnabled(straightEdgeLinesDraft);
-    }
-    if (Object.keys(patch).length > 0) void updateWorkspaceConfig(patch);
-  }
-
-  async function sendChat(
-    overridePrompt?: string,
-    options?: { hiddenUserMessage?: boolean; baseMessages?: ChatMessage[] },
-  ): Promise<void> {
-    if (!activeGraph) return;
-    const prompt = (overridePrompt ?? currentChatState.input).trim();
-    if (!prompt) return;
-    const hiddenUserMessage = options?.hiddenUserMessage ?? false;
-    const baseMessages = options?.baseMessages ?? currentChatState.messages;
-
-    const userMessage: ChatMessage = {
-      id: makeMessageId(),
-      role: "user",
-      content: prompt,
-      hidden: hiddenUserMessage,
-      created_at: new Date().toISOString(),
-    };
-    const nextMessages = [...baseMessages, userMessage];
-    updateCurrentChatState(() => ({ input: "", messages: nextMessages }));
-    setChatLoading(true);
-    setChatError(null);
-
-    try {
-      const response = await apiFetch(`${API_BASE}/api/v1/graphs/${activeGraph.graph_id}/chat/stream`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt,
-          messages: recentMessagesForContext(nextMessages, currentConfig?.memory_history_message_limit ?? 50).map((message) => ({
-            role: message.role,
-            content: message.content,
-            hidden: message.hidden ?? false,
-            created_at: message.created_at,
-          })),
-          hidden_user_message: hiddenUserMessage,
-          selected_topic_id: activeSessionId
-            ? chatSessions.find((s) => s.session_id === activeSessionId)?.topic_id ?? selectedTopicId
-            : selectedTopicId,
-          session_id: activeSessionId,
-          model: data?.workspace.config.default_model ?? null,
-          use_grounding: composerUseGrounding,
-        }),
-      });
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
-        throw new Error(payload?.detail ?? `chat failed with ${response.status}`);
-      }
-      if (!response.body) throw new Error("chat stream unavailable");
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-          const event = JSON.parse(trimmed) as GraphChatStreamEvent;
-          if (event.type === "assistant_message") {
-            const terminalAssistantMessage =
-              event.message ?? (event.messages && event.messages.length > 0 ? event.messages[event.messages.length - 1] : null);
-            updateCurrentChatState((current) => ({
-              ...current,
-              messages: [...current.messages, event.message],
-            }));
-            if (terminalAssistantMessage?.action === "answer") {
-              setChatLoading(false);
-            }
-            continue;
-          }
-          if (event.type === "planning_status") {
-            updateCurrentChatState((current) => ({
-              ...current,
-              messages: current.messages.map((message) =>
-                message.id === event.message_id
-                  ? { ...message, planning_status: event.label, planning_error: null }
-                  : message,
-              ),
-            }));
-            continue;
-          }
-          if (event.type === "proposal_ready") {
-            setChatLoading(false);
-            updateCurrentChatState((current) => ({
-              ...current,
-              messages: current.messages.map((message) =>
-                message.id === event.message_id
-                  ? { ...(event.message ?? message), planning_status: null, planning_error: null }
-                  : message,
-              ),
-            }));
-            continue;
-          }
-          if (event.type === "planning_error") {
-            setChatLoading(false);
-            updateCurrentChatState((current) => ({
-              ...current,
-              messages: current.messages.map((message) =>
-                message.id === event.message_id
-                  ? { ...message, planning_status: null, planning_error: event.detail }
-                  : message,
-              ),
-            }));
-            continue;
-          }
-          if (event.type === "error") {
-            throw new Error(event.detail);
-          }
-        }
-      }
-    } catch (chatLoadError) {
-      setChatError(chatLoadError instanceof Error ? chatLoadError.message : "chat failed");
-      updateCurrentChatState((current) => ({
-        ...current,
-        input: prompt,
-        messages: current.messages.filter((message) => message.id !== userMessage.id),
-      }));
-    } finally {
-      setChatLoading(false);
-      void loadSessions();
-    }
   }
 
   async function applyProposalFromMessage(messageId: string, proposal: ProposalGenerateResponse): Promise<void> {
@@ -1515,6 +1190,7 @@ export default function App(): React.JSX.Element {
   ];
   const suspendedSurfaceStateRef = useRef<{ leftSidebarOpen: boolean; assistantWidth: number } | null>(null);
   const overlayWasOpenRef = useRef(false);
+  const [overlayRestoreEpoch, setOverlayRestoreEpoch] = useState(0);
   const assistantOpen = assistantWidth >= ASSISTANT_MIN_WIDTH;
   const hasInlinePlanningWidget = currentChatState.messages.some((message) => Boolean(message.planning_status));
   const overlayLeftOffset = leftSidebarOpen ? 280 : 68;
@@ -1522,11 +1198,6 @@ export default function App(): React.JSX.Element {
   const topOverlayCompact =
     !isMobileViewport
     && viewportWidth - overlayLeftOffset - overlayRightOffset < COMPACT_TOP_OVERLAY_THRESHOLD;
-
-  const handleSelectTopic = useCallback((topicId: string | null, anchor: TopicAnchorPoint | null) => {
-    setSelectedTopicId(topicId);
-    setSelectedTopicAnchor(anchor);
-  }, []);
 
   const openSidebar = useCallback(() => {
     if (sidebarCloseTimerRef.current) {
@@ -1565,6 +1236,13 @@ export default function App(): React.JSX.Element {
     setMobileMenuOpen(false);
   }, []);
 
+  const closeOverlaySurfaces = useCallback(() => {
+    suspendedSurfaceStateRef.current = null;
+    setSettingsOpen(false);
+    setLogsOpen(false);
+    setMobileMenuOpen(false);
+  }, []);
+
   useEffect(() => {
     const overlayOpen = isSettingsOpen || isLogsOpen;
     if (overlayOpen && !overlayWasOpenRef.current) {
@@ -1585,6 +1263,7 @@ export default function App(): React.JSX.Element {
       setLeftSidebarOpen(suspendedState.leftSidebarOpen);
       setAssistantWidth(suspendedState.assistantWidth);
       suspendedSurfaceStateRef.current = null;
+      setOverlayRestoreEpoch((current) => current + 1);
     }
     overlayWasOpenRef.current = overlayOpen;
   }, [assistantWidth, isLogsOpen, isSettingsOpen, leftSidebarOpen]);
@@ -1620,125 +1299,149 @@ export default function App(): React.JSX.Element {
 
   const sidebarVisible = leftSidebarOpen || leftSidebarClosing;
 
+  if (!data || !workspaceSurface) {
+    return (
+      <div className="clewLaunchInline" role="status" aria-label="Loading Clew">
+        <ClewLoader size={56} />
+      </div>
+    );
+  }
+
   return (
     <div className="app" data-theme={themeModeDraft}>
       <div className="ambient-glow" />
       <WorkspaceShell
         copy={copy}
-        sidebarVisible={sidebarVisible}
-        leftSidebarClosing={leftSidebarClosing}
-        closeSidebar={closeSidebar}
-        projectsExpanded={projectsExpanded}
-        setProjectsExpanded={setProjectsExpanded}
-        availableGraphs={availableGraphs}
-        activeGraph={activeGraph}
-        renamingGraphId={renamingGraphId}
-        renameGraphDraft={renameGraphDraft}
-        setRenameGraphDraft={setRenameGraphDraft}
-        renameGraphSaving={renameGraphSaving}
-        renameGraph={renameGraph}
-        setError={setError}
-        setRenamingGraphId={setRenamingGraphId}
-        setActiveGraphId={setActiveGraphId}
-        setSelectedTopicId={setSelectedTopicId}
-        setSelectedTopicAnchor={setSelectedTopicAnchor}
-        openExportGraphModal={openExportGraphModal}
-        setDeleteConfirm={setDeleteConfirm}
-        setCreateGraphOpen={setCreateGraphOpen}
-        setCreateGraphError={setCreateGraphError}
-        openConfigurationSettings={openConfigurationSettings}
-        openDebugLogs={toggleDebugLogs}
-        isLogsOpen={isLogsOpen}
-        isMobileViewport={isMobileViewport}
-        leftSidebarOpen={leftSidebarOpen}
-        openSidebar={openSidebar}
-        assistantOpen={assistantOpen}
-        setAssistantWidth={setAssistantWidth}
-        assistantWidth={assistantWidth}
-        viewportCenteredZoom={viewportCenteredZoom}
-        setViewportCenteredZoom={setViewportCenteredZoom}
-        straightEdgeLinesEnabled={straightEdgeLinesEnabled}
-        topOverlayCompact={topOverlayCompact}
-        overlayLeftOffset={overlayLeftOffset}
-        overlayRightOffset={overlayRightOffset}
-        data={data}
-        assessmentError={assessmentError}
-        configSaving={configSaving}
-        error={error}
-        graphSummary={graphSummary}
-        activeAssessmentCards={activeAssessmentCards}
-        graphLayoutEditing={graphLayoutEditing}
-        graphLayoutSaving={graphLayoutSaving}
-        saveGraphLayout={saveGraphLayout}
-        startGraphLayoutEdit={startGraphLayoutEdit}
-        setGraphLayoutEditing={setGraphLayoutEditing}
-        setGraphLayoutDraft={setGraphLayoutDraft}
-        floatingStatsRef={floatingStatsRef}
-        graphShellRef={graphShellRef}
-        focusData={focusData}
-        addTopicResource={addTopicResource}
-        addTopicArtifact={addTopicArtifact}
-        handleSelectTopic={handleSelectTopic}
-        handleSelectedTopicAnchorChange={handleSelectedTopicAnchorChange}
-        selectedTopicId={selectedTopicId}
-        graphLayoutDraft={graphLayoutDraft}
-        activeGraphManualLayout={activeGraphManualLayout}
-        liveDisableIdleAnimations={liveDisableIdleAnimations}
-        showGraphLoadingState={showGraphLoadingState}
-        showGraphEmptyState={showGraphEmptyState}
-        onboardingNeedsFirstGraph={onboardingNeedsFirstGraph}
-        workspaceSurface={workspaceSurface}
-        selectedTopic={selectedTopic}
-        popoverPosition={popoverPosition}
-        topicPopoverRef={topicPopoverRef}
-        popoverDragRef={popoverDragRef}
-        selectedZoneLabel={selectedZoneLabel}
-        selectedResourceLinks={selectedResourceLinks}
-        selectedArtifacts={selectedArtifacts}
-        selectedClosureStatus={selectedClosureStatus}
-        topicTitlesById={topicTitlesById}
-        quizError={quizError}
-        quizSuccess={quizSuccess}
-        closureTestsEnabled={closureTestsEnabled}
-        quizLoading={quizLoading}
-        startQuiz={startQuiz}
-        markTopicFinished={markTopicFinished}
-        assistantResizing={assistantResizing}
-        handleAssistantResize={handleAssistantResize}
-        chatSessions={chatSessions}
-        activeSessionId={activeSessionId}
-        setActiveSessionId={setActiveSessionId}
-        sessionListWrapRef={sessionListWrapRef}
-        sessionListRef={sessionListRef}
-        sessionDragRef={sessionDragRef}
-        apiFetch={apiFetch}
-        loadSessions={loadSessions}
-        currentChatState={currentChatState}
-        chatViewportRef={chatViewportRef}
-        chatThreadLoading={chatThreadLoading}
-        hasInlinePlanningWidget={hasInlinePlanningWidget}
-        chatLoading={chatLoading}
-        chatError={chatError}
-        chatSessionsError={chatSessionsError}
-        updateCurrentChatState={updateCurrentChatState}
-        sendChat={sendChat}
-        applyLoadingMessageId={applyLoadingMessageId}
-        applyProposalFromMessage={applyProposalFromMessage}
-        summarizePreviewCounts={(proposal) => summarizePreviewCounts(proposal, copy)}
-        summarizeTopOperations={(proposal) => summarizeTopOperations(proposal, copy)}
-        setSessionDeleteConfirm={setSessionDeleteConfirm}
-        applyError={applyError}
-        assistantTemplates={assistantTemplates}
-        composerUseGrounding={composerUseGrounding}
-        setComposerUseGrounding={setComposerUseGrounding}
-        chatComposerRef={chatComposerRef}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-        sessionUser={sessionUser}
-        isSettingsOpen={isSettingsOpen}
-        debugModeEnabled={debugModeEnabled}
-        themeMode={themeModeDraft}
-        setThemeMode={setThemeModeDraft}
+        navigation={{
+          sidebarVisible,
+          leftSidebarClosing,
+          closeSidebar,
+          projectsExpanded,
+          setProjectsExpanded,
+          availableGraphs,
+          activeGraph,
+          renamingGraphId,
+          renameGraphDraft,
+          setRenameGraphDraft,
+          renameGraphSaving,
+          renameGraph,
+          setError,
+          setRenamingGraphId,
+          setActiveGraphId,
+          setSelectedTopicId,
+          setSelectedTopicAnchor,
+          openExportGraphModal,
+          setDeleteConfirm,
+          setCreateGraphOpen,
+          setCreateGraphError,
+          mobileMenuOpen,
+          setMobileMenuOpen,
+        }}
+        chrome={{
+          openConfigurationSettings,
+          openDebugLogs: toggleDebugLogs,
+          closeOverlaySurfaces,
+          isLogsOpen,
+          modalSurfaceLocked: isSettingsOpen || isLogsOpen,
+          isMobileViewport,
+          leftSidebarOpen,
+          openSidebar,
+          assistantOpen,
+          setAssistantWidth,
+          assistantWidth,
+          viewportCenteredZoom,
+          setViewportCenteredZoom,
+          straightEdgeLinesEnabled,
+          topOverlayCompact,
+          overlayLeftOffset,
+          overlayRightOffset,
+          floatingStatsRef,
+          sessionUser,
+          isSettingsOpen,
+          debugModeEnabled,
+          themeMode: themeModeDraft,
+          setThemeMode: setThemeModeDraft,
+          overlayRestoreEpoch,
+        }}
+        workspaceStatus={{
+          data,
+          assessmentError,
+          configSaving,
+          error,
+          workspaceSurface,
+        }}
+        graphWorkspace={{
+          graphSummary,
+          activeAssessmentCards,
+          graphLayoutEditing,
+          graphLayoutSaving,
+          saveGraphLayout,
+          startGraphLayoutEdit,
+          setGraphLayoutEditing,
+          setGraphLayoutDraft,
+          graphShellRef,
+          focusData,
+          handleSelectTopic,
+          handleSelectedTopicAnchorChange,
+          selectedTopicId,
+          graphLayoutDraft,
+          activeGraphManualLayout,
+          liveDisableIdleAnimations,
+          showGraphLoadingState,
+          showGraphEmptyState,
+          onboardingNeedsFirstGraph,
+        }}
+        topicDetails={{
+          addTopicResource,
+          addTopicArtifact,
+          selectedTopic,
+          popoverPosition,
+          topicPopoverRef,
+          popoverDragRef,
+          selectedZoneLabel,
+          selectedResourceLinks,
+          selectedArtifacts,
+          selectedClosureStatus,
+          topicTitlesById,
+          quizError,
+          quizSuccess,
+          closureTestsEnabled,
+          quizLoading,
+          startQuiz,
+          markTopicFinished,
+        }}
+        assistant={{
+          assistantResizing,
+          handleAssistantResize,
+          chatSessions,
+          activeSessionId,
+          setActiveSessionId,
+          sessionListWrapRef,
+          sessionListRef,
+          sessionDragRef,
+          apiFetch,
+          loadSessions,
+          currentChatState,
+          chatViewportRef,
+          chatThreadLoading,
+          hasInlinePlanningWidget,
+          chatLoading,
+          chatError,
+          chatSessionsError,
+          updateCurrentChatState,
+          sendChat,
+          applyLoadingMessageId,
+          applyProposalFromMessage,
+          setSessionDeleteConfirm,
+          applyError,
+          assistantTemplates,
+          chatModelOptions,
+          selectedChatModel,
+          setSelectedChatModel,
+          composerUseGrounding,
+          setComposerUseGrounding,
+          chatComposerRef,
+        }}
       />
 
       <SettingsModal
@@ -1760,6 +1463,7 @@ export default function App(): React.JSX.Element {
           orchestratorMaxTokens: orchestratorMaxTokensDraft,
           quizMaxTokens: quizMaxTokensDraft,
           assistantMaxTokens: assistantMaxTokensDraft,
+          assistantNickname: assistantNicknameDraft,
           persona: personaDraft,
           disableIdleAnimations: disableIdleAnimationsDraft,
           memoryMode: memoryModeDraft,
@@ -1790,6 +1494,7 @@ export default function App(): React.JSX.Element {
           orchestratorMaxTokens: setOrchestratorMaxTokensDraft,
           quizMaxTokens: setQuizMaxTokensDraft,
           assistantMaxTokens: setAssistantMaxTokensDraft,
+          assistantNickname: setAssistantNicknameDraft,
           persona: setPersonaDraft,
           disableIdleAnimations: setDisableIdleAnimationsDraft,
           memoryMode: setMemoryModeDraft,
@@ -1823,7 +1528,7 @@ export default function App(): React.JSX.Element {
         rollbackSnapshot={rollbackSnapshot}
         configSaving={configSaving}
         settingsDirty={settingsDirty}
-        saveSettings={saveSettings}
+        saveSettings={settingsState.saveSettings}
       />
 
       <DebugLogsModal
@@ -1867,6 +1572,7 @@ export default function App(): React.JSX.Element {
         setCreateGraphDraft={setCreateGraphDraft}
         createGraphError={createGraphError}
         openImportGraphModal={openImportGraphModal}
+        openImportObsidianModal={openImportObsidianModal}
         createGraphLoading={createGraphLoading}
         createGraph={createGraph}
         importGraphOpen={importGraphOpen}
@@ -1884,6 +1590,19 @@ export default function App(): React.JSX.Element {
         importGraphError={importGraphError}
         importGraphLoading={importGraphLoading}
         importGraphFromPackage={importGraphFromPackage}
+        importObsidianOpen={importObsidianOpen}
+        importObsidianModalRef={importObsidianModalRef}
+        closeImportObsidianModal={closeImportObsidianModal}
+        importObsidianFolderInputRef={importObsidianFolderInputRef}
+        importObsidianFolderButtonRef={importObsidianFolderButtonRef}
+        handleObsidianVaultFiles={handleObsidianVaultFiles}
+        obsidianVaultName={obsidianVaultName}
+        obsidianImportDraft={obsidianImportDraft}
+        setObsidianImportDraft={setObsidianImportDraft}
+        obsidianImportPreview={obsidianImportPreview}
+        importObsidianError={importObsidianError}
+        importObsidianLoading={importObsidianLoading}
+        importGraphFromObsidian={importGraphFromObsidian}
         exportGraphTarget={exportGraphTarget}
         exportGraphModalRef={exportGraphModalRef}
         closeExportGraphModal={closeExportGraphModal}
@@ -1892,6 +1611,10 @@ export default function App(): React.JSX.Element {
         setExportGraphTitleDraft={setExportGraphTitleDraft}
         exportGraphIncludeProgressDraft={exportGraphIncludeProgressDraft}
         setExportGraphIncludeProgressDraft={setExportGraphIncludeProgressDraft}
+        exportGraphFormatDraft={exportGraphFormatDraft}
+        setExportGraphFormatDraft={setExportGraphFormatDraft}
+        exportGraphObsidianOptionsDraft={exportGraphObsidianOptionsDraft}
+        setExportGraphObsidianOptionsDraft={setExportGraphObsidianOptionsDraft}
         exportGraphError={exportGraphError}
         exportGraphLoading={exportGraphLoading}
         exportGraph={exportGraph}

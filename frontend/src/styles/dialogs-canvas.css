@@ -2,6 +2,81 @@
   position: relative;
 }
 
+.quizModalWide {
+  width: min(920px, calc(100vw - 32px));
+  max-width: min(920px, calc(100vw - 32px));
+}
+
+.obsidianImportGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.obsidianSettingsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.obsidianPreviewStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.obsidianIssueList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.obsidianVaultSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.obsidianVaultSummaryLabel {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.obsidianVaultSummaryValue {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.obsidianVaultSummaryEmpty .obsidianVaultSummaryValue {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.obsidianImportModal .obsidianPreviewStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.obsidianImportModal .previewStatCard {
+  min-height: auto;
+}
+
+.obsidianImportModal .settingsToggleRow {
+  align-items: flex-start;
+}
+
 .modalCloseButton {
   appearance: none;
   width: 22px;
@@ -216,8 +291,28 @@
   gap: 12px;
 }
 
+.quizActionsGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
 .quizActionsRight {
   justify-content: flex-end;
+}
+
+.exportSettingsGrid {
+  margin-top: 2px;
+}
+
+.exportSettingsToggleRow {
+  align-items: flex-start;
+}
+
+.exportGraphHint {
+  margin-top: -2px;
 }
 
 .quizSubmitButton {
@@ -914,6 +1009,13 @@
     padding-bottom: 8px;
   }
 
+  .quizModalWide,
+  .obsidianImportGrid,
+  .obsidianSettingsGrid,
+  .obsidianPreviewStats {
+    grid-template-columns: 1fr;
+  }
+
   .settingsModal {
     width: 100%;
     height: min(92vh, 100vh);
@@ -1012,10 +1114,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    min-height: 46px;
+    min-height: 48px;
     min-width: 0;
-    font-size: 12px;
     border: 1px solid transparent;
     background: transparent;
     color: rgba(255, 255, 255, 0.72);
@@ -1067,10 +1167,6 @@
   box-shadow: 0 18px 40px var(--shadow-soft);
 }
 
-:root[data-theme="light"] .topicPopover {
-  background: rgba(255, 255, 255, 0.958);
-}
-
 :root[data-theme="light"] .card {
   background: var(--surface-0);
   border: 1px solid var(--border);
@@ -1084,4 +1180,3 @@
   border-radius: 8px;
   box-shadow: none !important;
 }
-

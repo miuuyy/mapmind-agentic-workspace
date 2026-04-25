@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from app.core.config import Settings
@@ -17,8 +16,11 @@ from app.models.domain import (
     TopicQuizSession,
 )
 
-if TYPE_CHECKING:
-    from google import genai as genai_module
+
+class QuizGenerationError(RuntimeError):
+    def __init__(self, message: str, *, diagnostics: dict | None = None):
+        super().__init__(message)
+        self.diagnostics = diagnostics or {}
 
 
 def is_prerequisite_relation(relation: str) -> bool:
@@ -29,8 +31,6 @@ class QuizService:
     def __init__(self, settings: Settings):
         self._settings = settings
         self._provider = build_llm_provider(settings)
-        self._client: genai_module.Client | None = getattr(self._provider, "_client", None)
-        self._types: Any | None = getattr(self._provider, "_types", None)
 
     def build_closure_status(self, graph: StudyGraph, topic_id: str) -> TopicClosureStatus:
         topic_map = {topic.id: topic for topic in graph.topics}
@@ -153,8 +153,6 @@ class QuizService:
         if self._provider is None:
             raise ValueError("closure quiz generation is unavailable: missing AI provider")
         questions = self._build_questions_with_ai(graph, topic, closure, question_count, model=model)
-        if not questions:
-            raise ValueError("closure quiz generation failed: provider returned no valid questions")
         return questions, model or self._settings.default_model
 
     def _build_questions_with_ai(
@@ -165,9 +163,9 @@ class QuizService:
         question_count: int,
         *,
         model: str | None,
-    ) -> list[QuizQuestion] | None:
+    ) -> list[QuizQuestion]:
         if self._provider is None:
-            return None
+            raise QuizGenerationError("closure quiz generation is unavailable: missing AI provider")
         topic_map = {item.id: item for item in graph.topics}
         parent_ids = [
             edge.source_topic_id
@@ -234,9 +232,42 @@ class QuizService:
                 ],
                 question_count,
             )
-            return questions or None
-        except (LLMProviderError, Exception):
-            return None
+            if not questions:
+                raise QuizGenerationError(
+                    "closure quiz generation failed: provider returned no valid questions",
+                    diagnostics={
+                        "graph_id": graph.graph_id,
+                        "topic_id": topic.id,
+                        "model": model or self._settings.default_model,
+                        "requested_question_count": question_count,
+                        "returned_question_count": len(question_set.questions),
+                    },
+                )
+            return questions
+        except LLMProviderError as exc:
+            diagnostics = dict(getattr(exc, "diagnostics", {}) or {})
+            diagnostics.setdefault("graph_id", graph.graph_id)
+            diagnostics.setdefault("topic_id", topic.id)
+            diagnostics.setdefault("model", model or self._settings.default_model)
+            diagnostics.setdefault("requested_question_count", question_count)
+            raise QuizGenerationError(
+                f"closure quiz generation failed: {exc}",
+                diagnostics=diagnostics,
+            ) from exc
+        except QuizGenerationError:
+            raise
+        except Exception as exc:
+            raise QuizGenerationError(
+                "closure quiz generation failed: unexpected provider error",
+                diagnostics={
+                    "graph_id": graph.graph_id,
+                    "topic_id": topic.id,
+                    "model": model or self._settings.default_model,
+                    "requested_question_count": question_count,
+                    "error_type": exc.__class__.__name__,
+                    "error_message": str(exc),
+                },
+            ) from exc
 
     def _language_name(self, language: str) -> str:
         return {"en": "English", "uk": "Ukrainian", "ru": "Russian"}.get(language, "English")

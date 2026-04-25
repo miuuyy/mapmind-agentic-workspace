@@ -1,6 +1,6 @@
 # Provider Guide
 
-MapMind ships with a provider seam instead of a one-provider integration.
+Clew ships with a provider seam instead of a one-provider integration.
 
 That seam is important for two reasons:
 
@@ -53,7 +53,7 @@ The provider seam supports:
 - structured generation into typed schemas
 - grounded or web-enabled requests when the provider supports them
 
-MapMind uses that layer for:
+Clew uses that layer for:
 
 - proposal generation
 - chat orchestration decisions

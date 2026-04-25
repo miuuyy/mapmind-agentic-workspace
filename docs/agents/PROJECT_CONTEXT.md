@@ -1,21 +1,21 @@
 # Project Context
 
-This file is the shared truth layer for coding agents working on MapMind.
+This file is the shared truth layer for coding agents working on Clew.
 
 ## One-sentence definition
 
-MapMind is a graph-first learning workspace with an AI agent layer for building, auditing, and evolving structured knowledge paths.
+Clew is a graph-first learning workspace with an AI agent layer for building, auditing, and evolving structured knowledge paths.
 
 ## Product identity
 
-MapMind is not:
+Clew is not:
 
 - a note app clone
 - a checklist app with AI pasted on top
 - a silent graph mutator
 - a generic autonomous agent platform
 
-MapMind is:
+Clew is:
 
 - a graph workspace
 - with explicit proposal review
@@ -63,7 +63,7 @@ See:
 
 ## Quality bar
 
-MapMind should feel like:
+Clew should feel like:
 
 - a serious solo product
 - a portfolio-grade graph workspace
@@ -77,7 +77,7 @@ It should not feel like:
 
 ## Docs split
 
-- `documentation/` = product-facing docs source
+- `docs/site_faq/` = product-facing docs source
 - `docs/` = engineering docs
 
 Agents should preserve that split.

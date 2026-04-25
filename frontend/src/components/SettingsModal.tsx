@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Card } from "./Card";
-import { MEMORY_MODE_OPTIONS, THINKING_MODE_OPTIONS, type MemoryMode, type SettingsDraftSetters, type SettingsDrafts, type ThemeMode, type ThinkingMode } from "../lib/appContracts";
+import { MEMORY_MODE_OPTIONS, THINKING_MODE_OPTIONS, type MemoryMode, type SettingsDraftSetters, type SettingsDrafts, type ThinkingMode } from "../lib/appContracts";
 import type { AppCopy } from "../lib/appCopy";
 import type { GraphEnvelope, SnapshotRecord, WorkspaceConfig, WorkspaceEnvelope } from "../lib/types";
 
@@ -88,6 +88,7 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
     orchestratorMaxTokens: orchestratorMaxTokensDraft,
     quizMaxTokens: quizMaxTokensDraft,
     assistantMaxTokens: assistantMaxTokensDraft,
+    assistantNickname: assistantNicknameDraft,
     persona: personaDraft,
     disableIdleAnimations: disableIdleAnimationsDraft,
     memoryMode: memoryModeDraft,
@@ -118,6 +119,7 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
     orchestratorMaxTokens: setOrchestratorMaxTokensDraft,
     quizMaxTokens: setQuizMaxTokensDraft,
     assistantMaxTokens: setAssistantMaxTokensDraft,
+    assistantNickname: setAssistantNicknameDraft,
     persona: setPersonaDraft,
     disableIdleAnimations: setDisableIdleAnimationsDraft,
     memoryMode: setMemoryModeDraft,
@@ -130,7 +132,6 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
     enableClosureTests: setEnableClosureTestsDraft,
     debugModeEnabled: setDebugModeEnabledDraft,
     straightEdgeLines: setStraightEdgeLinesDraft,
-    themeMode: setThemeModeDraft,
     quizQuestionCount: setQuizQuestionCountDraft,
     quizPassCount: setQuizPassCountDraft,
   } = setDrafts;
@@ -360,26 +361,37 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                         <div className="settingsInlineFields">
                           <label className="field">
                             <span className="fieldLabel">{copy.settingsPanel.plannerMaxOutputTokens}</span>
-                            <input className="input" type="number" min={100} step={100} value={plannerMaxTokensDraft} onChange={(event) => setPlannerMaxTokensDraft(Number(event.target.value) || 100)} />
+                            <input className="input" type="number" step={100} value={plannerMaxTokensDraft} onChange={(event) => setPlannerMaxTokensDraft(Number.isNaN(event.currentTarget.valueAsNumber) ? 0 : event.currentTarget.valueAsNumber)} />
                           </label>
                           <label className="field">
                             <span className="fieldLabel">{copy.settingsPanel.plannerThinkingBudget}</span>
-                            <input className="input" type="number" min={100} step={100} value={plannerThinkingBudgetDraft} onChange={(event) => setPlannerThinkingBudgetDraft(Number(event.target.value) || 100)} />
+                            <input className="input" type="number" step={100} value={plannerThinkingBudgetDraft} onChange={(event) => setPlannerThinkingBudgetDraft(Number.isNaN(event.currentTarget.valueAsNumber) ? 0 : event.currentTarget.valueAsNumber)} />
                           </label>
                           <label className="field">
                             <span className="fieldLabel">{copy.settingsPanel.orchestratorMaxOutputTokens}</span>
-                            <input className="input" type="number" min={100} step={100} value={orchestratorMaxTokensDraft} onChange={(event) => setOrchestratorMaxTokensDraft(Number(event.target.value) || 100)} />
+                            <input className="input" type="number" step={100} value={orchestratorMaxTokensDraft} onChange={(event) => setOrchestratorMaxTokensDraft(Number.isNaN(event.currentTarget.valueAsNumber) ? 0 : event.currentTarget.valueAsNumber)} />
                           </label>
                           <label className="field">
                             <span className="fieldLabel">{copy.settingsPanel.quizMaxOutputTokens}</span>
-                            <input className="input" type="number" min={100} step={100} value={quizMaxTokensDraft} onChange={(event) => setQuizMaxTokensDraft(Number(event.target.value) || 100)} />
+                            <input className="input" type="number" step={100} value={quizMaxTokensDraft} onChange={(event) => setQuizMaxTokensDraft(Number.isNaN(event.currentTarget.valueAsNumber) ? 0 : event.currentTarget.valueAsNumber)} />
                           </label>
                           <label className="field">
                             <span className="fieldLabel">{copy.settingsPanel.assistantMaxOutputTokens}</span>
-                            <input className="input" type="number" min={100} step={100} value={assistantMaxTokensDraft} onChange={(event) => setAssistantMaxTokensDraft(Number(event.target.value) || 100)} />
+                            <input className="input" type="number" step={100} value={assistantMaxTokensDraft} onChange={(event) => setAssistantMaxTokensDraft(Number.isNaN(event.currentTarget.valueAsNumber) ? 0 : event.currentTarget.valueAsNumber)} />
                           </label>
                         </div>
                       ) : null}
+                      <label className="field">
+                        <span className="fieldLabel">{copy.settingsPanel.assistantNickname}</span>
+                        <input
+                          className="input"
+                          value={assistantNicknameDraft}
+                          onChange={(event) => setAssistantNicknameDraft(event.target.value)}
+                          placeholder={copy.settingsPanel.assistantNicknamePlaceholder}
+                          maxLength={80}
+                        />
+                        <span className="mutedSmall">{copy.settingsPanel.assistantNicknameHelp}</span>
+                      </label>
                       <label className="field">
                         <span className="fieldLabel">{copy.settingsPanel.personaRules}</span>
                         <textarea
@@ -472,11 +484,9 @@ export function SettingsModal(props: SettingsModalProps): React.JSX.Element | nu
                               <input
                                 className="input"
                                 type="number"
-                                min={4}
-                                max={120}
                                 step={1}
                                 value={memoryHistoryLimitDraft}
-                                onChange={(event) => setMemoryHistoryLimitDraft(Number(event.target.value) || 4)}
+                                onChange={(event) => setMemoryHistoryLimitDraft(Number.isNaN(event.currentTarget.valueAsNumber) ? 0 : event.currentTarget.valueAsNumber)}
                               />
                             </label>
                           </div>

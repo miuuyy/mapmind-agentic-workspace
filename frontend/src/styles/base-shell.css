@@ -19,7 +19,8 @@
   --system-fonts: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --sans: "Manrope", var(--system-fonts);
   --heading: var(--sans);
-  --mono: "JetBrains Mono", source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  /* Keep monospace available for code/debug surfaces while compact chrome uses sans-serif. */
+  --mono: "ui-monospace", "SF Mono", Menlo, Monaco, Consolas, monospace;
   --green: #1EB866;
   --yellow: #ffd60a;
   --red: #ff453a;
@@ -30,28 +31,33 @@
   --bg: #faf9f6;
   --panel: #faf9f6;
   --panel2: #faf9f6;
-  --border: #e8e4de;
+  --border: #e9e1d7;
   --text: #2d2b28;
   --muted: #8b8580;
   --surface-0: #faf9f6;
-  --surface-1: #f0ede7;
+  --surface-1: #f0e9df;
   --surface-2: rgba(45, 43, 40, 0.06);
   --surface-3: rgba(45, 43, 40, 0.11);
   --field-bg: #faf9f6;
   --field-bg-focus: #faf9f6;
-  --field-border: rgba(195, 90, 44, 0.18);
+  --field-border: rgba(207, 110, 69, 0.18);
   --shadow-soft: rgba(45, 43, 40, 0.08);
   --shadow-strong: rgba(45, 43, 40, 0.14);
   --grid-line: rgba(45, 43, 40, 0.045);
   --text-secondary: rgba(45, 43, 40, 0.72);
-  --mm-accent-green: #c35a2c;
-  --mm-accent-green-hover: #ab4d24;
+  --mm-accent-green: #cf6e45;
+  --mm-accent-green-hover: #bd613b;
   --mm-accent-green-text: #fffaf6;
-  --mm-accent-green-soft-bg: rgba(195, 90, 44, 0.12);
-  --mm-accent-green-soft-border: rgba(195, 90, 44, 0.32);
-  --mm-accent-green-soft-text: rgba(145, 63, 28, 0.96);
+  --mm-accent-green-soft-bg: rgba(207, 110, 69, 0.12);
+  --mm-accent-green-soft-border: rgba(207, 110, 69, 0.28);
+  --mm-accent-green-soft-text: rgba(217, 119, 87, 0.96);
+  --mm-accent-ember: #a65939;
+  --mm-accent-clay: #c7593a;
+  --mm-accent-mustard: #f2b23c;
+  --mm-accent-soft: #d9a185;
+  --mm-accent-tint: #f6e3d8;
   --light-flat-bg: #faf9f6;
-  --light-soft-bg: #f0ede7;
+  --light-soft-bg: #f0e9df;
   --light-soft-hover: #f5f1eb;
 }
 
@@ -312,12 +318,16 @@ body {
   align-items: center;
   min-width: 0;
   text-decoration: none;
+  color: rgba(255, 255, 255, 0.96);
 }
 
-.sidebarBrandLogo {
+.sidebarBrandMark {
   display: block;
-  width: 72px;
-  height: auto;
+  width: 108px;
+  height: 96px;
+  background: currentColor;
+  -webkit-mask: url("/clew-mark.png") center / contain no-repeat;
+  mask: url("/clew-mark.png") center / contain no-repeat;
 }
 
 .sidebarAccountSection {
@@ -1429,6 +1439,11 @@ body {
   animation: lightWindowEnter 180ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
 
+.lightFloatingWindowExit {
+  animation: lightWindowExit 110ms cubic-bezier(0.4, 0.0, 1, 1) forwards;
+  pointer-events: none;
+}
+
 @keyframes lightWindowEnter {
   from {
     opacity: 0;
@@ -1441,15 +1456,27 @@ body {
   }
 }
 
+@keyframes lightWindowExit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(2px) scale(0.995);
+  }
+}
+
 .lightDock {
   position: absolute;
   z-index: 9;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 9px;
+  gap: 7px;
   width: 72px;
-  padding: 10px 9px 10px;
+  padding: 6px 9px 9px;
   border-radius: 26px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: rgba(255, 255, 255, 0.92);
@@ -1458,15 +1485,38 @@ body {
   box-shadow: 0 10px 24px rgba(30, 41, 59, 0.08);
 }
 
+/* Horizontal dock variant for narrow viewports. */
+.lightDockHorizontal {
+  position: fixed;
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  flex-direction: row;
+  width: auto;
+  max-width: calc(100% - 24px);
+  padding: 9px 6px;
+  z-index: 50;
+}
+
 .lightDockGrip {
   width: 100%;
-  height: 12px;
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 25% 50%, rgba(148, 163, 184, 0.34) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.34) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 75% 50%, rgba(148, 163, 184, 0.34) 0 1.2px, transparent 1.8px);
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mm-accent-green);
   cursor: grab;
+}
+
+.lightDockGrip::before {
+  content: "";
+  width: 28px;
+  height: 28px;
+  background: currentColor;
+  -webkit-mask: url("/clew-mark.png") center / contain no-repeat;
+  mask: url("/clew-mark.png") center / contain no-repeat;
 }
 
 .lightDockButton,
@@ -1492,7 +1542,7 @@ body {
   position: absolute;
   inset: 4px;
   border-radius: 999px;
-  background: rgba(255, 214, 102, 0.24);
+  background: var(--mm-accent-tint);
   opacity: 0;
   transform: scale(0.82);
   transition: opacity 180ms ease, transform 220ms cubic-bezier(0.2, 0.9, 0.3, 1);
@@ -1514,8 +1564,8 @@ body {
 .lightDockButtonLink svg {
   position: relative;
   z-index: 1;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
 }
 
 .lightFloatingWindow {
@@ -1578,7 +1628,7 @@ body {
   border-radius: 999px;
   border: 1px solid rgba(195, 90, 44, 0.16);
   background: rgba(195, 90, 44, 0.1);
-  color: rgba(131, 55, 24, 0.9);
+  color: rgba(217, 119, 87, 0.9);
   cursor: pointer;
   transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
 }
@@ -1586,7 +1636,7 @@ body {
 .lightWindowActionButton:hover {
   background: rgba(195, 90, 44, 0.16);
   border-color: rgba(195, 90, 44, 0.24);
-  color: rgba(111, 44, 17, 0.96);
+  color: rgba(217, 119, 87, 0.96);
 }
 
 .lightWorkspaceWindowBody {
@@ -1790,4 +1840,3 @@ body {
   color: #fff;
   border-color: rgba(255, 255, 255, 0.22);
 }
-

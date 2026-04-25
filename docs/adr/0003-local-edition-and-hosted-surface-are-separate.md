@@ -5,7 +5,7 @@
 
 ## Context
 
-MapMind currently has two distinct realities:
+Clew currently has two distinct realities:
 
 1. a public local edition meant to be runnable, inspectable, and modifiable as code
 2. a hosted product meant to reduce setup friction and test product demand
@@ -45,13 +45,13 @@ That would either expose surfaces that do not belong in the public local branch 
 
 Rejected.
 
-That would hide an important part of the real product story and remove the easiest path for people who simply want to try MapMind.
+That would hide an important part of the real product story and remove the easiest path for people who simply want to try Clew.
 
 ### 3. Treat the hosted product as the only real version
 
 Rejected.
 
-That would weaken the open-source and developer story of MapMind, which matters for trust, contribution, and long-term architecture quality.
+That would weaken the open-source and developer story of Clew, which matters for trust, contribution, and long-term architecture quality.
 
 ## Consequences
 

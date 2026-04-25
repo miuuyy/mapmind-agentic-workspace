@@ -1,8 +1,8 @@
-# Contributing to MapMind
+# Contributing to Clew
 
 Thanks for wanting to contribute.
 
-MapMind is a graph-first learning workspace, so good contributions usually make the product clearer, calmer, and more trustworthy for real study. The best changes strengthen the graph surface, provider seam, study flow, or repository clarity without turning the project into generic dashboard software.
+Clew is a graph-first learning workspace, so good contributions usually make the product clearer, calmer, and more trustworthy for real study. The best changes strengthen the graph surface, provider seam, study flow, or repository clarity without turning the project into generic dashboard software.
 
 ## Before you start
 
@@ -39,8 +39,8 @@ Less useful contributions usually push the repository toward:
 Clone the repository and start the local stack:
 
 ```bash
-git clone https://github.com/miuuyy/mapmind-agentic-workspace.git
-cd mapmind-agentic-workspace
+git clone https://github.com/miuuyy/Clew.git
+cd Clew
 cp .env.example .env
 ./scripts/dev.sh
 ```
@@ -99,9 +99,9 @@ If there is visible UI behavior, include screenshots or a short before/after exp
 
 ## Documentation contributions
 
-MapMind uses two documentation layers:
+Clew uses two documentation layers:
 
-- `documentation/` for product-facing docs that later feed the hosted docs experience
+- `docs/site_faq/` for product-facing docs that later feed the hosted docs/site FAQ experience
 - `docs/` for engineering and local-developer guides
 
 If you add or rewrite docs, keep the distinction clean:
@@ -134,6 +134,6 @@ If you are unsure whether an idea fits the project, open an issue first and desc
 
 - the problem
 - the proposed change
-- why it belongs in MapMind specifically
+- why it belongs in Clew specifically
 
 That is much better than building a large feature around the wrong product assumption.

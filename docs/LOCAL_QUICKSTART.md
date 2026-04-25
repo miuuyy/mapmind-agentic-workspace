@@ -4,7 +4,7 @@ This guide is for developers and advanced users who want to run the public `main
 
 If you only want to try the product, the faster path is the hosted site:
 
-- [mapmind.space](https://mapmind.space)
+- [clew.my](https://clew.my)
 
 If you want local control over the workspace, providers, and graph packs, use this guide.
 
@@ -20,8 +20,8 @@ If you want local control over the workspace, providers, and graph packs, use th
 ## Start the app
 
 ```bash
-git clone https://github.com/miuuyy/mapmind-agentic-workspace.git
-cd mapmind-agentic-workspace
+git clone https://github.com/miuuyy/Clew.git
+cd Clew
 cp .env.example .env
 ./scripts/dev.sh
 ```

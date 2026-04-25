@@ -14,6 +14,27 @@ export type NodePosition = {
   vy: number;
 };
 
+export type IdleMotionState = {
+  idleFrozen: boolean;
+  idleSettleFrames: number;
+};
+
+export type IdleRenderOffsetArgs = {
+  enabled: boolean;
+  frameCount: number;
+  nodeId: string;
+  progress?: number;
+  zoneId: string | null;
+};
+
+export type EdgeRenderMotionArgs = {
+  edgeMotionFrozen: boolean;
+  fadeRate: number;
+  frameCount: number;
+  fromX: number;
+  litFrame: number | undefined;
+};
+
 export type ManualNodePositions = Record<string, { x: number; y: number }>;
 
 export type LabelBox = {
@@ -120,22 +141,23 @@ export type GraphCanvasPalette = {
 
 export function graphCanvasPalette(themeMode: GraphCanvasThemeMode): GraphCanvasPalette {
   if (themeMode === "light") {
+    // Keep light-theme node fills warm so they sit with the paper-and-ink palette.
     return {
-      gridStroke: "rgba(17,24,39,0.06)",
-      edgeRgb: "17,24,39",
+      gridStroke: "rgba(45,43,40,0.05)",
+      edgeRgb: "45,43,40",
       nodeBaseFill: "rgba(250,249,246,0.98)",
-      nodeSelectedFill: "rgba(56,67,84,0.88)",
-      nodePathFill: "rgba(84,96,115,0.84)",
-      nodeStableFill: "rgba(96,108,126,0.78)",
-      nodeLearningFill: "rgba(123,134,149,0.7)",
-      nodeReviewFill: "rgba(178,80,58,0.86)",
-      nodeDefaultFill: "rgba(132,126,119,0.68)",
+      nodeSelectedFill: "rgba(217,119,87,0.92)",
+      nodePathFill: "rgba(128,104,78,0.82)",
+      nodeStableFill: "rgba(158,138,112,0.74)",
+      nodeLearningFill: "rgba(195,178,156,0.66)",
+      nodeReviewFill: "rgba(217,119,87,0.86)",
+      nodeDefaultFill: "rgba(178,162,140,0.56)",
       frontierRgb: "176,134,24",
-      reviewRingRgb: "214,82,60",
-      labelRgb: "17,24,39",
-      shadowSelected: "rgba(15,23,42,0.2)",
-      shadowPath: "rgba(15,23,42,0.12)",
-      shadowContext: "rgba(15,23,42,0.06)",
+      reviewRingRgb: "217,119,87",
+      labelRgb: "45,43,40",
+      shadowSelected: "rgba(45,43,40,0.18)",
+      shadowPath: "rgba(45,43,40,0.1)",
+      shadowContext: "rgba(45,43,40,0.05)",
       zoneOpacityMultiplier: 0.02,
       zoneOutlineAlpha: 0.2,
       zoneOutlineWidth: 1.5,
@@ -226,28 +248,101 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
+export function nextIdleMotionState({
+  currentMaxVelocity,
+  draggedNodeId,
+  frameCount,
+  idleFrozen,
+  idleSettleFrames,
+  layoutEditMode,
+  revealActive,
+  structureActivityFrame,
+}: {
+  currentMaxVelocity: number;
+  draggedNodeId: string | null;
+  frameCount: number;
+  idleFrozen: boolean;
+  idleSettleFrames: number;
+  layoutEditMode: boolean;
+  revealActive: boolean;
+  structureActivityFrame: number;
+}): IdleMotionState {
+  if (layoutEditMode || draggedNodeId) {
+    return { idleFrozen: false, idleSettleFrames: 0 };
+  }
+  if (revealActive || frameCount - structureActivityFrame <= 90) {
+    return { idleFrozen: false, idleSettleFrames: 0 };
+  }
+  if (idleFrozen) {
+    return { idleFrozen: true, idleSettleFrames: 0 };
+  }
+  if (currentMaxVelocity < 0.35 || frameCount - structureActivityFrame > 180) {
+    const nextSettleFrames = idleSettleFrames + 1;
+    return {
+      idleFrozen: nextSettleFrames >= 4,
+      idleSettleFrames: nextSettleFrames,
+    };
+  }
+  return { idleFrozen: false, idleSettleFrames: 0 };
+}
+
+export function idleRenderOffset({
+  enabled,
+  frameCount,
+  nodeId,
+  progress = 1,
+  zoneId,
+}: IdleRenderOffsetArgs): { x: number; y: number } {
+  if (!enabled) return { x: 0, y: 0 };
+  const amplitude = clamp(progress, 0, 1);
+  if (amplitude === 0) return { x: 0, y: 0 };
+
+  const topicSeed = hashString(nodeId);
+  const zoneSeed = zoneId ? hashString(zoneId) : topicSeed;
+  const topicPhase = ((topicSeed % 8192) / 8192) * Math.PI * 2;
+  const zonePhase = ((zoneSeed % 8192) / 8192) * Math.PI * 2;
+  const slowTime = frameCount * 0.018;
+  const localTime = frameCount * 0.011;
+
+  return {
+    x: (Math.sin(slowTime + zonePhase) * 1.45 + Math.sin(localTime + topicPhase) * 0.42) * amplitude,
+    y: (Math.cos(slowTime * 0.82 + zonePhase) * 1.05 + Math.cos(localTime * 0.91 + topicPhase * 1.17) * 0.34) * amplitude,
+  };
+}
+
+export function edgeRenderMotion({
+  edgeMotionFrozen,
+  fadeRate,
+  frameCount,
+  fromX,
+  litFrame,
+}: EdgeRenderMotionArgs): { brightness: number; pulse: number } {
+  if (edgeMotionFrozen) {
+    return { brightness: 1, pulse: 0.84 };
+  }
+
+  const safeFadeRate = Math.max(fadeRate, Number.EPSILON);
+  return {
+    brightness: litFrame === undefined ? 0 : clamp((frameCount - litFrame) / safeFadeRate, 0, 1),
+    pulse: 0.84 + Math.sin(frameCount * 0.03 + fromX * 0.008) * 0.05,
+  };
+}
+
 export function buildZoneContour(points: NodePosition[], intensity: number): Array<{ x: number; y: number }> {
   if (points.length === 0) return [];
+  const contourPoints =
+    points.length === 1
+      ? expandSinglePointContourSeed(points[0], intensity)
+      : points;
 
-  const center = points.reduce(
-    (acc, point) => ({ x: acc.x + point.x / points.length, y: acc.y + point.y / points.length }),
+  const center = contourPoints.reduce(
+    (acc, point) => ({ x: acc.x + point.x / contourPoints.length, y: acc.y + point.y / contourPoints.length }),
     { x: 0, y: 0 },
   );
   const basePadding = 42 + intensity * 10;
 
-  if (points.length === 1) {
-    const radius = 58 + intensity * 10;
-    return Array.from({ length: 10 }, (_, index) => {
-      const angle = (Math.PI * 2 * index) / 10 - Math.PI / 2;
-      return {
-        x: points[0].x + Math.cos(angle) * radius,
-        y: points[0].y + Math.sin(angle) * radius,
-      };
-    });
-  }
-
-  if (points.length === 2) {
-    const [first, second] = points;
+  if (contourPoints.length === 2) {
+    const [first, second] = contourPoints;
     const dx = second.x - first.x;
     const dy = second.y - first.y;
     const distance = Math.max(1, Math.hypot(dx, dy));
@@ -265,7 +360,7 @@ export function buildZoneContour(points: NodePosition[], intensity: number): Arr
     ];
   }
 
-  const expanded = points
+  const expanded = contourPoints
     .map((point) => {
       const dx = point.x - center.x;
       const dy = point.y - center.y;
@@ -279,9 +374,60 @@ export function buildZoneContour(points: NodePosition[], intensity: number): Arr
         angle: Math.atan2(dy, dx),
       };
     })
-    .sort((a, b) => a.angle - b.angle);
+    .sort((a, b) => a.angle - b.angle)
+    .map(({ x, y }) => ({ x, y }));
 
-  return expanded.map(({ x, y }) => ({ x, y }));
+  return convexHull(expanded);
+}
+
+function expandSinglePointContourSeed(point: NodePosition, intensity: number): NodePosition[] {
+  const radiusX = 34 + intensity * 6;
+  const radiusY = 28 + intensity * 5;
+  return Array.from({ length: 6 }, (_, index) => {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / 6;
+    return {
+      ...point,
+      x: point.x + Math.cos(angle) * radiusX,
+      y: point.y + Math.sin(angle) * radiusY,
+    };
+  });
+}
+
+function convexHull(points: Array<{ x: number; y: number }>): Array<{ x: number; y: number }> {
+  if (points.length <= 3) return points;
+  const sorted = [...points].sort((left, right) => {
+    if (left.x !== right.x) return left.x - right.x;
+    return left.y - right.y;
+  });
+
+  const cross = (
+    origin: { x: number; y: number },
+    a: { x: number; y: number },
+    b: { x: number; y: number },
+  ): number => {
+    return (a.x - origin.x) * (b.y - origin.y) - (a.y - origin.y) * (b.x - origin.x);
+  };
+
+  const lower: Array<{ x: number; y: number }> = [];
+  for (const point of sorted) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) {
+      lower.pop();
+    }
+    lower.push(point);
+  }
+
+  const upper: Array<{ x: number; y: number }> = [];
+  for (let index = sorted.length - 1; index >= 0; index -= 1) {
+    const point = sorted[index];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) {
+      upper.pop();
+    }
+    upper.push(point);
+  }
+
+  lower.pop();
+  upper.pop();
+  return [...lower, ...upper];
 }
 
 export function primaryZoneIdForTopic(zones: Zone[], topicId: string | null): string | null {
@@ -342,7 +488,10 @@ export function buildAnchorMap(nodes: GraphNode[], edges: Edge[], width: number,
     childrenByParent.set(edge.source_topic_id, [...(childrenByParent.get(edge.source_topic_id) ?? []), edge.target_topic_id]);
   }
 
-  const roots = nodes.filter((node) => (parentsByChild.get(node.id) ?? []).length === 0).sort((a, b) => a.title.localeCompare(b.title));
+  const explicitRoots = nodes.filter((node) => (parentsByChild.get(node.id) ?? []).length === 0).sort((a, b) => a.title.localeCompare(b.title));
+  const roots = explicitRoots.length > 0
+    ? explicitRoots
+    : [...nodes].sort((left, right) => left.level !== right.level ? left.level - right.level : left.title.localeCompare(right.title));
   const stableWidth = Math.max(width, 900);
   const stableHeight = Math.max(height, 600);
   const minDimension = Math.min(stableWidth, stableHeight);
@@ -356,6 +505,8 @@ export function buildAnchorMap(nodes: GraphNode[], edges: Edge[], width: number,
   const fullSpread = Math.PI * 2;
   const branchAngles = new Map<string, number>();
   const resolvedPrimaryBranches = new Map<string, string>();
+  const resolvingPrimaryRoots = new Set<string>();
+  const resolvingPrimaryBranches = new Set<string>();
 
   roots.forEach((root, index) => {
     const seed = hashString(root.id);
@@ -366,9 +517,15 @@ export function buildAnchorMap(nodes: GraphNode[], edges: Edge[], width: number,
   function resolvePrimaryRootId(nodeId: string): string {
     const cached = resolvedPrimaryRoots.get(nodeId);
     if (cached) return cached;
+    if (resolvingPrimaryRoots.has(nodeId)) {
+      resolvedPrimaryRoots.set(nodeId, nodeId);
+      return nodeId;
+    }
+    resolvingPrimaryRoots.add(nodeId);
     const parents = (parentsByChild.get(nodeId) ?? []).filter((pid) => byId.has(pid));
     if (parents.length === 0) {
       resolvedPrimaryRoots.set(nodeId, nodeId);
+      resolvingPrimaryRoots.delete(nodeId);
       return nodeId;
     }
     const freq = new Map<string, number>();
@@ -379,19 +536,27 @@ export function buildAnchorMap(nodes: GraphNode[], edges: Edge[], width: number,
     const sorted = [...freq.entries()].sort((a, b) => b[1] !== a[1] ? b[1] - a[1] : a[0].localeCompare(b[0]));
     const resolved = sorted[0]?.[0] ?? parents[0];
     resolvedPrimaryRoots.set(nodeId, resolved);
+    resolvingPrimaryRoots.delete(nodeId);
     return resolved;
   }
 
   function resolvePrimaryBranchId(nodeId: string): string {
     const cached = resolvedPrimaryBranches.get(nodeId);
     if (cached) return cached;
+    if (resolvingPrimaryBranches.has(nodeId)) {
+      resolvedPrimaryBranches.set(nodeId, nodeId);
+      return nodeId;
+    }
+    resolvingPrimaryBranches.add(nodeId);
     const parents = (parentsByChild.get(nodeId) ?? []).filter((pid) => byId.has(pid));
     if (parents.length === 0) {
       resolvedPrimaryBranches.set(nodeId, nodeId);
+      resolvingPrimaryBranches.delete(nodeId);
       return nodeId;
     }
     if (parents.find((pid) => (parentsByChild.get(pid) ?? []).length === 0)) {
       resolvedPrimaryBranches.set(nodeId, nodeId);
+      resolvingPrimaryBranches.delete(nodeId);
       return nodeId;
     }
     const freq = new Map<string, number>();
@@ -401,6 +566,7 @@ export function buildAnchorMap(nodes: GraphNode[], edges: Edge[], width: number,
     }
     const sorted = [...freq.entries()].sort((a, b) => b[1] !== a[1] ? b[1] - a[1] : a[0].localeCompare(b[0]));
     resolvedPrimaryBranches.set(nodeId, sorted[0]?.[0] ?? nodeId);
+    resolvingPrimaryBranches.delete(nodeId);
     return resolvedPrimaryBranches.get(nodeId)!;
   }
 

@@ -6,7 +6,10 @@ export const ASSISTANT_WIDTH_STORAGE_KEY = "knowledge_graph_assistant_width_v1";
 export const ASSISTANT_MAX_WIDTH = 620;
 export const ASSISTANT_MIN_WIDTH = 280;
 export const ASSISTANT_COLLAPSE_THRESHOLD = 210;
-export const APP_LOGO_SRC = "/mmlogo.png";
+export const APP_NAME = "Clew";
+export const APP_TAGLINE = "AI-native workspace for structured learning";
+export const APP_FAVICON_LIGHT_SRC = "/clew-favicon-light-accent.png";
+export const APP_FAVICON_DARK_SRC = "/clew-favicon-dark.png";
 
 export type ThinkingMode = "low" | "default" | "custom";
 export type MemoryMode = "balanced" | "max" | "custom";
@@ -101,6 +104,34 @@ export type AuthSessionPayload = {
 
 export type ThemeMode = "dark" | "light";
 
+export type WorkspaceConfigPatch = {
+  ai_provider?: string;
+  default_model?: string;
+  gemini_api_key?: string;
+  openai_api_key?: string;
+  openai_base_url?: string;
+  thinking_mode?: ThinkingMode;
+  memory_mode?: MemoryMode;
+  planner_max_output_tokens?: number;
+  planner_thinking_budget?: number;
+  orchestrator_max_output_tokens?: number;
+  quiz_max_output_tokens?: number;
+  assistant_max_output_tokens?: number;
+  assistant_nickname?: string;
+  disable_idle_animations?: boolean;
+  persona_rules?: string;
+  quiz_question_count?: number;
+  pass_threshold?: number;
+  enable_closure_tests?: boolean;
+  debug_mode_enabled?: boolean;
+  memory_history_message_limit?: number;
+  memory_include_graph_context?: boolean;
+  memory_include_progress_context?: boolean;
+  memory_include_quiz_context?: boolean;
+  memory_include_frontier_context?: boolean;
+  memory_include_selected_topic_context?: boolean;
+};
+
 export type SettingsDrafts = {
   provider: string;
   model: string;
@@ -115,6 +146,7 @@ export type SettingsDrafts = {
   orchestratorMaxTokens: number;
   quizMaxTokens: number;
   assistantMaxTokens: number;
+  assistantNickname: string;
   persona: string;
   disableIdleAnimations: boolean;
   memoryMode: MemoryMode;
@@ -146,6 +178,7 @@ export type SettingsDraftSetters = {
   orchestratorMaxTokens: Dispatch<SetStateAction<number>>;
   quizMaxTokens: Dispatch<SetStateAction<number>>;
   assistantMaxTokens: Dispatch<SetStateAction<number>>;
+  assistantNickname: Dispatch<SetStateAction<string>>;
   persona: Dispatch<SetStateAction<string>>;
   disableIdleAnimations: Dispatch<SetStateAction<boolean>>;
   memoryMode: Dispatch<SetStateAction<MemoryMode>>;

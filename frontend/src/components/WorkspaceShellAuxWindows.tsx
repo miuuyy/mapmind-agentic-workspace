@@ -3,11 +3,91 @@ import { CaretDown, CaretRight, Check, DownloadSimple, FolderOpen, FolderSimple,
 
 import type { GraphChatState } from "../lib/appContracts";
 import type { AppCopy } from "../lib/appCopy";
-import { renderDisplayText } from "../lib/appUiHelpers";
 import { formatTopicState, getTopicStateTone } from "../lib/graph";
-import { summarizePreviewCounts, summarizeTopOperations } from "../lib/graph";
+import { AssistantComposer } from "./assistant/AssistantComposer";
+import { AssistantSessionList } from "./assistant/AssistantSessionList";
+import { AssistantThread } from "./assistant/AssistantThread";
 import type { ChatSessionSummary, GraphEnvelope } from "../lib/types";
 import type { TopicAnchorPoint } from "./GraphCanvas";
+
+export function AssistantModelMenuTrigger({
+  options,
+  selectedModel,
+  setSelectedModel,
+  ariaLabel,
+  stopPointerDown = false,
+}: {
+  options: string[];
+  selectedModel: string | null;
+  setSelectedModel: React.Dispatch<React.SetStateAction<string | null>>;
+  ariaLabel: string;
+  stopPointerDown?: boolean;
+}): React.JSX.Element | null {
+  const [open, setOpen] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [open]);
+
+  if (options.length === 0) return null;
+
+  return (
+    <div
+      ref={rootRef}
+      className="assistantInlineModelTrigger"
+      onPointerDown={stopPointerDown ? (event) => event.stopPropagation() : undefined}
+    >
+      <button
+        className={`assistantModelMenuButton ${open ? "assistantModelMenuButtonOpen" : ""}`}
+        type="button"
+        aria-label={ariaLabel}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <CaretDown className="assistantModelMenuCaret" size={12} weight="bold" aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="assistantModelMenu" role="menu">
+          {options.map((modelId) => {
+            const active = modelId === (selectedModel ?? options[0]);
+            return (
+              <button
+                key={modelId}
+                className={`assistantModelMenuItem ${active ? "assistantModelMenuItemActive" : ""}`}
+                type="button"
+                role="menuitemradio"
+                aria-checked={active}
+                onClick={() => {
+                  setSelectedModel(modelId);
+                  setOpen(false);
+                }}
+              >
+                <span className="assistantModelMenuItemLabel">{modelId}</span>
+                {active ? <Check size={12} weight="bold" aria-hidden="true" /> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function LightWorkspaceWindow({
   workspaceWindowRef,
@@ -17,6 +97,7 @@ export function LightWorkspaceWindow({
   availableGraphs,
   setCreateGraphOpen,
   setCreateGraphError,
+  closing,
   activeGraph,
   lightWorkspaceExpandedGraphId,
   setLightWorkspaceExpandedGraphId,
@@ -59,11 +140,12 @@ export function LightWorkspaceWindow({
   setDeleteConfirm: React.Dispatch<React.SetStateAction<{ graphId: string; title: string } | null>>;
   selectedTopicId: string | null;
   handleSelectTopic: (topicId: string | null, anchor: TopicAnchorPoint | null) => void;
+  closing?: boolean;
 }): React.JSX.Element {
   return (
     <div
       ref={workspaceWindowRef}
-      className="lightFloatingWindow lightWorkspaceWindow lightFloatingWindowEnter"
+      className={`lightFloatingWindow lightWorkspaceWindow ${closing ? "lightFloatingWindowExit" : "lightFloatingWindowEnter"}`}
       style={{ left: `${workspaceWindowPosition.x}px`, top: `${workspaceWindowPosition.y}px` }}
     >
       <div className="lightFloatingWindowHeader" onPointerDown={(event) => beginFloatingDrag("workspace", event)}>
@@ -267,20 +349,20 @@ export function TopicAssetModal({
         tabIndex={-1}
       >
         <div className="quizModalHeader">
-          <div>
+          <div className="topicAssetHeaderCopy">
             <div id="topic-asset-dialog-title" className="cardTitle">
               {topicAssetDialog.kind === "resource" ? copy.dialogs.addResourceTitle : copy.dialogs.addArtifactTitle}
             </div>
             <div id="topic-asset-dialog-description" className="mutedSmall">
               {topicAssetDialog.kind === "resource" ? copy.dialogs.addResourceBody : copy.dialogs.addArtifactBody}
             </div>
+            <div className="mutedSmall topicAssetTopicTitle">{topicAssetDialog.topicTitle}</div>
           </div>
           <button className="modalCloseButton" onClick={closeTopicAssetModal} type="button">
             ×
           </button>
         </div>
         <div className="quizModalBody stack topicAssetModalBody">
-          <div className="mutedSmall topicAssetTopicTitle">{topicAssetDialog.topicTitle}</div>
           {topicAssetDialog.kind === "resource" ? (
             <label className="field topicAssetField">
               <span className="fieldLabel topicAssetFieldLabel">{copy.dialogs.resourceUrl}</span>
@@ -350,6 +432,7 @@ export function LightChatWindow({
   chatWindowPosition,
   assistantWidth,
   beginFloatingDrag,
+  assistantDisplayName,
   activeSession,
   selectedTopic,
   activeGraph,
@@ -381,12 +464,18 @@ export function LightChatWindow({
   composerUseGrounding,
   setComposerUseGrounding,
   assistantTemplates,
+  chatModelOptions,
+  selectedChatModel,
+  setSelectedChatModel,
   sendChat,
+  closing,
 }: {
   chatWindowRef: React.RefObject<HTMLDivElement | null>;
   chatWindowPosition: { x: number; y: number };
   assistantWidth: number;
+  closing?: boolean;
   beginFloatingDrag: (target: "chat", event: React.PointerEvent<HTMLElement>) => void;
+  assistantDisplayName: string;
   activeSession: ChatSessionSummary | null;
   selectedTopic: { id: string; title: string } | null;
   activeGraph: GraphEnvelope | null;
@@ -418,12 +507,15 @@ export function LightChatWindow({
   composerUseGrounding: boolean;
   setComposerUseGrounding: React.Dispatch<React.SetStateAction<boolean>>;
   assistantTemplates: Array<{ id: string; label: string; value: string }>;
+  chatModelOptions: string[];
+  selectedChatModel: string | null;
+  setSelectedChatModel: React.Dispatch<React.SetStateAction<string | null>>;
   sendChat: () => Promise<void>;
 }): React.JSX.Element {
   return (
     <div
       ref={chatWindowRef}
-      className="lightFloatingWindow lightChatWindow lightFloatingWindowEnter"
+      className={`lightFloatingWindow lightChatWindow ${closing ? "lightFloatingWindowExit" : "lightFloatingWindowEnter"}`}
       style={{
         left: `${chatWindowPosition.x}px`,
         top: `${chatWindowPosition.y}px`,
@@ -432,7 +524,16 @@ export function LightChatWindow({
     >
       <div className="lightFloatingWindowHeader" onPointerDown={(event) => beginFloatingDrag("chat", event)}>
         <div>
-          <div className="lightFloatingWindowTitle">{activeSession?.title ?? copy.sessions.assistantTitle}</div>
+          <div className="assistantDockTitleRow">
+            <div className="lightFloatingWindowTitle">{assistantDisplayName}</div>
+            <AssistantModelMenuTrigger
+              options={chatModelOptions}
+              selectedModel={selectedChatModel}
+              setSelectedModel={setSelectedChatModel}
+              ariaLabel={copy.sessions.modelPicker}
+              stopPointerDown
+            />
+          </div>
           <div className="lightFloatingWindowSubtle">
             {activeSession?.topic_id
               ? copy.sessions.learningSession
@@ -442,293 +543,52 @@ export function LightChatWindow({
           </div>
         </div>
       </div>
-      <div className="sessionListWrap" ref={sessionListWrapRef}>
-        <div
-          className="sessionList"
-          ref={sessionListRef}
-          onScroll={() => {
-            const el = sessionListRef.current;
-            const wrap = sessionListWrapRef.current;
-            if (!el || !wrap) return;
-            wrap.classList.toggle("scrolledLeft", el.scrollLeft > 4);
-            wrap.classList.toggle("scrolledRight", el.scrollLeft >= el.scrollWidth - el.clientWidth - 4);
-          }}
-          onMouseDown={(event) => {
-            if (!sessionListRef.current) return;
-            sessionDragRef.current = { startX: event.clientX, scrollLeft: sessionListRef.current.scrollLeft };
-          }}
-          onMouseMove={(event) => {
-            if (!sessionDragRef.current || !sessionListRef.current) return;
-            const deltaX = event.clientX - sessionDragRef.current.startX;
-            sessionListRef.current.scrollLeft = sessionDragRef.current.scrollLeft - deltaX;
-          }}
-          onMouseUp={() => { sessionDragRef.current = null; }}
-          onMouseLeave={() => { sessionDragRef.current = null; }}
-          onWheel={(event) => {
-            if (!sessionListRef.current) return;
-            if (Math.abs(event.deltaX) < Math.abs(event.deltaY)) {
-              event.preventDefault();
-              sessionListRef.current.scrollLeft += event.deltaY;
-            }
-          }}
-        >
-          <button
-            className={`sessionItem lightChatSessionChip ${!activeSessionId ? "sessionItemActive lightChatSessionChipActive" : ""}`}
-            onClick={() => setActiveSessionId(null)}
-            type="button"
-          >
-            <span className="sessionItemLabel">{copy.sessions.general}</span>
-            <span className="sessionItemBadge">{generalSession?.message_count ?? 0}</span>
-          </button>
-          {topicSessions.map((session) => (
-            <div
-              key={session.session_id}
-              className={`sessionItemGroup lightChatSessionChip ${activeSessionId === session.session_id ? "sessionItemGroupActive lightChatSessionChipActive" : ""}`}
-            >
-              <button
-                className="sessionItemInline"
-                onClick={() => setActiveSessionId(session.session_id)}
-                type="button"
-              >
-                <span className="sessionItemLabel">{session.title ?? session.topic_id}</span>
-                <span className="sessionItemBadge">{session.message_count}</span>
-              </button>
-              <button
-                className="sessionDeleteBtn"
-                title={copy.sessions.deleteSession}
-                onMouseDown={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  event.preventDefault();
-                  setSessionDeleteConfirm({ sessionId: session.session_id, title: session.title ?? session.topic_id ?? copy.sessions.fallbackSessionTitle });
-                }}
-                aria-label={copy.sessions.deleteSessionAria(session.title ?? session.topic_id ?? copy.sessions.fallbackSessionTitle)}
-                type="button"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-          {selectedTopic && !chatSessions.find((session) => session.topic_id === selectedTopicId) ? (
-            <button className="sessionItem sessionItemNew" type="button" onClick={() => void createTopicSession()}>
-              {copy.sessions.learnTopic(selectedTopic.title)}
-            </button>
-          ) : null}
-        </div>
-      </div>
+      <AssistantSessionList
+        copy={copy}
+        sessionListWrapRef={sessionListWrapRef}
+        sessionListRef={sessionListRef}
+        sessionDragRef={sessionDragRef}
+        activeSessionId={activeSessionId}
+        setActiveSessionId={setActiveSessionId}
+        generalSession={generalSession}
+        topicSessions={topicSessions}
+        setSessionDeleteConfirm={setSessionDeleteConfirm}
+        chatSessions={chatSessions}
+        selectedTopic={selectedTopic}
+        selectedTopicId={selectedTopicId}
+        createTopicSession={createTopicSession}
+        chipClassName="lightChatSessionChip"
+        chipActiveClassName="lightChatSessionChipActive"
+      />
       <div className="sessionShadow" />
-      <div ref={chatViewportRef} className="assistantThread">
-        {currentChatState.messages.length === 0 && !chatThreadLoading ? (
-          <div className="assistantHello">
-            <div className="assistantHelloTitle">{copy.sessions.helloTitle}</div>
-            <div className="assistantHelloCopy">{copy.sessions.helloCopy}</div>
-          </div>
-        ) : null}
-        {visibleMessages.length > 0 ? (
-          visibleMessages.map((message) => {
-            const proposal = message.proposal;
-            const proposalCounts = proposal ? summarizePreviewCounts(proposal, copy) : [];
-            const proposalHighlights = proposal ? summarizeTopOperations(proposal, copy) : [];
-            return (
-              <div key={message.id} className={`chatMessage chatMessage-${message.role}`}>
-                <div className="chatBubble">
-                  <div className="chatCopy">{renderDisplayText(message.content)}</div>
-                  {message.inline_quiz ? (() => {
-                    const quiz = message.inline_quiz;
-                    const answered = quiz.answered_index != null;
-                    return (
-                      <div className="inlineQuizCard">
-                        <div className="inlineQuizQuestion">{renderDisplayText(quiz.question)}</div>
-                        <div className="inlineQuizChoices">
-                          {quiz.choices.map((choice: string, idx: number) => {
-                            let className = "inlineQuizChoice";
-                            if (answered) {
-                              if (idx === quiz.correct_index) className += " inlineQuizCorrect";
-                              else if (idx === quiz.answered_index) className += " inlineQuizWrong";
-                              else className += " inlineQuizDimmed";
-                            }
-                            return (
-                              <button
-                                key={idx}
-                                className={className}
-                                type="button"
-                                disabled={answered || chatLoading}
-                                onClick={() => {
-                                  const answeredMessages = currentChatState.messages.map((entry) =>
-                                    entry.id === message.id && entry.inline_quiz
-                                      ? { ...entry, inline_quiz: { ...entry.inline_quiz, answered_index: idx } }
-                                      : entry,
-                                  );
-                                  updateCurrentChatState((prev) => ({
-                                    ...prev,
-                                    messages: answeredMessages,
-                                  }));
-                                }}
-                              >
-                                {choice}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })() : null}
-                  {message.role === "assistant" ? (
-                    <div className="chatMetaRow">
-                      {message.model ? <span className="badge badge-gray">{message.model}</span> : null}
-                      {message.fallback_used ? <span className="badge badge-yellow">{copy.sessions.fallbackUsed}</span> : null}
-                    </div>
-                  ) : null}
-                  {message.planning_status ? (
-                    <div className="proposalInlineCard proposalInlinePending">
-                      <div className="proposalInlinePendingRow">
-                        <div className="proposalInlinePendingLabel">{message.planning_status}</div>
-                        <div className="proposalInlinePendingDots" aria-hidden="true"><span /><span /><span /></div>
-                      </div>
-                    </div>
-                  ) : null}
-                  {message.planning_error ? <div className="inlineNotice inlineNoticeError">{message.planning_error}</div> : null}
-                  {proposal ? (
-                    <div className="proposalInlineCard">
-                      <div className="proposalInlineHead">
-                        <div>
-                          <div className="proposalInlineTitle">{proposal.display.summary}</div>
-                          {proposal.proposal_envelope.assistant_message ? (
-                            <div className="mutedSmall">{proposal.proposal_envelope.assistant_message}</div>
-                          ) : null}
-                        </div>
-                        <button
-                          className={`proposalAddButton${message.proposal_applied ? " proposalAddButtonApplied" : ""}`}
-                          disabled={applyLoadingMessageId === message.id || message.proposal_applied || !proposal.apply_plan.validation.ok}
-                          onClick={() => void applyProposalFromMessage(message.id, proposal)}
-                          type="button"
-                          aria-label={message.proposal_applied ? copy.sessions.proposalApplied : copy.sessions.addProposalToGraph}
-                          title={message.proposal_applied ? copy.sessions.applied : copy.sessions.addProposalToGraph}
-                        >
-                          {applyLoadingMessageId === message.id ? "…" : message.proposal_applied ? <span className="proposalAppliedMark" aria-hidden="true"><Check size={12} weight="bold" /></span> : "+"}
-                        </button>
-                      </div>
-                      {proposalCounts.length > 0 ? (
-                        <div className="previewStatGrid">
-                          {proposalCounts.map((item) => (
-                            <div key={item.label} className="previewStatCard">
-                              <strong>{item.value}</strong>
-                              <span>{item.label}</span>
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-                      {proposalHighlights.length > 0 ? (
-                        <div className="proposalMiniList">
-                          {proposalHighlights.map((item, index) => (
-                            <button
-                              key={`${item.label}-${item.target}-${index}`}
-                              className="proposalMiniItem"
-                              type="button"
-                              onClick={() => {
-                                updateCurrentChatState((current) => ({
-                                  ...current,
-                                  input: `Expand from topic ${item.target} to topic: `,
-                                }));
-                                window.requestAnimationFrame(() => chatComposerRef.current?.focus());
-                              }}
-                            >
-                              <span>{item.target}</span>
-                              <span className="badge badge-gray">{item.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            );
-          })
-        ) : null}
-        {chatLoading && !hasInlinePlanningWidget ? (
-          <div className="chatMessage chatMessage-assistant">
-            <div className="chatBubble chatBubbleLoading">
-              <span className="chatTypingDot" />
-              <span className="chatTypingDot" />
-              <span className="chatTypingDot" />
-            </div>
-          </div>
-        ) : null}
-      </div>
-      <div className="assistantComposerWrap">
-        {chatError ? <div className="inlineNotice inlineNoticeError">{chatError}</div> : null}
-        {chatSessionsError ? <div className="inlineNotice inlineNoticeError">{chatSessionsError}</div> : null}
-        {applyError ? <div className="inlineNotice inlineNoticeError">{applyError}</div> : null}
-        <div className="assistantTemplates">
-          <button
-            className={`assistantTemplate webGroundingToggle ${composerUseGrounding ? "active" : ""}`}
-            onClick={() => setComposerUseGrounding((current) => !current)}
-            title={copy.sessions.groundingToggle}
-            type="button"
-          >
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
-            Web
-          </button>
-          {assistantTemplates.map((template) => (
-            <button
-              key={template.id}
-              className="assistantTemplate"
-              onClick={() => {
-                updateCurrentChatState((current) => ({
-                  ...current,
-                  input: template.value,
-                }));
-                window.requestAnimationFrame(() => chatComposerRef.current?.focus());
-              }}
-              type="button"
-            >
-              {template.label}
-            </button>
-          ))}
-        </div>
-        <div className="assistantComposer">
-          <textarea
-            ref={chatComposerRef}
-            className="assistantInput"
-            value={currentChatState.input}
-            onChange={(event) =>
-              updateCurrentChatState((current) => ({
-                ...current,
-                input: event.target.value,
-              }))
-            }
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                void sendChat();
-              }
-            }}
-            placeholder={copy.sessions.composerPlaceholder}
-          />
-          <button
-            className="assistantSendButton assistantSendButtonIcon"
-            disabled={chatLoading || chatThreadLoading || !currentChatState.input.trim()}
-            onClick={() => void sendChat()}
-            type="button"
-          >
-            {chatLoading ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
-                <circle cx="12" cy="12" r="10" strokeOpacity="0.25"></circle>
-                <path d="M12 2a10 10 0 0 1 10 10"></path>
-              </svg>
-            ) : (
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 19V5"></path>
-                <path d="M5 12L12 5L19 12"></path>
-              </svg>
-            )}
-          </button>
-        </div>
-      </div>
+      <AssistantThread
+        copy={copy}
+        chatViewportRef={chatViewportRef}
+        chatThreadLoading={chatThreadLoading}
+        currentChatState={currentChatState}
+        visibleMessages={visibleMessages}
+        chatLoading={chatLoading}
+        hasInlinePlanningWidget={hasInlinePlanningWidget}
+        applyLoadingMessageId={applyLoadingMessageId}
+        applyProposalFromMessage={applyProposalFromMessage}
+        updateCurrentChatState={updateCurrentChatState}
+        chatComposerRef={chatComposerRef}
+      />
+      <AssistantComposer
+        copy={copy}
+        chatError={chatError}
+        chatSessionsError={chatSessionsError}
+        applyError={applyError}
+        composerUseGrounding={composerUseGrounding}
+        setComposerUseGrounding={setComposerUseGrounding}
+        assistantTemplates={assistantTemplates}
+        updateCurrentChatState={updateCurrentChatState}
+        chatComposerRef={chatComposerRef}
+        currentChatState={currentChatState}
+        chatLoading={chatLoading}
+        chatThreadLoading={chatThreadLoading}
+        sendChat={() => void sendChat()}
+      />
     </div>
   );
 }

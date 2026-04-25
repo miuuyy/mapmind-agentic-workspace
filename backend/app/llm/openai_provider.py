@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, TypeVar
+from typing import Any, Iterable, TypeVar
 
 import httpx
 from pydantic import BaseModel
 
 from app.core.config import Settings
-from app.llm.base import LLMProviderError, LLMStructuredResponse, parse_structured_text
+from app.llm.base import LLMProviderError, LLMStructuredResponse, LLMStructuredStreamChunk, parse_structured_text
 
 
 T = TypeVar("T", bound=BaseModel)
@@ -191,4 +191,34 @@ class OpenAIProvider:
             parsed=parsed,
             usage=usage,
             finish_reason=response.get("status") if isinstance(response.get("status"), str) else None,
+        )
+
+    def stream_structured(
+        self,
+        *,
+        model: str,
+        system_instruction: str,
+        prompt: str,
+        schema: type[T],
+        schema_name: str | None = None,
+        response_json_schema: dict[str, Any] | None = None,
+        max_output_tokens: int,
+        temperature: float,
+        use_grounding: bool = False,
+    ) -> Iterable[LLMStructuredStreamChunk]:
+        response = self.generate_structured(
+            model=model,
+            system_instruction=system_instruction,
+            prompt=prompt,
+            schema=schema,
+            schema_name=schema_name,
+            response_json_schema=response_json_schema,
+            max_output_tokens=max_output_tokens,
+            temperature=temperature,
+            use_grounding=use_grounding,
+        )
+        yield LLMStructuredStreamChunk(
+            text=response.text,
+            usage=response.usage,
+            finish_reason=response.finish_reason,
         )

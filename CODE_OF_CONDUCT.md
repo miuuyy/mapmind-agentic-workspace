@@ -1,6 +1,6 @@
 # Code of Conduct
 
-MapMind is a small public project. The goal is to make it possible to discuss product ideas, bugs, docs, and contributions without turning the repository into a hostile place.
+Clew is a small public project. The goal is to make it possible to discuss product ideas, bugs, docs, and contributions without turning the repository into a hostile place.
 
 ## Expected behavior
 

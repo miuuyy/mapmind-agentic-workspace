@@ -4,8 +4,15 @@ import unittest
 
 from pydantic import ValidationError
 
+from app.llm.base import LLMProviderError
 from app.llm.contracts import render_action_contract, render_quiz_contract
-from app.llm.schemas import GeminiProposalDraft, InlineQuizDraft, QuizQuestionSetDraft, planner_response_json_schema
+from app.llm.prompt_templates import (
+    orchestrator_system_instruction,
+    planner_system_instruction,
+    quiz_system_instruction,
+    study_assistant_system_instruction,
+)
+from app.llm.schemas import GeminiProposalDraft, InlineQuizDraft, ProposalEdgeDraft, QuizQuestionSetDraft, planner_response_json_schema
 
 
 class LLMContractTests(unittest.TestCase):
@@ -55,6 +62,9 @@ class LLMContractTests(unittest.TestCase):
         operation_properties = schema["properties"]["operations"]["items"]["properties"]
 
         self.assertNotIn("status", operation_properties)
+        zone_properties = operation_properties["zone"]["properties"]
+        self.assertNotIn("color", zone_properties)
+        self.assertNotIn("intensity", zone_properties)
 
     def test_gemini_proposal_draft_schema_avoids_additional_properties_maps(self) -> None:
         schema = GeminiProposalDraft.model_json_schema()
@@ -62,6 +72,37 @@ class LLMContractTests(unittest.TestCase):
         schema_text = str(schema)
         self.assertNotIn("'additionalProperties': True", schema_text)
         self.assertNotIn('"additionalProperties": true', schema_text)
+
+    def test_proposal_edge_draft_rejects_unknown_relation_literal(self) -> None:
+        with self.assertRaises(ValidationError):
+            ProposalEdgeDraft.model_validate(
+                {
+                    "id": "edge-functions-linear",
+                    "source_topic_id": "functions",
+                    "target_topic_id": "linear-equations",
+                    "relation": "prerequisite",
+                    "rationale": "bad synonym",
+                    "weight": 1.0,
+                }
+            )
+
+    def test_math_formatting_rules_are_injected_into_model_roles(self) -> None:
+        planner = planner_system_instruction()
+        orchestrator = orchestrator_system_instruction(language_name="English", persona_rules="", use_grounding=False)
+        assistant = study_assistant_system_instruction(language_name="English", persona_rules="", use_grounding=False)
+        quiz = quiz_system_instruction(language_name="English")
+
+        for prompt in (planner, orchestrator, assistant, quiz):
+            self.assertIn("MATH FORMATTING RULES:", prompt)
+            self.assertIn("KaTeX-compatible LaTeX", prompt)
+            self.assertIn("Use $...$ for inline formulas", prompt)
+
+    def test_llm_provider_error_preserves_diagnostics_payload(self) -> None:
+        error = LLMProviderError("schema failed", diagnostics={"provider": "gemini", "model": "gemini-2.5-pro"})
+
+        self.assertEqual(str(error), "schema failed")
+        self.assertEqual(error.diagnostics["provider"], "gemini")
+        self.assertEqual(error.diagnostics["model"], "gemini-2.5-pro")
 
 
 if __name__ == "__main__":

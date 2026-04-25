@@ -1,15 +1,15 @@
 import React from "react";
-import { BookBookmark, BugBeetle, CaretDown, CaretLeft, CaretRight, ChatCircleDots, Check, CrosshairSimple, DownloadSimple, GearSix, PencilSimple, SquaresFour } from "@phosphor-icons/react";
+import { BookBookmark, BugBeetle, CaretDown, CaretLeft, CaretRight, ChatCircleDots, Check, CrosshairSimple, DownloadSimple, GearSix, List, PencilSimple, SquaresFour } from "@phosphor-icons/react";
 
-import { APP_LOGO_SRC, ASSISTANT_MIN_WIDTH, type AuthSessionPayload, type GraphChatState, type ThemeMode, type WorkspaceSurfacePayload } from "../lib/appContracts";
+import { APP_NAME, ASSISTANT_MIN_WIDTH, type AuthSessionPayload, type GraphChatState, type ThemeMode, type WorkspaceSurfacePayload } from "../lib/appContracts";
 import { API_BASE } from "../lib/api";
 import {
   LIGHT_DESKTOP_LAYOUT_STORAGE_KEY,
   clampFloatingPosition,
+  canPlaceFloatingRect,
   computeCanonicalLightDesktopLayout,
   makeFloatingRect,
   readStoredLightDesktopLayout,
-  resolveFloatingCollision,
   toFloatingRect,
   type FloatingRect,
   type FloatingWindowDragTarget,
@@ -22,8 +22,12 @@ import { formatMinutes, formatTopicState } from "../lib/graph";
 import { useModalAccessibility } from "../lib/useModalAccessibility";
 import { GraphCanvas } from "./GraphCanvas";
 import type { TopicAnchorPoint } from "./GraphCanvas";
-import { LightChatWindow, LightWorkspaceWindow, TopicAssetModal } from "./WorkspaceShellAuxWindows";
-import { GraphStatItems, OverlayControls } from "./WorkspaceShellOverlayControls";
+import { AssistantModelMenuTrigger, LightChatWindow, LightWorkspaceWindow, TopicAssetModal } from "./WorkspaceShellAuxWindows";
+import { AssistantComposer } from "./assistant/AssistantComposer";
+import { AssistantSessionList } from "./assistant/AssistantSessionList";
+import { AssistantThread } from "./assistant/AssistantThread";
+import { ClewLoader } from "./ClewLoader";
+import { TopStatsOverlay } from "./TopStatsOverlay";
 import type {
   Artifact,
   ChatMessage,
@@ -39,7 +43,31 @@ import type {
 
 type StateSetter<T> = React.Dispatch<React.SetStateAction<T>>;
 
-const noop = () => {};
+  const noop = () => {};
+  const LIGHT_WORKSPACE_EXPANDED_GRAPH_STORAGE_KEY = "knowledge_graph_light_workspace_expanded_graph_v1";
+
+// Keep closing windows mounted briefly so the exit animation can complete.
+const WINDOW_CLOSE_MS = 110;
+
+function useDelayedUnmount(isOpen: boolean, delayMs: number): { rendered: boolean; closing: boolean } {
+  const [rendered, setRendered] = React.useState<boolean>(isOpen);
+  const [closing, setClosing] = React.useState<boolean>(false);
+  React.useEffect(() => {
+    if (isOpen) {
+      setRendered(true);
+      setClosing(false);
+      return;
+    }
+    if (!rendered) return;
+    setClosing(true);
+    const timer = window.setTimeout(() => {
+      setRendered(false);
+      setClosing(false);
+    }, delayMs);
+    return () => window.clearTimeout(timer);
+  }, [isOpen, delayMs, rendered]);
+  return { rendered, closing };
+}
 
 type GraphSummary = {
   topicCount: number;
@@ -63,8 +91,7 @@ type AssistantTemplate = {
   value: string;
 };
 
-type WorkspaceShellProps = {
-  copy: AppCopy;
+type WorkspaceNavigationProps = {
   sidebarVisible: boolean;
   leftSidebarClosing: boolean;
   closeSidebar: () => void;
@@ -86,9 +113,16 @@ type WorkspaceShellProps = {
   setDeleteConfirm: StateSetter<{ graphId: string; title: string } | null>;
   setCreateGraphOpen: StateSetter<boolean>;
   setCreateGraphError: StateSetter<string | null>;
+  mobileMenuOpen: boolean;
+  setMobileMenuOpen: StateSetter<boolean>;
+};
+
+type WorkspaceChromeProps = {
   openConfigurationSettings: () => void;
   openDebugLogs: () => void;
+  closeOverlaySurfaces: () => void;
   isLogsOpen: boolean;
+  modalSurfaceLocked: boolean;
   isMobileViewport: boolean;
   leftSidebarOpen: boolean;
   openSidebar: () => void;
@@ -101,10 +135,24 @@ type WorkspaceShellProps = {
   topOverlayCompact: boolean;
   overlayLeftOffset: number;
   overlayRightOffset: number;
+  floatingStatsRef: React.RefObject<HTMLDivElement | null>;
+  sessionUser: AuthSessionPayload["user"];
+  isSettingsOpen: boolean;
+  debugModeEnabled: boolean;
+  themeMode: ThemeMode;
+  setThemeMode: StateSetter<ThemeMode>;
+  overlayRestoreEpoch: number;
+};
+
+type WorkspaceStatusProps = {
   data: WorkspaceEnvelope | null;
   assessmentError: string | null;
   configSaving: boolean;
   error: string | null;
+  workspaceSurface: WorkspaceSurfacePayload | null;
+};
+
+type GraphWorkspaceProps = {
   graphSummary: GraphSummary;
   activeAssessmentCards: GraphAssessment["cards"];
   graphLayoutEditing: boolean;
@@ -113,11 +161,8 @@ type WorkspaceShellProps = {
   startGraphLayoutEdit: () => void;
   setGraphLayoutEditing: StateSetter<boolean>;
   setGraphLayoutDraft: StateSetter<ManualLayoutPositions | null>;
-  floatingStatsRef: React.RefObject<HTMLDivElement | null>;
   graphShellRef: React.RefObject<HTMLDivElement | null>;
   focusData: FocusData;
-  addTopicResource: (topicId: string, url: string) => Promise<void>;
-  addTopicArtifact: (topicId: string, title: string, body: string) => Promise<void>;
   handleSelectTopic: (topicId: string | null, anchor: TopicAnchorPoint | null) => void;
   handleSelectedTopicAnchorChange: (next: TopicAnchorPoint | null) => void;
   selectedTopicId: string | null;
@@ -127,7 +172,11 @@ type WorkspaceShellProps = {
   showGraphLoadingState: boolean;
   showGraphEmptyState: boolean;
   onboardingNeedsFirstGraph: boolean;
-  workspaceSurface: WorkspaceSurfacePayload | null;
+};
+
+type TopicDetailsProps = {
+  addTopicResource: (topicId: string, url: string) => Promise<void>;
+  addTopicArtifact: (topicId: string, title: string, body: string) => Promise<void>;
   selectedTopic: Topic | null;
   popoverPosition: PopoverPosition | null;
   topicPopoverRef: React.RefObject<HTMLDivElement | null>;
@@ -143,6 +192,9 @@ type WorkspaceShellProps = {
   quizLoading: boolean;
   startQuiz: () => Promise<void>;
   markTopicFinished: () => Promise<void>;
+};
+
+type AssistantWorkspaceProps = {
   assistantResizing: boolean;
   handleAssistantResize: (startX: number) => void;
   chatSessions: ChatSessionSummary[];
@@ -164,26 +216,38 @@ type WorkspaceShellProps = {
   sendChat: (overridePrompt?: string, options?: { hiddenUserMessage?: boolean; baseMessages?: ChatMessage[] }) => Promise<void>;
   applyLoadingMessageId: string | null;
   applyProposalFromMessage: (messageId: string, proposal: ProposalGenerateResponse) => Promise<void>;
-  summarizePreviewCounts: (proposal: ProposalGenerateResponse) => Array<{ label: string; value: number }>;
-  summarizeTopOperations: (proposal: ProposalGenerateResponse) => Array<{ label: string; target: string }>;
   setSessionDeleteConfirm: StateSetter<{ sessionId: string; title: string } | null>;
   applyError: string | null;
   assistantTemplates: AssistantTemplate[];
+  chatModelOptions: string[];
+  selectedChatModel: string | null;
+  setSelectedChatModel: StateSetter<string | null>;
   composerUseGrounding: boolean;
   setComposerUseGrounding: StateSetter<boolean>;
   chatComposerRef: React.RefObject<HTMLTextAreaElement | null>;
-  mobileMenuOpen: boolean;
-  setMobileMenuOpen: StateSetter<boolean>;
-  sessionUser: AuthSessionPayload["user"];
-  isSettingsOpen: boolean;
-  debugModeEnabled: boolean;
-  themeMode: ThemeMode;
-  setThemeMode: StateSetter<ThemeMode>;
+};
+
+type WorkspaceShellProps = {
+  copy: AppCopy;
+  navigation: WorkspaceNavigationProps;
+  chrome: WorkspaceChromeProps;
+  workspaceStatus: WorkspaceStatusProps;
+  graphWorkspace: GraphWorkspaceProps;
+  topicDetails: TopicDetailsProps;
+  assistant: AssistantWorkspaceProps;
 };
 
 export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const {
     copy,
+    navigation,
+    chrome,
+    workspaceStatus,
+    graphWorkspace,
+    topicDetails,
+    assistant,
+  } = props;
+  const {
     sidebarVisible,
     leftSidebarClosing,
     closeSidebar,
@@ -205,9 +269,15 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     setDeleteConfirm,
     setCreateGraphOpen,
     setCreateGraphError,
+    mobileMenuOpen,
+    setMobileMenuOpen,
+  } = navigation;
+  const {
     openConfigurationSettings,
     openDebugLogs,
+    closeOverlaySurfaces,
     isLogsOpen,
+    modalSurfaceLocked,
     isMobileViewport,
     leftSidebarOpen,
     openSidebar,
@@ -220,10 +290,22 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     topOverlayCompact,
     overlayLeftOffset,
     overlayRightOffset,
+    floatingStatsRef,
+    sessionUser,
+    isSettingsOpen,
+    debugModeEnabled,
+    themeMode,
+    setThemeMode,
+    overlayRestoreEpoch,
+  } = chrome;
+  const {
     data,
     assessmentError,
     configSaving,
     error,
+    workspaceSurface,
+  } = workspaceStatus;
+  const {
     graphSummary,
     activeAssessmentCards,
     graphLayoutEditing,
@@ -232,11 +314,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     startGraphLayoutEdit,
     setGraphLayoutEditing,
     setGraphLayoutDraft,
-    floatingStatsRef,
     graphShellRef,
     focusData,
-    addTopicResource,
-    addTopicArtifact,
     handleSelectTopic,
     handleSelectedTopicAnchorChange,
     selectedTopicId,
@@ -246,7 +325,10 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     showGraphLoadingState,
     showGraphEmptyState,
     onboardingNeedsFirstGraph,
-    workspaceSurface,
+  } = graphWorkspace;
+  const {
+    addTopicResource,
+    addTopicArtifact,
     selectedTopic,
     popoverPosition,
     topicPopoverRef,
@@ -262,6 +344,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     quizLoading,
     startQuiz,
     markTopicFinished,
+  } = topicDetails;
+  const {
     assistantResizing,
     handleAssistantResize,
     chatSessions,
@@ -283,22 +367,17 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     sendChat,
     applyLoadingMessageId,
     applyProposalFromMessage,
-    summarizePreviewCounts,
-    summarizeTopOperations,
     setSessionDeleteConfirm,
     applyError,
     assistantTemplates,
+    chatModelOptions,
+    selectedChatModel,
+    setSelectedChatModel,
     composerUseGrounding,
     setComposerUseGrounding,
     chatComposerRef,
-    mobileMenuOpen,
-    setMobileMenuOpen,
-    sessionUser,
-    isSettingsOpen,
-    debugModeEnabled,
-    themeMode,
-    setThemeMode,
-  } = props;
+  } = assistant;
+  const assistantDisplayName = data?.workspace.config.assistant_nickname?.trim() || copy.sessions.assistantTitle;
   const experimentalLightDesktop = !isMobileViewport;
   const shellSurfaceRef = React.useRef<HTMLDivElement | null>(null);
   const dockRef = React.useRef<HTMLDivElement | null>(null);
@@ -307,6 +386,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const dragStateRef = React.useRef<{
     target: FloatingWindowDragTarget;
     origin: FloatingWindowPosition;
+    lastValid: FloatingWindowPosition;
     startPointerX: number;
     startPointerY: number;
     shellRect: DOMRect;
@@ -317,10 +397,18 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const lightDesktopLayoutInitializedRef = React.useRef(false);
   const prevLightWorkspacePanelOpenRef = React.useRef(false);
   const prevLightChatPanelOpenRef = React.useRef(false);
+  const lastOverlayRestoreEpochRef = React.useRef(overlayRestoreEpoch);
   const [dockPosition, setDockPosition] = React.useState<FloatingWindowPosition>(() => storedLightDesktopLayout?.dock ?? { x: 18, y: 82 });
   const [workspaceWindowPosition, setWorkspaceWindowPosition] = React.useState<FloatingWindowPosition>(() => storedLightDesktopLayout?.workspace ?? { x: 92, y: 86 });
   const [chatWindowPosition, setChatWindowPosition] = React.useState<FloatingWindowPosition>(() => storedLightDesktopLayout?.chat ?? { x: 0, y: 84 });
-  const [lightWorkspaceExpandedGraphId, setLightWorkspaceExpandedGraphId] = React.useState<string | null>(null);
+  const [lightWorkspaceExpandedGraphId, setLightWorkspaceExpandedGraphId] = React.useState<string | null>(() => {
+    try {
+      const stored = localStorage.getItem(LIGHT_WORKSPACE_EXPANDED_GRAPH_STORAGE_KEY);
+      return stored && stored.trim() ? stored : null;
+    } catch {
+      return null;
+    }
+  });
   const showMobileOverlay = isMobileViewport && !isSettingsOpen;
   const showCompactDesktopOverlay = topOverlayCompact && !isMobileViewport && !isSettingsOpen;
   const showInlineDesktopOverlay = !topOverlayCompact && !isMobileViewport && !isSettingsOpen;
@@ -328,7 +416,13 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const lightChatPanelOpen = experimentalLightDesktop && assistantOpen;
   const overlayLeftInset = experimentalLightDesktop ? 104 : overlayLeftOffset;
   const overlayRightInset = experimentalLightDesktop ? 24 : overlayRightOffset;
-  const dockIconWeight = themeMode === "dark" ? "regular" : "duotone";
+  const getDockIconWeight = React.useCallback(
+    (isActive: boolean) => {
+      if (themeMode === "dark") return "regular";
+      return isActive ? "regular" : "duotone";
+    },
+    [themeMode],
+  );
 
   const graphCanvasBackgroundFill = themeMode === "light" ? "#f7f7f4" : "#000000";
   const [topicAssetDialog, setTopicAssetDialog] = React.useState<{
@@ -343,6 +437,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   const [topicArtifactBodyDraft, setTopicArtifactBodyDraft] = React.useState("");
   const topicAssetModalRef = React.useRef<HTMLDivElement | null>(null);
   const topicAssetPrimaryInputRef = React.useRef<HTMLElement | null>(null);
+  // Prevent repeated pointer events from creating duplicate topic chat sessions.
+  const createTopicSessionPendingRef = React.useRef(false);
   const closeTopicAssetModal = React.useCallback(() => {
     setTopicAssetDialog(null);
     setTopicAssetSaving(false);
@@ -372,11 +468,13 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     dragStateRef.current = {
       target,
       origin,
+      lastValid: origin,
       startPointerX: event.clientX,
       startPointerY: event.clientY,
       shellRect,
       size: { width: targetRect.width, height: targetRect.height },
     };
+    document.body.style.userSelect = "none";
     event.preventDefault();
   }, [chatWindowPosition, dockPosition, experimentalLightDesktop, workspaceWindowPosition]);
 
@@ -390,20 +488,34 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       };
       const blockedRects: FloatingRect[] = [];
 
-      if (drag.target !== "dock") {
-        const dockRect = dockRef.current?.getBoundingClientRect();
-        if (dockRect) blockedRects.push(toFloatingRect(drag.shellRect, dockRect));
+      // Only visible stat chips block floating-window drag targets.
+      const statsContainer = floatingStatsRef.current;
+      if (statsContainer) {
+        for (const child of Array.from(statsContainer.children) as HTMLElement[]) {
+          const rect = child.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            blockedRects.push(toFloatingRect(drag.shellRect, rect));
+          }
+        }
       }
-      if (drag.target !== "workspace" && lightWorkspacePanelOpen) {
-        const workspaceRect = workspaceWindowRef.current?.getBoundingClientRect();
-        if (workspaceRect) blockedRects.push(toFloatingRect(drag.shellRect, workspaceRect));
-      }
-      if (drag.target !== "chat" && lightChatPanelOpen) {
-        const chatRect = chatWindowRef.current?.getBoundingClientRect();
-        if (chatRect) blockedRects.push(toFloatingRect(drag.shellRect, chatRect));
-      }
+      // Topic popovers do not block floating windows.
 
-      const resolved = resolveFloatingCollision(drag.target, nextPosition, drag.size, drag.shellRect, blockedRects);
+      const clampedCandidate = clampFloatingPosition(drag.target, nextPosition, drag.size, drag.shellRect);
+      const candidateRect = makeFloatingRect(clampedCandidate, drag.size);
+      const xOnlyCandidate = { x: clampedCandidate.x, y: drag.lastValid.y };
+      const yOnlyCandidate = { x: drag.lastValid.x, y: clampedCandidate.y };
+      const xOnlyRect = makeFloatingRect(xOnlyCandidate, drag.size);
+      const yOnlyRect = makeFloatingRect(yOnlyCandidate, drag.size);
+      let resolved = drag.lastValid;
+
+      if (canPlaceFloatingRect(candidateRect, blockedRects)) {
+        resolved = clampedCandidate;
+      } else if (canPlaceFloatingRect(xOnlyRect, blockedRects)) {
+        resolved = xOnlyCandidate;
+      } else if (canPlaceFloatingRect(yOnlyRect, blockedRects)) {
+        resolved = yOnlyCandidate;
+      }
+      drag.lastValid = resolved;
 
       if (drag.target === "workspace") {
         setWorkspaceWindowPosition(resolved);
@@ -415,6 +527,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     };
     const handlePointerUp = () => {
       dragStateRef.current = null;
+      document.body.style.userSelect = "";
     };
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
@@ -422,7 +535,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [lightChatPanelOpen, lightWorkspacePanelOpen]);
+  }, [floatingStatsRef, lightChatPanelOpen, lightWorkspacePanelOpen, popoverPosition, selectedTopic, topicPopoverRef]);
 
   const applyCanonicalLightDesktopLayout = React.useCallback(() => {
     if (!experimentalLightDesktop) return;
@@ -457,18 +570,15 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
 
   React.useLayoutEffect(() => {
     if (!experimentalLightDesktop) return;
-    const workspaceJustOpened = lightWorkspacePanelOpen && !prevLightWorkspacePanelOpenRef.current;
-    const chatJustOpened = lightChatPanelOpen && !prevLightChatPanelOpenRef.current;
-    if (workspaceJustOpened || chatJustOpened) {
-      applyCanonicalLightDesktopLayout();
-    }
+    // Preserve user-adjusted floating-window positions across overlay toggles.
+    lastOverlayRestoreEpochRef.current = overlayRestoreEpoch;
     prevLightWorkspacePanelOpenRef.current = lightWorkspacePanelOpen;
     prevLightChatPanelOpenRef.current = lightChatPanelOpen;
   }, [
-    applyCanonicalLightDesktopLayout,
     experimentalLightDesktop,
     lightChatPanelOpen,
     lightWorkspacePanelOpen,
+    overlayRestoreEpoch,
   ]);
 
   React.useLayoutEffect(() => {
@@ -507,22 +617,12 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     const chatSize = chatRect ? { width: chatRect.width, height: chatRect.height } : { width: Math.min(Math.max(assistantWidth, 390), 460), height: 760 };
 
     const nextDockPosition = clampFloatingPosition("dock", dockPosition, dockSize, shellRect);
-    let nextWorkspacePosition = workspaceWindowPosition;
-    let nextChatPosition = chatWindowPosition;
-
-    const dockBlockedRect = makeFloatingRect(nextDockPosition, dockSize);
-
-    if (lightWorkspacePanelOpen) {
-      nextWorkspacePosition = resolveFloatingCollision("workspace", workspaceWindowPosition, workspaceSize, shellRect, [dockBlockedRect]);
-    }
-
-    if (lightChatPanelOpen) {
-      const blockedRects = [dockBlockedRect];
-      if (lightWorkspacePanelOpen) {
-        blockedRects.push(makeFloatingRect(nextWorkspacePosition, workspaceSize));
-      }
-      nextChatPosition = resolveFloatingCollision("chat", chatWindowPosition, chatSize, shellRect, blockedRects);
-    }
+    const nextWorkspacePosition = lightWorkspacePanelOpen
+      ? clampFloatingPosition("workspace", workspaceWindowPosition, workspaceSize, shellRect)
+      : workspaceWindowPosition;
+    const nextChatPosition = lightChatPanelOpen
+      ? clampFloatingPosition("chat", chatWindowPosition, chatSize, shellRect)
+      : chatWindowPosition;
 
     if (nextDockPosition.x !== dockPosition.x || nextDockPosition.y !== dockPosition.y) {
       setDockPosition(nextDockPosition);
@@ -538,8 +638,14 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     chatWindowPosition,
     dockPosition,
     experimentalLightDesktop,
+    floatingStatsRef,
     lightChatPanelOpen,
     lightWorkspacePanelOpen,
+    overlayLeftOffset,
+    overlayRightOffset,
+    popoverPosition,
+    selectedTopic,
+    topicPopoverRef,
     workspaceWindowPosition,
   ]);
 
@@ -572,6 +678,26 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
     if (!activeGraph?.graph_id) return;
     setLightWorkspaceExpandedGraphId((current) => current ?? activeGraph.graph_id);
   }, [activeGraph?.graph_id, experimentalLightDesktop]);
+
+  React.useEffect(() => {
+    if (!experimentalLightDesktop) return;
+    if (!lightWorkspaceExpandedGraphId) return;
+    if (availableGraphs.some((graph) => graph.graph_id === lightWorkspaceExpandedGraphId)) return;
+    setLightWorkspaceExpandedGraphId(activeGraph?.graph_id ?? null);
+  }, [activeGraph?.graph_id, availableGraphs, experimentalLightDesktop, lightWorkspaceExpandedGraphId]);
+
+  React.useEffect(() => {
+    if (!experimentalLightDesktop) return;
+    try {
+      if (lightWorkspaceExpandedGraphId) {
+        localStorage.setItem(LIGHT_WORKSPACE_EXPANDED_GRAPH_STORAGE_KEY, lightWorkspaceExpandedGraphId);
+      } else {
+        localStorage.removeItem(LIGHT_WORKSPACE_EXPANDED_GRAPH_STORAGE_KEY);
+      }
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [experimentalLightDesktop, lightWorkspaceExpandedGraphId]);
 
   function openTopicAssetDialog(kind: "resource" | "artifact"): void {
     if (!selectedTopic) return;
@@ -606,24 +732,29 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
   }
 
   const toggleExperimentalWorkspaceWindow = (): void => {
+    if (modalSurfaceLocked) {
+      closeOverlaySurfaces();
+    }
     if (leftSidebarOpen) {
       closeSidebar();
       return;
     }
-    applyCanonicalLightDesktopLayout();
     openSidebar();
   };
 
   const toggleExperimentalChatWindow = (): void => {
+    if (modalSurfaceLocked) {
+      closeOverlaySurfaces();
+    }
     if (assistantOpen) {
       setAssistantWidth(0);
       return;
     }
     setAssistantWidth((current) => (current < ASSISTANT_MIN_WIDTH ? 390 : current));
-    applyCanonicalLightDesktopLayout();
   };
 
-  const lightWorkspaceWindow = lightWorkspacePanelOpen ? (
+  const workspaceWindowAnim = useDelayedUnmount(lightWorkspacePanelOpen, WINDOW_CLOSE_MS);
+  const lightWorkspaceWindow = workspaceWindowAnim.rendered ? (
     <LightWorkspaceWindow
       workspaceWindowRef={workspaceWindowRef}
       workspaceWindowPosition={workspaceWindowPosition}
@@ -649,27 +780,36 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       setDeleteConfirm={setDeleteConfirm}
       selectedTopicId={selectedTopicId}
       handleSelectTopic={handleSelectTopic}
+      closing={workspaceWindowAnim.closing}
     />
   ) : null;
   async function createTopicSession(): Promise<void> {
     if (!activeGraph || !selectedTopicId || !selectedTopic) return;
-    const response = await apiFetch(`${API_BASE}/api/v1/graphs/${activeGraph.graph_id}/chat/sessions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic_id: selectedTopicId, title: selectedTopic.title }),
-    });
-    if (!response.ok) return;
-    const session = await response.json();
-    setActiveSessionId(session.session_id);
-    void loadSessions();
+    if (createTopicSessionPendingRef.current) return;
+    createTopicSessionPendingRef.current = true;
+    try {
+      const response = await apiFetch(`${API_BASE}/api/v1/graphs/${activeGraph.graph_id}/chat/sessions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic_id: selectedTopicId, title: selectedTopic.title }),
+      });
+      if (!response.ok) return;
+      const session = await response.json();
+      setActiveSessionId(session.session_id);
+      void loadSessions();
+    } finally {
+      createTopicSessionPendingRef.current = false;
+    }
   }
 
-  const lightChatWindow = lightChatPanelOpen ? (
+  const chatWindowAnim = useDelayedUnmount(lightChatPanelOpen, WINDOW_CLOSE_MS);
+  const lightChatWindow = chatWindowAnim.rendered ? (
     <LightChatWindow
       chatWindowRef={chatWindowRef}
       chatWindowPosition={chatWindowPosition}
       assistantWidth={assistantWidth}
       beginFloatingDrag={beginFloatingDrag}
+      assistantDisplayName={assistantDisplayName}
       activeSession={activeSession}
       selectedTopic={selectedTopic}
       activeGraph={activeGraph}
@@ -701,7 +841,11 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       composerUseGrounding={composerUseGrounding}
       setComposerUseGrounding={setComposerUseGrounding}
       assistantTemplates={assistantTemplates}
+      chatModelOptions={chatModelOptions}
+      selectedChatModel={selectedChatModel}
+      setSelectedChatModel={setSelectedChatModel}
       sendChat={sendChat}
+      closing={chatWindowAnim.closing}
     />
   ) : null;
 
@@ -710,8 +854,8 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
       {!experimentalLightDesktop ? (
       <aside className={`leftSidebar ${sidebarVisible ? "leftSidebarVisible" : "leftSidebarCollapsed"} ${leftSidebarClosing ? "leftSidebarClosing" : ""}`}>
         <div className="sidebarHeader">
-          <div className="sidebarBrand" aria-label="MapMind brand">
-            <img className="sidebarBrandLogo" src={APP_LOGO_SRC} alt="MapMind logo" />
+          <div className="sidebarBrand" aria-label={`${APP_NAME} brand`}>
+            <span className="sidebarBrandMark" aria-hidden="true" />
           </div>
           <button className="sidebarToggleBtn" onClick={closeSidebar} title={copy.sidebar.closeSidebar}>
             <CaretLeft size={16} weight="bold" />
@@ -838,7 +982,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
           </button>
           <a
             className="sidebarAccountTrigger sidebarAccountLink"
-            href="https://mapmind.space/how-to-use"
+            href="https://clew.my/how-to-use"
             target="_blank"
             rel="noreferrer"
           >
@@ -911,164 +1055,98 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
           </div>
         ) : null}
 
-        {showMobileOverlay ? (
-          <div
-            className="topOverlayStack topOverlayStackMobile"
-            style={{
-              left: "12px",
-              right: "12px",
-              top: "calc(75px + env(safe-area-inset-top, 0px))",
-            }}
-          >
-            <div
-              ref={floatingStatsRef}
-              className="floatingStatsContainer floatingStatsContainerStacked"
-              onWheel={(event) => {
-                const strip = floatingStatsRef.current;
-                if (!strip) return;
-                if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-                strip.scrollLeft += event.deltaY;
-                event.preventDefault();
-              }}
-            >
-              <GraphStatItems
-                activeGraph={activeGraph}
-                graphSummary={graphSummary}
-                copy={copy}
-                activeAssessmentCards={activeAssessmentCards}
-                data={data}
-                assessmentError={assessmentError}
-                configSaving={configSaving}
-                error={error}
-                graphLayoutEditing={graphLayoutEditing}
-                topOverlayCompact={topOverlayCompact}
-                isMobileViewport={isMobileViewport}
-              />
-            </div>
-            <div className="floatingStatusContainer floatingStatusContainerCompact">
-              <OverlayControls
-                activeGraph={activeGraph}
-                themeMode={themeMode}
-                setThemeMode={setThemeMode}
-                viewportCenteredZoom={viewportCenteredZoom}
-                setViewportCenteredZoom={setViewportCenteredZoom}
-                graphLayoutEditing={graphLayoutEditing}
-                saveGraphLayout={saveGraphLayout}
-                startGraphLayoutEdit={startGraphLayoutEdit}
-                graphLayoutSaving={graphLayoutSaving}
-                copy={copy}
-                setGraphLayoutEditing={setGraphLayoutEditing}
-                setGraphLayoutDraft={setGraphLayoutDraft}
-              />
-            </div>
-          </div>
-        ) : null}
+        <TopStatsOverlay
+          visible={showMobileOverlay}
+          wrapperClassName="topOverlayStack topOverlayStackMobile"
+          wrapperStyle={{
+            left: "12px",
+            right: "12px",
+            top: "calc(75px + env(safe-area-inset-top, 0px))",
+          }}
+          floatingStatsRef={floatingStatsRef}
+          activeGraph={activeGraph}
+          graphSummary={graphSummary}
+          copy={copy}
+          activeAssessmentCards={activeAssessmentCards}
+          data={data}
+          assessmentError={assessmentError}
+          configSaving={configSaving}
+          error={error}
+          graphLayoutEditing={graphLayoutEditing}
+          graphLayoutSaving={graphLayoutSaving}
+          topOverlayCompact={topOverlayCompact}
+          isMobileViewport={isMobileViewport}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+          viewportCenteredZoom={viewportCenteredZoom}
+          setViewportCenteredZoom={setViewportCenteredZoom}
+          saveGraphLayout={saveGraphLayout}
+          startGraphLayoutEdit={startGraphLayoutEdit}
+          setGraphLayoutEditing={setGraphLayoutEditing}
+          setGraphLayoutDraft={setGraphLayoutDraft}
+        />
 
-        {showCompactDesktopOverlay ? (
-          <div
-            className="topOverlayStack"
-            style={{
-              left: `${overlayLeftInset}px`,
-              right: `${overlayRightInset}px`,
-              top: "20px",
-            }}
-          >
-            <div
-              ref={floatingStatsRef}
-              className="floatingStatsContainer floatingStatsContainerStacked"
-              onWheel={(event) => {
-                const strip = floatingStatsRef.current;
-                if (!strip) return;
-                if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-                strip.scrollLeft += event.deltaY;
-                event.preventDefault();
-              }}
-            >
-              <GraphStatItems
-                activeGraph={activeGraph}
-                graphSummary={graphSummary}
-                copy={copy}
-                activeAssessmentCards={activeAssessmentCards}
-                data={data}
-                assessmentError={assessmentError}
-                configSaving={configSaving}
-                error={error}
-                graphLayoutEditing={graphLayoutEditing}
-                topOverlayCompact={topOverlayCompact}
-                isMobileViewport={isMobileViewport}
-              />
-            </div>
-            <div className="floatingStatusContainer floatingStatusContainerCompact">
-              <OverlayControls
-                activeGraph={activeGraph}
-                themeMode={themeMode}
-                setThemeMode={setThemeMode}
-                viewportCenteredZoom={viewportCenteredZoom}
-                setViewportCenteredZoom={setViewportCenteredZoom}
-                graphLayoutEditing={graphLayoutEditing}
-                saveGraphLayout={saveGraphLayout}
-                startGraphLayoutEdit={startGraphLayoutEdit}
-                graphLayoutSaving={graphLayoutSaving}
-                copy={copy}
-                setGraphLayoutEditing={setGraphLayoutEditing}
-                setGraphLayoutDraft={setGraphLayoutDraft}
-              />
-            </div>
-          </div>
-        ) : null}
+        <TopStatsOverlay
+          visible={showCompactDesktopOverlay}
+          wrapperClassName="topOverlayStack"
+          wrapperStyle={{
+            left: `${overlayLeftInset}px`,
+            right: `${overlayRightInset}px`,
+            top: "20px",
+          }}
+          floatingStatsRef={floatingStatsRef}
+          activeGraph={activeGraph}
+          graphSummary={graphSummary}
+          copy={copy}
+          activeAssessmentCards={activeAssessmentCards}
+          data={data}
+          assessmentError={assessmentError}
+          configSaving={configSaving}
+          error={error}
+          graphLayoutEditing={graphLayoutEditing}
+          graphLayoutSaving={graphLayoutSaving}
+          topOverlayCompact={topOverlayCompact}
+          isMobileViewport={isMobileViewport}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+          viewportCenteredZoom={viewportCenteredZoom}
+          setViewportCenteredZoom={setViewportCenteredZoom}
+          saveGraphLayout={saveGraphLayout}
+          startGraphLayoutEdit={startGraphLayoutEdit}
+          setGraphLayoutEditing={setGraphLayoutEditing}
+          setGraphLayoutDraft={setGraphLayoutDraft}
+        />
 
-        {showInlineDesktopOverlay ? (
-          <div
-            className="topOverlayInline"
-            style={{
-              left: `${overlayLeftInset}px`,
-              right: `${overlayRightInset}px`,
-              top: "20px",
-            }}
-          >
-            <div
-              ref={floatingStatsRef}
-              className="floatingStatsContainer floatingStatsContainerStacked"
-              onWheel={(event) => {
-                const strip = floatingStatsRef.current;
-                if (!strip) return;
-                if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-                strip.scrollLeft += event.deltaY;
-                event.preventDefault();
-              }}
-            >
-              <GraphStatItems
-                activeGraph={activeGraph}
-                graphSummary={graphSummary}
-                copy={copy}
-                activeAssessmentCards={activeAssessmentCards}
-                data={data}
-                assessmentError={assessmentError}
-                configSaving={configSaving}
-                error={error}
-                graphLayoutEditing={graphLayoutEditing}
-                topOverlayCompact={topOverlayCompact}
-                isMobileViewport={isMobileViewport}
-              />
-            </div>
-            <div className="floatingStatusContainer floatingStatusContainerCompact">
-              <OverlayControls
-                activeGraph={activeGraph}
-                themeMode={themeMode}
-                setThemeMode={setThemeMode}
-                viewportCenteredZoom={viewportCenteredZoom}
-                setViewportCenteredZoom={setViewportCenteredZoom}
-                graphLayoutEditing={graphLayoutEditing}
-                saveGraphLayout={saveGraphLayout}
-                startGraphLayoutEdit={startGraphLayoutEdit}
-                graphLayoutSaving={graphLayoutSaving}
-                copy={copy}
-                setGraphLayoutEditing={setGraphLayoutEditing}
-                setGraphLayoutDraft={setGraphLayoutDraft}
-              />
-            </div>
-          </div>
-        ) : null}
+        <TopStatsOverlay
+          visible={showInlineDesktopOverlay}
+          wrapperClassName="topOverlayInline"
+          wrapperStyle={{
+            left: `${overlayLeftInset}px`,
+            right: `${overlayRightInset}px`,
+            top: "20px",
+          }}
+          floatingStatsRef={floatingStatsRef}
+          activeGraph={activeGraph}
+          graphSummary={graphSummary}
+          copy={copy}
+          activeAssessmentCards={activeAssessmentCards}
+          data={data}
+          assessmentError={assessmentError}
+          configSaving={configSaving}
+          error={error}
+          graphLayoutEditing={graphLayoutEditing}
+          graphLayoutSaving={graphLayoutSaving}
+          topOverlayCompact={topOverlayCompact}
+          isMobileViewport={isMobileViewport}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+          viewportCenteredZoom={viewportCenteredZoom}
+          setViewportCenteredZoom={setViewportCenteredZoom}
+          saveGraphLayout={saveGraphLayout}
+          startGraphLayoutEdit={startGraphLayoutEdit}
+          setGraphLayoutEditing={setGraphLayoutEditing}
+          setGraphLayoutDraft={setGraphLayoutDraft}
+        />
 
         <div ref={shellSurfaceRef} className={`workspaceShell ${experimentalLightDesktop ? "workspaceShellLightDockMode" : ""}`}>
           <div className="workspaceMain">
@@ -1305,6 +1383,9 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                               {quizSuccess}
                             </span>
                           ) : null}
+                          {closureTestsEnabled && !selectedClosureStatus.can_award_completion ? (
+                            <div className="topicClosureBlockedHint">{copy.closure.closePrerequisitesFirst}</div>
+                          ) : null}
                           {!(selectedTopicClosed && !closureTestsEnabled) ? (
                             <button
                               className={`assistantSendButton ${closureTestsEnabled ? "startQuizButton" : "markFinishedButton"}`}
@@ -1316,9 +1397,6 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                                 ? (closureTestsEnabled ? copy.closure.generatingQuiz : copy.closure.markingAsFinished)
                                 : (closureTestsEnabled ? copy.closure.startClosureQuiz : copy.closure.markAsFinished)}
                             </button>
-                          ) : null}
-                          {closureTestsEnabled && !selectedClosureStatus.can_award_completion ? (
-                            <div className="topicClosureBlockedHint">{copy.closure.closePrerequisitesFirst}</div>
                           ) : null}
                         </div>
                       </div>
@@ -1345,8 +1423,16 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
             />
             <div className="assistantDockHeader">
               <div>
-                <div className="assistantDockTitle">
-                  {activeSession?.title ?? copy.sessions.assistantTitle}
+                <div className="assistantDockTitleRow">
+                  <div className="assistantDockTitle">
+                    {assistantDisplayName}
+                  </div>
+                  <AssistantModelMenuTrigger
+                    options={chatModelOptions}
+                    selectedModel={selectedChatModel}
+                    setSelectedModel={setSelectedChatModel}
+                    ariaLabel={copy.sessions.modelPicker}
+                  />
                 </div>
                 <div className="assistantDockSubtle">
                   {activeSession?.topic_id
@@ -1357,340 +1443,52 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                 </div>
               </div>
             </div>
-            <div className="sessionListWrap" ref={sessionListWrapRef}>
-              <div
-                className="sessionList"
-                ref={sessionListRef}
-                onScroll={() => {
-                  const el = sessionListRef.current;
-                  const wrap = sessionListWrapRef.current;
-                  if (!el || !wrap) return;
-                  wrap.classList.toggle("scrolledLeft", el.scrollLeft > 4);
-                  wrap.classList.toggle("scrolledRight", el.scrollLeft >= el.scrollWidth - el.clientWidth - 4);
-                }}
-                onMouseDown={(e) => {
-                  if (!sessionListRef.current) return;
-                  sessionDragRef.current = { startX: e.clientX, scrollLeft: sessionListRef.current.scrollLeft };
-                }}
-                onMouseMove={(e) => {
-                  if (!sessionDragRef.current || !sessionListRef.current) return;
-                  const dx = e.clientX - sessionDragRef.current.startX;
-                  sessionListRef.current.scrollLeft = sessionDragRef.current.scrollLeft - dx;
-                }}
-                onMouseUp={() => { sessionDragRef.current = null; }}
-                onMouseLeave={() => { sessionDragRef.current = null; }}
-                onWheel={(e) => {
-                  if (!sessionListRef.current) return;
-                  if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
-                    e.preventDefault();
-                    sessionListRef.current.scrollLeft += e.deltaY;
-                  }
-                }}
-              >
-                <button
-                  className={`sessionItem ${!activeSessionId ? "sessionItemActive" : ""}`}
-                  onClick={() => setActiveSessionId(null)}
-                  type="button"
-                >
-                  <span className="sessionItemLabel">{copy.sessions.general}</span>
-                  <span className="sessionItemBadge">
-                    {generalSession?.message_count ?? 0}
-                  </span>
-                </button>
-                {topicSessions.map((session) => (
-                  <div
-                    key={session.session_id}
-                    className={`sessionItemGroup ${activeSessionId === session.session_id ? "sessionItemGroupActive" : ""}`}
-                  >
-                    <button
-                      className="sessionItemInline"
-                      onClick={() => setActiveSessionId(session.session_id)}
-                      type="button"
-                    >
-                      <span className="sessionItemLabel">{session.title ?? session.topic_id}</span>
-                      <span className="sessionItemBadge">{session.message_count}</span>
-                    </button>
-                    <button
-                      className="sessionDeleteBtn"
-                      title={copy.sessions.deleteSession}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        setSessionDeleteConfirm({ sessionId: session.session_id, title: session.title ?? session.topic_id ?? copy.sessions.fallbackSessionTitle });
-                      }}
-                      aria-label={copy.sessions.deleteSessionAria(session.title ?? session.topic_id ?? copy.sessions.fallbackSessionTitle)}
-                      type="button"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                {selectedTopic && !chatSessions.find((session) => session.topic_id === selectedTopicId) ? (
-                  <button
-                    className="sessionItem sessionItemNew"
-                    type="button"
-                    onClick={async () => {
-                      if (!activeGraph || !selectedTopicId) return;
-                      const response = await apiFetch(`${API_BASE}/api/v1/graphs/${activeGraph.graph_id}/chat/sessions`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ topic_id: selectedTopicId, title: selectedTopic.title }),
-                      });
-                      if (!response.ok) return;
-                      const session = await response.json();
-                      setActiveSessionId(session.session_id);
-                      void loadSessions();
-                    }}
-                  >
-                    {copy.sessions.learnTopic(selectedTopic.title)}
-                  </button>
-                ) : null}
-              </div>
-            </div>
+            <AssistantSessionList
+              copy={copy}
+              sessionListWrapRef={sessionListWrapRef}
+              sessionListRef={sessionListRef}
+              sessionDragRef={sessionDragRef}
+              activeSessionId={activeSessionId}
+              setActiveSessionId={setActiveSessionId}
+              generalSession={generalSession}
+              topicSessions={topicSessions}
+              setSessionDeleteConfirm={setSessionDeleteConfirm}
+              chatSessions={chatSessions}
+              selectedTopic={selectedTopic}
+              selectedTopicId={selectedTopicId}
+              createTopicSession={createTopicSession}
+            />
 
             <div className="sessionShadow" />
-            <div ref={chatViewportRef} className="assistantThread">
-              {currentChatState.messages.length === 0 && !chatThreadLoading ? (
-                <div className="assistantHello">
-                  <div className="assistantHelloTitle">{copy.sessions.helloTitle}</div>
-                  <div className="assistantHelloCopy">{copy.sessions.helloCopy}</div>
-                </div>
-              ) : null}
-              {visibleMessages.length > 0 ? (
-                visibleMessages.map((message) => {
-                  const proposal = message.proposal;
-                  const proposalCounts = proposal ? summarizePreviewCounts(proposal) : [];
-                  const proposalHighlights = proposal ? summarizeTopOperations(proposal) : [];
-                  return (
-                    <div key={message.id} className={`chatMessage chatMessage-${message.role}`}>
-                      <div className="chatBubble">
-                        <div className="chatCopy">{renderDisplayText(message.content)}</div>
-                        {message.inline_quiz ? (() => {
-                          const quiz = message.inline_quiz;
-                          const answered = quiz.answered_index != null;
-                          return (
-                            <div className="inlineQuizCard">
-                              <div className="inlineQuizQuestion">{renderDisplayText(quiz.question)}</div>
-                              <div className="inlineQuizChoices">
-                                {quiz.choices.map((choice: string, idx: number) => {
-                                  let cls = "inlineQuizChoice";
-                                  if (answered) {
-                                    if (idx === quiz.correct_index) cls += " inlineQuizCorrect";
-                                    else if (idx === quiz.answered_index) cls += " inlineQuizWrong";
-                                    else cls += " inlineQuizDimmed";
-                                  }
-                                  return (
-                                    <button
-                                      key={idx}
-                                      className={cls}
-                                      type="button"
-                                      disabled={answered || chatLoading}
-                                      onClick={() => {
-                                        const answeredMessages = currentChatState.messages.map((entry) =>
-                                          entry.id === message.id && entry.inline_quiz
-                                            ? { ...entry, inline_quiz: { ...entry.inline_quiz, answered_index: idx } }
-                                            : entry,
-                                        );
-                                        updateCurrentChatState((prev) => ({
-                                          ...prev,
-                                          messages: answeredMessages,
-                                        }));
-                                      }}
-                                    >
-                                      {choice}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })() : null}
-                        {message.role === "assistant" ? (
-                          <div className="chatMetaRow">
-                            {message.model ? <span className="badge badge-gray">{message.model}</span> : null}
-                            {message.fallback_used ? <span className="badge badge-yellow">{copy.sessions.fallbackUsed}</span> : null}
-                          </div>
-                        ) : null}
-                        {message.planning_status ? (
-                          <div className="proposalInlineCard proposalInlinePending">
-                            <div className="proposalInlinePendingRow">
-                              <div className="proposalInlinePendingLabel">{message.planning_status}</div>
-                              <div className="proposalInlinePendingDots" aria-hidden="true">
-                                <span />
-                                <span />
-                                <span />
-                              </div>
-                            </div>
-                          </div>
-                        ) : null}
-                        {message.planning_error ? (
-                          <div className="inlineNotice inlineNoticeError">{message.planning_error}</div>
-                        ) : null}
-                        {proposal ? (
-                          <div className="proposalInlineCard">
-                            <div className="proposalInlineHead">
-                              <div>
-                                <div className="proposalInlineTitle">{proposal.display.summary}</div>
-                                {proposal.proposal_envelope.assistant_message ? (
-                                  <div className="mutedSmall">{proposal.proposal_envelope.assistant_message}</div>
-                                ) : null}
-                              </div>
-                              <button
-                                className={`proposalAddButton${message.proposal_applied ? " proposalAddButtonApplied" : ""}`}
-                                disabled={
-                                  applyLoadingMessageId === message.id ||
-                                  message.proposal_applied ||
-                                  !proposal.apply_plan.validation.ok
-                                }
-                                onClick={() => void applyProposalFromMessage(message.id, proposal)}
-                                type="button"
-                                aria-label={message.proposal_applied ? copy.sessions.proposalApplied : copy.sessions.addProposalToGraph}
-                                title={message.proposal_applied ? copy.sessions.applied : copy.sessions.addProposalToGraph}
-                              >
-                                {applyLoadingMessageId === message.id ? "…" : message.proposal_applied ? <span className="proposalAppliedMark" aria-hidden="true"><Check size={12} weight="bold" /></span> : "+"}
-                              </button>
-                            </div>
-                            {proposalCounts.length > 0 ? (
-                              <div className="previewStatGrid">
-                                {proposalCounts.map((item) => (
-                                  <div key={item.label} className="previewStatCard">
-                                    <strong>{item.value}</strong>
-                                    <span>{item.label}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
-                            {proposalHighlights.length > 0 ? (
-                              <div className="proposalMiniList">
-                                {proposalHighlights.map((item, index) => (
-                                  <button
-                                    key={`${item.label}-${item.target}-${index}`}
-                                    className="proposalMiniItem"
-                                    type="button"
-                                    onClick={() => {
-                                      updateCurrentChatState((current) => ({
-                                        ...current,
-                                        input: `Expand from topic ${item.target} to topic: `,
-                                      }));
-                                      window.requestAnimationFrame(() => chatComposerRef.current?.focus());
-                                    }}
-                                  >
-                                    <span>{item.target}</span>
-                                    <span className="badge badge-gray">{item.label}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            ) : null}
-                            {proposal.apply_plan.validation.errors.length > 0 ? (
-                              <div className="stackCompact">
-                                {proposal.apply_plan.validation.errors.map((entry) => (
-                                  <div key={entry} className="inlineNotice inlineNoticeError">
-                                    {entry}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
-                            {proposal.apply_plan.validation.warnings.length > 0 ? (
-                              <div className="stackCompact">
-                                {proposal.apply_plan.validation.warnings.map((entry) => (
-                                  <div key={entry} className="inlineNotice inlineNoticeWarn">
-                                    {entry}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : null}
-              {chatLoading && !hasInlinePlanningWidget ? (
-                <div className="chatMessage chatMessage-assistant">
-                  <div className="chatBubble chatBubbleLoading">
-                    <span className="chatTypingDot" />
-                    <span className="chatTypingDot" />
-                    <span className="chatTypingDot" />
-                  </div>
-                </div>
-              ) : null}
-            </div>
+            <AssistantThread
+              copy={copy}
+              chatViewportRef={chatViewportRef}
+              chatThreadLoading={chatThreadLoading}
+              currentChatState={currentChatState}
+              visibleMessages={visibleMessages}
+              chatLoading={chatLoading}
+              hasInlinePlanningWidget={hasInlinePlanningWidget}
+              applyLoadingMessageId={applyLoadingMessageId}
+              applyProposalFromMessage={applyProposalFromMessage}
+              updateCurrentChatState={updateCurrentChatState}
+              chatComposerRef={chatComposerRef}
+            />
 
-            <div className="assistantComposerWrap">
-              {chatError ? <div className="inlineNotice inlineNoticeError">{chatError}</div> : null}
-              {chatSessionsError ? <div className="inlineNotice inlineNoticeError">{chatSessionsError}</div> : null}
-              {applyError ? <div className="inlineNotice inlineNoticeError">{applyError}</div> : null}
-              <div className="assistantTemplates">
-                <button
-                  className={`assistantTemplate webGroundingToggle ${composerUseGrounding ? "active" : ""}`}
-                  onClick={() => setComposerUseGrounding((current) => !current)}
-                  title={copy.sessions.groundingToggle}
-                  type="button"
-                >
-                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
-                  Web
-                </button>
-                {assistantTemplates.map((template) => (
-                  <button
-                    key={template.id}
-                    className="assistantTemplate"
-                    onClick={() => {
-                      updateCurrentChatState((current) => ({
-                        ...current,
-                        input: template.value,
-                      }));
-                      window.requestAnimationFrame(() => chatComposerRef.current?.focus());
-                    }}
-                    type="button"
-                  >
-                    {template.label}
-                  </button>
-                ))}
-              </div>
-              <div className="assistantComposer">
-                <textarea
-                  ref={chatComposerRef}
-                  className="assistantInput"
-                  value={currentChatState.input}
-                  onChange={(event) =>
-                    updateCurrentChatState((current) => ({
-                      ...current,
-                      input: event.target.value,
-                    }))
-                  }
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && !event.shiftKey) {
-                      event.preventDefault();
-                      void sendChat();
-                    }
-                  }}
-                  placeholder={copy.sessions.composerPlaceholder}
-                />
-                <button
-                  className="assistantSendButton assistantSendButtonIcon"
-                  disabled={chatLoading || chatThreadLoading || !currentChatState.input.trim()}
-                  onClick={() => void sendChat()}
-                  type="button"
-                >
-                  {chatLoading ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
-                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25"></circle>
-                      <path d="M12 2a10 10 0 0 1 10 10"></path>
-                    </svg>
-                  ) : (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 19V5"></path>
-                      <path d="M5 12L12 5L19 12"></path>
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
+            <AssistantComposer
+              copy={copy}
+              chatError={chatError}
+              chatSessionsError={chatSessionsError}
+              applyError={applyError}
+              composerUseGrounding={composerUseGrounding}
+              setComposerUseGrounding={setComposerUseGrounding}
+              assistantTemplates={assistantTemplates}
+              updateCurrentChatState={updateCurrentChatState}
+              chatComposerRef={chatComposerRef}
+              currentChatState={currentChatState}
+              chatLoading={chatLoading}
+              chatThreadLoading={chatThreadLoading}
+              sendChat={() => void sendChat()}
+            />
           </aside>
           ) : null}
 
@@ -1708,7 +1506,7 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   title={copy.shell.workspace}
                   type="button"
                 >
-                  <SquaresFour size={28} weight={dockIconWeight} />
+                  <SquaresFour size={28} weight={getDockIconWeight(lightWorkspacePanelOpen)} />
                 </button>
                 <button
                   className={`lightDockButton ${lightChatPanelOpen ? "lightDockButtonActive" : ""}`}
@@ -1716,17 +1514,17 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   title={copy.shell.chat}
                   type="button"
                 >
-                  <ChatCircleDots size={28} weight={dockIconWeight} />
+                  <ChatCircleDots size={28} weight={getDockIconWeight(lightChatPanelOpen)} />
                 </button>
                 <button className={`lightDockButton ${isSettingsOpen ? "lightDockButtonActive" : ""}`} onClick={openConfigurationSettings} title={copy.shell.configuration} type="button">
-                  <GearSix size={28} weight={dockIconWeight} />
+                  <GearSix size={28} weight={getDockIconWeight(isSettingsOpen)} />
                 </button>
-                <a className="lightDockButton lightDockButtonLink" href="https://mapmind.space/how-to-use" rel="noreferrer" target="_blank" title={copy.sidebar.documentation}>
-                  <BookBookmark size={28} weight={dockIconWeight} />
+                <a className="lightDockButton lightDockButtonLink" href="https://clew.my/how-to-use" rel="noreferrer" target="_blank" title={copy.sidebar.documentation}>
+                  <BookBookmark size={28} weight={getDockIconWeight(false)} />
                 </a>
                 {debugModeEnabled ? (
                   <button className={`lightDockButton ${isLogsOpen ? "lightDockButtonActive" : ""}`} onClick={openDebugLogs} title={copy.sidebar.logs} type="button">
-                    <BugBeetle size={28} weight={dockIconWeight} />
+                    <BugBeetle size={28} weight={getDockIconWeight(isLogsOpen)} />
                   </button>
                 ) : null}
               </div>
@@ -1737,21 +1535,35 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
         </div>
 
         {isMobileViewport ? (
-          <div className="mobileDock">
+          (() => {
+            const workspaceActive = !assistantOpen && !mobileMenuOpen && !isSettingsOpen;
+            return (
+          <div className="lightDock lightDockHorizontal">
             <button
-              className="mobileDockItem mobileDockItemActive"
+              className={`lightDockButton ${workspaceActive ? "lightDockButtonActive" : ""}`}
               type="button"
+              aria-label={copy.shell.workspace}
+              title={copy.shell.workspace}
               onClick={() => {
+                if (modalSurfaceLocked) {
+                  closeOverlaySurfaces();
+                }
                 setMobileMenuOpen(false);
+                setAssistantWidth(0);
               }}
             >
-              <span className="mobileDockLabel">{copy.shell.workspace}</span>
+              <SquaresFour size={28} weight={getDockIconWeight(workspaceActive)} />
             </button>
             {activeGraph ? (
               <button
-                className={`mobileDockItem mobileDockItemChat ${assistantOpen ? "mobileDockItemActive" : ""}`}
+                className={`lightDockButton ${assistantOpen ? "lightDockButtonActive" : ""}`}
                 type="button"
+                aria-label={copy.shell.chat}
+                title={copy.shell.chat}
                 onClick={() => {
+                  if (modalSurfaceLocked) {
+                    closeOverlaySurfaces();
+                  }
                   setMobileMenuOpen(false);
                   setAssistantWidth((current) => {
                     const opening = current < ASSISTANT_MIN_WIDTH;
@@ -1762,47 +1574,21 @@ export function WorkspaceShell(props: WorkspaceShellProps): React.JSX.Element {
                   });
                 }}
               >
-                <span className="mobileDockLabel">{copy.shell.chat}</span>
+                <ChatCircleDots size={28} weight={getDockIconWeight(assistantOpen)} />
               </button>
             ) : null}
             <button
-              className={`mobileDockItem ${mobileMenuOpen ? "mobileDockItemActive" : ""}`}
+              className={`lightDockButton ${isSettingsOpen ? "lightDockButtonActive" : ""}`}
               type="button"
-              onClick={() => setMobileMenuOpen((current) => !current)}
+              aria-label={copy.shell.configuration}
+              title={copy.shell.configuration}
+              onClick={openConfigurationSettings}
             >
-              <span className="mobileDockLabel">{copy.shell.menu}</span>
+              <GearSix size={28} weight={getDockIconWeight(isSettingsOpen)} />
             </button>
           </div>
-        ) : null}
-        {isMobileViewport && mobileMenuOpen ? (
-          <>
-            <button
-              className="mobileMenuBackdrop"
-              type="button"
-              aria-label={copy.settingsPanel.closeSettings}
-              onClick={() => setMobileMenuOpen(false)}
-            />
-            <div className="mobileMenuSheet" role="dialog" aria-modal="true" aria-label={copy.shell.mobileMenuAria}>
-              <div className="mobileMenuSheetHeader">
-                <div className="sidebarAvatar">{sessionUser?.avatar_url ? <img src={sessionUser.avatar_url} alt="" className="sidebarAvatarImg" /> : userInitials(sessionUser?.name)}</div>
-                <div className="mobileMenuSheetMeta">
-                  <span className="mobileMenuSheetName">{sessionUser?.name ?? copy.shell.authenticatedUser}</span>
-                  <span className="mobileMenuSheetEmail">{sessionUser?.email ?? copy.shell.noEmail}</span>
-                </div>
-                <button
-                  className="mobileMenuCloseButton"
-                  type="button"
-                  aria-label={copy.settingsPanel.closeSettings}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  ✕
-                </button>
-              </div>
-              <button className="sidebarAccountPopoverItem" type="button" onClick={openConfigurationSettings}>
-                <GearSix size={14} weight="bold" className="sidebarIcon" /> {copy.shell.configuration}
-              </button>
-            </div>
-          </>
+            );
+          })()
         ) : null}
       </main>
       {topicAssetDialog ? (

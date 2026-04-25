@@ -1,0 +1,28 @@
+:root {
+  --clew-accent-rgb: 195, 90, 44;
+  --clew-accent-strong-rgb: 145, 63, 28;
+  --clew-radius-pill: 999px;
+  --clew-radius-panel: 14px;
+  --clew-radius-card: 18px;
+  --clew-shadow-soft: 0 4px 12px rgba(45, 43, 40, 0.04);
+}
+
+:root[data-theme="light"] {
+  --clew-surface-highlight: rgba(var(--clew-accent-rgb), 0.1);
+  --clew-surface-highlight-border: rgba(var(--clew-accent-rgb), 0.24);
+  --clew-surface-highlight-text: rgba(var(--clew-accent-strong-rgb), 0.96);
+  --clew-light-dock-bg: rgba(246, 242, 236, 0.97);
+  --clew-light-dock-border: rgba(233, 225, 215, 0.98);
+  --clew-accent-orange: #d97757;
+  --clew-light-dock-active-bg: rgba(214, 106, 51, 0.16);
+  --clew-light-dock-active-text: rgba(62, 49, 39, 0.96);
+  --clew-light-chat-bubble-bg: var(--dt-light-card);
+  --clew-light-chat-bubble-border: var(--dt-light-border);
+  --clew-light-chat-bubble-shadow: 0 1px 8px rgba(0, 0, 0, 0.03);
+}
+
+:root[data-theme="dark"] {
+  --clew-surface-highlight: rgba(255, 255, 255, 0.08);
+  --clew-surface-highlight-border: rgba(255, 255, 255, 0.14);
+  --clew-surface-highlight-text: rgba(255, 255, 255, 0.94);
+}

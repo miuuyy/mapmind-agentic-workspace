@@ -8,7 +8,7 @@ body:
     id: location
     attributes:
       label: Which document or section?
-      placeholder: README quick start, docs/ARCHITECTURE.md, documentation/how-to-use.md...
+      placeholder: README quick start, docs/ARCHITECTURE.md, docs/site_faq/how-to-use.md...
     validations:
       required: true
   - type: textarea

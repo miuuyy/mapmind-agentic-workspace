@@ -1,8 +1,4 @@
 @import "./styles/base-shell.css";
 @import "./styles/workspace-chat.css";
 @import "./styles/dialogs-canvas.css";
-@import "./styles/light-theme-core.css";
-@import "./styles/light-theme-overrides-a.css";
-@import "./styles/light-theme-overrides-b.css";
-@import "./styles/dark-theme-core.css";
-@import "./styles/dark-theme-overrides.css";
+@import "./styles/theme-tokens.css";

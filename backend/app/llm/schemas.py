@@ -5,7 +5,7 @@ from typing import Any
 from pydantic import BaseModel, Field, model_validator
 
 from app.llm.contracts import INLINE_QUIZ_CHOICE_COUNT, OrchestratorAction
-from app.models.domain import ProposalOpenQuestion
+from app.models.domain import EdgeRelation, ProposalOpenQuestion
 
 
 class ProposalResourceDraft(BaseModel):
@@ -32,7 +32,7 @@ class ProposalEdgeDraft(BaseModel):
     id: str
     source_topic_id: str
     target_topic_id: str
-    relation: str = "requires"
+    relation: EdgeRelation = "requires"
     rationale: str = ""
     weight: float = 1.0
 
@@ -41,8 +41,6 @@ class ProposalZoneDraft(BaseModel):
     id: str
     title: str
     kind: str
-    color: str
-    intensity: float = 0.5
     topic_ids: list[str] = Field(default_factory=list)
 
 
@@ -131,7 +129,7 @@ class QuizQuestionSetDraft(BaseModel):
 def planner_response_json_schema() -> dict[str, Any]:
     state_enum = ["not_started", "learning", "shaky", "solid", "mastered", "needs_review"]
     relation_enum = ["requires", "supports", "bridges", "extends", "reviews"]
-    op_enum = ["upsert_topic", "upsert_edge", "upsert_zone", "set_mastery"]
+    op_enum = ["upsert_topic", "upsert_edge", "upsert_zone"]
     return {
         "type": "object",
         "properties": {
@@ -161,7 +159,7 @@ def planner_response_json_schema() -> dict[str, Any]:
                     "properties": {
                         "op_id": {"type": "string"},
                         "op": {"type": "string", "enum": op_enum},
-                        "entity_kind": {"type": "string", "enum": ["topic", "edge", "zone", "mastery"]},
+                        "entity_kind": {"type": "string", "enum": ["topic", "edge", "zone"]},
                         "rationale": {"type": "string"},
                         "topic": {
                             "type": "object",
@@ -212,11 +210,9 @@ def planner_response_json_schema() -> dict[str, Any]:
                                 "id": {"type": "string"},
                                 "title": {"type": "string"},
                                 "kind": {"type": "string"},
-                                "color": {"type": "string"},
-                                "intensity": {"type": "number"},
                                 "topic_ids": {"type": "array", "items": {"type": "string"}},
                             },
-                            "required": ["id", "title", "kind", "color", "intensity", "topic_ids"],
+                            "required": ["id", "title", "kind", "topic_ids"],
                             "additionalProperties": False,
                         },
                         "topic_id": {"type": "string"},

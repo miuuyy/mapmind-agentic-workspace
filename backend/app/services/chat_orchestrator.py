@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from app.core.config import Settings
 from app.llm.contracts import QUIZ_ANSWER_HISTORY_TAG
@@ -9,25 +9,21 @@ from app.llm import LLMProviderError, build_llm_provider
 from app.llm.prompt_templates import orchestrator_system_instruction
 from app.llm.schemas import OrchestratorDecision
 from app.models.domain import GraphChatRequest, GraphChatResponse, ProposalGenerateRequest, StudyGraph, WorkspaceConfig
-from app.services.gemini_planner import GeminiPlanner, GeminiPlannerError
+from app.services.proposal_planner import ProposalPlanner, ProposalPlannerError
 from app.services.quiz_service import is_prerequisite_relation
-
-if TYPE_CHECKING:
-    from google import genai as genai_module
-    from google.genai import types as genai_types
 
 
 class ChatOrchestratorError(RuntimeError):
-    pass
+    def __init__(self, message: str, *, diagnostics: dict[str, Any] | None = None):
+        super().__init__(message)
+        self.diagnostics = diagnostics or {}
 
 
 class ChatOrchestratorService:
-    def __init__(self, settings: Settings, planner: GeminiPlanner):
+    def __init__(self, settings: Settings, planner: ProposalPlanner):
         self._settings = settings
         self._planner = planner
         self._provider = build_llm_provider(settings)
-        self._client: genai_module.Client | None = getattr(self._provider, "_client", None)
-        self._types: Any | None = getattr(self._provider, "_types", None)
 
     def has_live_provider(self) -> bool:
         return self._provider is not None
@@ -56,7 +52,10 @@ class ChatOrchestratorService:
         try:
             proposal = self._planner.generate_proposal(graph, proposal_request)
         except Exception as exc:
-            raise ChatOrchestratorError(f"proposal generation failed: {exc}") from exc
+            raise ChatOrchestratorError(
+                f"proposal generation failed: {exc}",
+                diagnostics=getattr(exc, "diagnostics", None),
+            ) from exc
         return GraphChatResponse(
             session_id="",
             graph_id=graph.graph_id,
@@ -108,10 +107,11 @@ class ChatOrchestratorService:
                 if isinstance(candidate, dict):
                     result_payload = candidate
                     break
-        except GeminiPlannerError as exc:
-            raise ChatOrchestratorError(f"proposal generation failed: {exc}") from exc
         except Exception as exc:
-            raise ChatOrchestratorError(f"proposal generation failed: {exc}") from exc
+            raise ChatOrchestratorError(
+                f"proposal generation failed: {exc}",
+                diagnostics=getattr(exc, "diagnostics", None),
+            ) from exc
         if result_payload is None:
             raise ChatOrchestratorError("proposal generation failed: empty result")
         return result_payload
@@ -261,7 +261,7 @@ class ChatOrchestratorService:
         if not attempts:
             return "no quizzes taken yet"
 
-        # Section 1: Attempt summary (all, last 15)
+        # Summarize the most recent quiz attempts.
         lines: list[str] = ["## Recent attempts"]
         for attempt in attempts[:15]:
             topic_title = self._topic_title(topics_by_id, attempt.topic_id)
@@ -273,18 +273,18 @@ class ChatOrchestratorService:
                 + (" → closure awarded" if attempt.closure_awarded else "")
             )
 
-        # Section 2: Missed questions from unclosed topics only (smart filtering)
+        # Include missed questions only for unclosed topics.
         missed_by_topic: dict[str, list[str]] = {}
         for attempt in attempts:
             if attempt.topic_id in closed_ids:
-                continue  # topic is closed, skip — learner already mastered it
+                continue  # Closed topics no longer need missed-question reminders.
             if not attempt.missed_questions:
                 continue
             topic_title = self._topic_title(topics_by_id, attempt.topic_id)
             if topic_title not in missed_by_topic:
                 missed_by_topic[topic_title] = []
             for q in attempt.missed_questions:
-                if q not in missed_by_topic[topic_title]:  # deduplicate
+                if q not in missed_by_topic[topic_title]:  # Deduplicate repeated missed prompts.
                     missed_by_topic[topic_title].append(q)
 
         if missed_by_topic:
@@ -295,7 +295,7 @@ class ChatOrchestratorService:
                     lines.append(f"... (truncated, {sum(len(q) for q in missed_by_topic.values()) - total_missed} more)")
                     break
                 lines.append(f"### {topic_title}")
-                for q in questions[:10]:  # max 10 per topic
+                for q in questions[:10]:  # Keep each topic summary short.
                     lines.append(f"  - {q}")
                     total_missed += 1
 

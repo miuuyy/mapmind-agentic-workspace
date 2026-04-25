@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, TypeVar
+import json
+from typing import TYPE_CHECKING, Any, Iterable, TypeVar
 
 from pydantic import BaseModel
 
 from app.core.config import Settings
-from app.llm.base import LLMProviderError, LLMStructuredResponse, parse_structured_text
+from app.llm.base import LLMProviderError, LLMStructuredResponse, LLMStructuredStreamChunk, parse_structured_text
 
 if TYPE_CHECKING:
     from google import genai as genai_module
@@ -89,14 +90,32 @@ class GeminiProvider:
             config=self._types.GenerateContentConfig(**config_kwargs),
         )
         parsed = getattr(response, "parsed", None)
-        if isinstance(parsed, schema):
-            model_instance = parsed
-        elif parsed is not None:
-            model_instance = schema.model_validate(parsed)
-        else:
-            text = (getattr(response, "text", "") or "").strip()
-            model_instance = parse_structured_text(text, schema)
-        text = (getattr(response, "text", "") or "").strip() or model_instance.model_dump_json()
+        text = (getattr(response, "text", "") or "").strip()
+        try:
+            if isinstance(parsed, schema):
+                model_instance = parsed
+            elif parsed is not None:
+                model_instance = schema.model_validate(parsed)
+            else:
+                model_instance = parse_structured_text(text, schema)
+        except Exception as exc:
+            parsed_excerpt: str | None = None
+            if parsed is not None:
+                try:
+                    parsed_excerpt = json.dumps(parsed, ensure_ascii=False)[:8000]
+                except Exception:
+                    parsed_excerpt = str(parsed)[:8000]
+            raise LLMProviderError(
+                f"Gemini returned structured payload that failed schema validation: {exc}",
+                diagnostics={
+                    "provider": "gemini",
+                    "model": model,
+                    "raw_model_response_text": text[:12000] or None,
+                    "parsed_response_excerpt": parsed_excerpt,
+                    "schema_name": schema_name or schema.__name__,
+                },
+            ) from exc
+        text = text or model_instance.model_dump_json()
         usage = None
         usage_metadata = getattr(response, "usage_metadata", None)
         if usage_metadata is not None:
@@ -105,3 +124,60 @@ class GeminiProvider:
             except Exception:
                 usage = None
         return LLMStructuredResponse(text=text, parsed=model_instance, usage=usage, finish_reason=None)
+
+    def stream_structured(
+        self,
+        *,
+        model: str,
+        system_instruction: str,
+        prompt: str,
+        schema: type[T],
+        schema_name: str | None = None,
+        response_json_schema: dict[str, Any] | None = None,
+        max_output_tokens: int,
+        temperature: float,
+        use_grounding: bool = False,
+    ) -> Iterable[LLMStructuredStreamChunk]:
+        if not self.is_configured():
+            raise LLMProviderError("Gemini provider is not configured")
+        config = self._types.GenerateContentConfig(
+            system_instruction=system_instruction,
+            temperature=temperature,
+            max_output_tokens=max_output_tokens,
+            response_mime_type="application/json",
+            response_schema=schema,
+            tools=[self._types.Tool(google_search=self._types.GoogleSearch())] if use_grounding else None,
+        )
+        stream = self._client.models.generate_content_stream(
+            model=model,
+            contents=prompt,
+            config=config,
+        )
+        for chunk in stream:
+            usage = None
+            usage_metadata = getattr(chunk, "usage_metadata", None)
+            if usage_metadata is not None:
+                try:
+                    usage = usage_metadata.model_dump(mode="json") if hasattr(usage_metadata, "model_dump") else dict(usage_metadata)
+                except Exception:
+                    usage = None
+            finish_reason = None
+            candidates = getattr(chunk, "candidates", None)
+            if isinstance(candidates, list) and candidates:
+                raw_finish_reason = getattr(candidates[0], "finish_reason", None)
+                if raw_finish_reason is not None:
+                    finish_reason = str(raw_finish_reason)
+            text = (getattr(chunk, "text", "") or "").strip()
+            if not text:
+                content_text: list[str] = []
+                for candidate in candidates if isinstance(candidates, list) else []:
+                    content = getattr(candidate, "content", None)
+                    parts = getattr(content, "parts", None)
+                    if not isinstance(parts, list):
+                        continue
+                    for part in parts:
+                        part_text = getattr(part, "text", None)
+                        if isinstance(part_text, str) and part_text.strip():
+                            content_text.append(part_text)
+                text = "".join(content_text).strip()
+            yield LLMStructuredStreamChunk(text=text, usage=usage, finish_reason=finish_reason)

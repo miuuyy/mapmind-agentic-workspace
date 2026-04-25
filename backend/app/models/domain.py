@@ -307,6 +307,7 @@ class WorkspaceConfig(BaseModel):
     disable_idle_animations: bool = False
     thinking_mode: ThinkingMode = "default"
     memory_mode: MemoryMode = "balanced"
+    assistant_nickname: str = ""
     persona_rules: str = ""
     quiz_question_count: int = 12
     pass_threshold: float = 0.75
@@ -332,7 +333,7 @@ class WorkspaceConfig(BaseModel):
 
 class WorkspaceDocument(BaseModel):
     workspace_id: str = "default"
-    title: str = "MapMind Workspace"
+    title: str = "Clew Workspace"
     active_graph_id: str | None = None
     config: WorkspaceConfig = Field(default_factory=WorkspaceConfig)
     graphs: list[StudyGraph] = Field(default_factory=list)
@@ -363,6 +364,7 @@ class UpdateWorkspaceConfigRequest(BaseModel):
     disable_idle_animations: bool | None = None
     thinking_mode: ThinkingMode | None = None
     memory_mode: MemoryMode | None = None
+    assistant_nickname: str | None = None
     persona_rules: str | None = None
     quiz_question_count: int | None = None
     pass_threshold: float | None = None
@@ -533,7 +535,7 @@ class ProposalZone(BaseModel):
     id: str
     title: str
     kind: str
-    color: str
+    color: str = ""
     intensity: float = 0.5
     topic_ids: list[str] = Field(default_factory=list)
 

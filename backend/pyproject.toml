@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mapmind-backend"
-version = "0.1.1"
-description = "Backend for the MapMind graph-first learning workspace"
+version = "0.2.0"
+description = "Backend for the Clew graph-first learning workspace"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115.0,<1.0.0",
@@ -13,8 +13,12 @@ dependencies = [
   "pydantic>=2.10.0,<3.0.0",
   "pydantic-settings>=2.6.0,<3.0.0",
   "google-genai>=1.67.0,<2.0.0",
-  "httpx>=0.28.0,<1.0.0"
+  "httpx>=0.28.0,<1.0.0",
+  "mcp>=1.2.0,<2.0.0"
 ]
+
+[project.scripts]
+clew-study-assist = "app.mcp_server.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

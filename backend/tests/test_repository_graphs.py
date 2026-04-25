@@ -4,7 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from app.models.domain import Artifact, CreateGraphRequest, GraphProposal, PatchOperation, ProposalTopic, ProposalZone, QuizAttempt
+from app.models.api import ObsidianExportOptions
+from app.models.domain import Artifact, CreateGraphRequest, GraphProposal, PatchOperation, ProposalTopic, ProposalZone, QuizAttempt, ResourceLink
 from app.services.assessment_service import AssessmentService
 from app.services.repository import GraphRepository
 
@@ -144,6 +145,69 @@ class RepositoryGraphTests(unittest.TestCase):
         self.assertEqual(imported_graph.metadata["imported_from_graph_id"], "mathematics-demo")
         self.assertFalse(imported_graph.metadata["imported_with_progress"])
 
+    def test_export_graph_to_obsidian_generates_markdown_vault_package(self) -> None:
+        current = self.repository.current()
+        demo_graph = next(graph for graph in current.workspace.graphs if graph.graph_id == "mathematics-demo")
+        topic = next(item for item in demo_graph.topics if item.id == "functions")
+        topic.state = "solid"
+        topic.description = "Study how a function maps inputs to outputs."
+        topic.resources.append(
+            ResourceLink(
+                id="resource-functions-guide",
+                label="Functions guide",
+                url="https://example.com/functions-guide",
+            )
+        )
+        topic.artifacts.append(
+            Artifact(
+                id="artifact-functions-sheet",
+                title="Functions sheet",
+                kind="notes",
+                body="Domain, codomain, and composition notes.",
+            )
+        )
+
+        with self.repository._connect() as conn:  # noqa: SLF001
+            self.repository._insert_snapshot(  # noqa: SLF001
+                conn,
+                current.workspace,
+                source="test.seed",
+                reason="seed obsidian export state",
+                parent_snapshot_id=current.snapshot.id,
+            )
+
+        package = self.repository.export_graph_to_obsidian(
+            "mathematics-demo",
+            title="Math vault",
+            include_progress=True,
+            options=ObsidianExportOptions(
+                use_folders_as_zones=True,
+                include_descriptions=True,
+                include_resources=True,
+                include_artifacts=True,
+            ),
+        )
+
+        self.assertEqual(package.kind, "mapmind_obsidian_export")
+        self.assertEqual(package.title, "Math vault")
+        self.assertEqual(package.folder_name, "Math vault")
+        self.assertEqual(package.file_count, len(package.files))
+
+        readme = next(file for file in package.files if file.path == "README.md")
+        functions_note = next(file for file in package.files if file.path.endswith("Functions.md"))
+
+        self.assertIn("# Math vault", readme.body)
+        self.assertIn("Closed topics", readme.body)
+        self.assertIn("## Resources", functions_note.body)
+        self.assertIn("## Artifacts", functions_note.body)
+        self.assertIn("mapmind_relations:", functions_note.body)
+        self.assertIn('mapmind_state: "solid"', functions_note.body)
+        self.assertIn("[Functions guide]", functions_note.body)
+        self.assertIn("## Requires", functions_note.body)
+        self.assertIn("[[Algebra basics]]", functions_note.body)
+        self.assertIn("[[Arithmetic and number sense]] via [[Algebra basics]]", functions_note.body)
+        self.assertNotIn("## Path context", functions_note.body)
+
     def test_upsert_topic_preserves_existing_progress_and_artifacts(self) -> None:
         current = self.repository.current()
         demo_graph = next(graph for graph in current.workspace.graphs if graph.graph_id == "mathematics-demo")
@@ -264,6 +328,108 @@ class RepositoryGraphTests(unittest.TestCase):
         self.assertIn("ml-runway", embeddings.zones)
         self.assertIn("embeddings", review_zone.topic_ids)
         self.assertIn("embeddings", ml_zone.topic_ids)
+
+    def test_apply_proposal_assigns_zone_style_deterministically_in_repository(self) -> None:
+        applied = self.repository.apply_proposal(
+            GraphProposal(
+                graph_id="mathematics-demo",
+                user_prompt="add cell processes zone",
+                summary="style zone on apply",
+                assistant_message="style zone on apply",
+                operations=[
+                    PatchOperation(
+                        op="upsert_topic",
+                        topic=ProposalTopic(
+                            id="cell-membrane-transport",
+                            slug="cell-membrane-transport",
+                            title="Cell membrane transport",
+                            zones=["cell-processes"],
+                        ),
+                    ),
+                    PatchOperation(
+                        op="upsert_edge",
+                        edge={
+                            "id": "edge-functions-cell-transport",
+                            "source_topic_id": "functions",
+                            "target_topic_id": "cell-membrane-transport",
+                            "relation": "requires",
+                        },
+                    ),
+                    PatchOperation(
+                        op="upsert_zone",
+                        zone=ProposalZone(
+                            id="cell-processes",
+                            title="Cell Processes",
+                            kind="concept",
+                            color="purple",
+                            intensity=4.0,
+                            topic_ids=["cell-membrane-transport"],
+                        ),
+                    ),
+                ],
+            )
+        )
+
+        graph = next(graph for graph in applied.workspace.graphs if graph.graph_id == "mathematics-demo")
+        zone = next(zone for zone in graph.zones if zone.id == "cell-processes")
+
+        self.assertRegex(zone.color, r"^#[0-9a-fA-F]{6}$")
+        self.assertNotEqual(zone.color, "purple")
+        self.assertLessEqual(zone.intensity, 1.0)
+
+    def test_apply_proposal_is_reversible_via_snapshot_rollback(self) -> None:
+        before = self.repository.current()
+
+        applied = self.repository.apply_proposal(
+            GraphProposal(
+                graph_id="mathematics-demo",
+                user_prompt="add exponential function",
+                summary="add one topic and one edge",
+                assistant_message="added",
+                operations=[
+                    PatchOperation(
+                        op="upsert_topic",
+                        topic=ProposalTopic(
+                            id="exponential-function",
+                            title="Exponential function",
+                            slug="exponential-function",
+                            description="Growth and decay foundations",
+                            estimated_minutes=90,
+                            level=2,
+                        ),
+                    ),
+                    PatchOperation(
+                        op="upsert_edge",
+                        edge={
+                            "id": "edge-functions-exponential",
+                            "source_topic_id": "functions",
+                            "target_topic_id": "exponential-function",
+                            "relation": "requires",
+                        },
+                    ),
+                ],
+            )
+        )
+
+        self.assertNotEqual(
+            self._normalized_workspace_structure(applied.workspace),
+            self._normalized_workspace_structure(before.workspace),
+        )
+
+        rolled_back = self.repository.rollback_to(before.snapshot.id)
+
+        self.assertEqual(
+            self._normalized_workspace_structure(rolled_back.workspace),
+            self._normalized_workspace_structure(before.workspace),
+        )
+
+    @staticmethod
+    def _normalized_workspace_structure(workspace):
+        payload = workspace.model_dump(mode="json")
+        payload.pop("active_graph_id", None)
+        for graph in payload.get("graphs", []):
+            graph.pop("version", None)
+        return payload
 
 
 if __name__ == "__main__":

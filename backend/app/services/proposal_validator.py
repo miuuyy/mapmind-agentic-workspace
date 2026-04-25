@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import deque
 from urllib.parse import urlparse
 
 from app.models.domain import ApplyValidation, GraphProposalEnvelope, ResourceLink, StudyGraph
@@ -9,7 +10,6 @@ ALLOWED_PROPOSAL_OPERATIONS = {
     "upsert_topic",
     "upsert_edge",
     "upsert_zone",
-    "set_mastery",
 }
 
 
@@ -19,7 +19,7 @@ class ProposalValidator:
         warnings: list[str] = list(envelope.warnings)
 
         if envelope.graph_id != graph.graph_id:
-            errors.append("Gemini returned proposal for the wrong graph")
+            errors.append("provider returned proposal for the wrong graph")
 
         existing_topic_ids = {topic.id for topic in graph.topics}
         proposed_topic_ids = {
@@ -78,15 +78,6 @@ class ProposalValidator:
                     )
                 continue
 
-            if operation.op == "set_mastery":
-                if not (operation.topic_id and operation.state):
-                    errors.append(f"{operation.op_id}: set_mastery missing topic_id or state")
-                    continue
-                if operation.topic_id not in known_topic_ids:
-                    errors.append(f"{operation.op_id}: mastery topic {operation.topic_id} is unknown")
-                if operation.state == "mastered":
-                    errors.append(f"{operation.op_id}: proposal generation cannot directly master topics")
-
         if not errors and not self._is_connected_after_apply(graph, envelope):
             errors.append("proposal would create disconnected graph islands; link new topics through meaningful prerequisites")
 
@@ -117,8 +108,13 @@ class ProposalValidator:
         return True
 
     def _is_connected_after_apply(self, graph: StudyGraph, proposal: GraphProposalEnvelope) -> bool:
+        diagnostics = self.connectivity_diagnostics(graph, proposal)
+        return bool(diagnostics["connected"])
+
+    def connectivity_diagnostics(self, graph: StudyGraph, proposal: GraphProposalEnvelope) -> dict:
         topic_ids = {topic.id for topic in graph.topics}
         adjacency: dict[str, set[str]] = {topic.id: set() for topic in graph.topics}
+        existing_topic_ids = {topic.id for topic in graph.topics}
 
         for operation in proposal.operations:
             if operation.topic is not None:
@@ -137,18 +133,54 @@ class ProposalValidator:
             adjacency.setdefault(operation.edge.target_topic_id, set()).add(operation.edge.source_topic_id)
 
         if len(topic_ids) <= 1:
-            return True
+            return {
+                "connected": True,
+                "component_count": 1 if topic_ids else 0,
+                "island_components": [],
+                "components": [
+                    {
+                        "topic_ids": sorted(topic_ids),
+                        "size": len(topic_ids),
+                        "contains_existing_topics": bool(topic_ids & existing_topic_ids),
+                        "existing_topic_ids": sorted(topic_ids & existing_topic_ids),
+                    }
+                ] if topic_ids else [],
+            }
 
-        start_topic_id = next(iter(topic_ids))
         visited: set[str] = set()
-        stack = [start_topic_id]
-        while stack:
-            current = stack.pop()
-            if current in visited:
+        components: list[dict[str, object]] = []
+
+        for start_topic_id in sorted(topic_ids):
+            if start_topic_id in visited:
                 continue
-            visited.add(current)
-            stack.extend(adjacency.get(current, set()) - visited)
-        return visited == topic_ids
+            queue = deque([start_topic_id])
+            component: set[str] = set()
+            while queue:
+                current = queue.popleft()
+                if current in component:
+                    continue
+                component.add(current)
+                visited.add(current)
+                for neighbor in adjacency.get(current, set()):
+                    if neighbor not in component:
+                        queue.append(neighbor)
+            existing_in_component = component & existing_topic_ids
+            components.append(
+                {
+                    "topic_ids": sorted(component),
+                    "size": len(component),
+                    "contains_existing_topics": bool(existing_in_component),
+                    "existing_topic_ids": sorted(existing_in_component),
+                }
+            )
+
+        island_components = [component for component in components if not component["contains_existing_topics"]]
+        return {
+            "connected": len(components) <= 1,
+            "component_count": len(components),
+            "island_components": island_components,
+            "components": components,
+        }
 
     def _dedupe_preserving_order(self, items: list[str]) -> list[str]:
         seen: set[str] = set()

@@ -8,7 +8,7 @@ from app.llm.catalog import provider_default_model, provider_model_options
 
 
 class Settings(BaseSettings):
-    app_name: str = "MapMind"
+    app_name: str = "Clew"
     api_host: str = "127.0.0.1"
     api_port: int = 8787
     root_dir: Path = Path(__file__).resolve().parents[3]

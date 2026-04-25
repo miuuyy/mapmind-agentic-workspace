@@ -9,7 +9,7 @@ body:
       value: |
         Please describe the problem first, not only the solution.
 
-        The strongest feature requests explain why the change belongs in MapMind specifically.
+        The strongest feature requests explain why the change belongs in Clew specifically.
   - type: textarea
     id: problem
     attributes:
@@ -27,7 +27,7 @@ body:
   - type: textarea
     id: fit
     attributes:
-      label: Why does this fit MapMind?
+      label: Why does this fit Clew?
       description: Explain why this belongs in a graph-first learning workspace instead of becoming generic product sprawl.
       placeholder: This keeps the graph as the product and improves reviewability instead of adding unrelated productivity chrome...
     validations:

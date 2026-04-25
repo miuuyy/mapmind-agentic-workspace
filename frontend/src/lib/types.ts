@@ -33,6 +33,7 @@ export type Topic = {
   zones: string[];
   resources: ResourceLink[];
   artifacts: Artifact[];
+  metadata?: Record<string, unknown>;
 };
 
 export type QuizAttempt = {
@@ -212,7 +213,7 @@ export type GraphChatResponse = {
 };
 
 export type GraphChatStreamEvent =
-  | { type: "assistant_message"; message: ChatMessage; messages?: ChatMessage[] }
+  | { type: "assistant_message"; message?: ChatMessage; messages?: ChatMessage[] }
   | { type: "planning_status"; message_id: string; label: string }
   | { type: "proposal_ready"; message_id: string; message?: ChatMessage; messages?: ChatMessage[] }
   | { type: "planning_error"; message_id: string; detail: string }
@@ -390,6 +391,7 @@ export type WorkspaceConfig = {
   disable_idle_animations: boolean;
   thinking_mode: "low" | "default" | "custom";
   memory_mode: "balanced" | "max" | "custom";
+  assistant_nickname: string;
   persona_rules: string;
   quiz_question_count: number;
   pass_threshold: number;
@@ -455,6 +457,32 @@ export type GraphExportPackagePayload = {
   title: string;
   include_progress: boolean;
   graph: GraphEnvelope;
+};
+
+export type GraphExportFormat = "mapmind_graph_export" | "mapmind_obsidian_export";
+
+export type ObsidianExportOptions = {
+  use_folders_as_zones: boolean;
+  include_descriptions: boolean;
+  include_resources: boolean;
+  include_artifacts: boolean;
+};
+
+export type ObsidianExportFilePayload = {
+  path: string;
+  body: string;
+};
+
+export type ObsidianGraphExportPackagePayload = {
+  kind: "mapmind_obsidian_export";
+  version: number;
+  exported_at: string;
+  source_graph_id: string;
+  title: string;
+  include_progress: boolean;
+  folder_name: string;
+  file_count: number;
+  files: ObsidianExportFilePayload[];
 };
 
 export type WorkspaceEnvelope = {

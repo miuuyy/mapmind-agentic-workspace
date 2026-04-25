@@ -155,8 +155,8 @@
   background: rgba(17, 24, 39, 0.08);
 }
 
-:root[data-theme="light"] .sidebarBrandLogo {
-  filter: invert(1) brightness(0.14);
+:root[data-theme="light"] .sidebarBrand {
+  color: var(--mm-accent-green);
 }
 
 :root[data-theme="light"] .sidebarAvatar {
@@ -489,13 +489,13 @@
 
 :root[data-theme="light"] .chatBubble {
   background: rgba(255, 255, 255, 0.98);
-  border-color: #e8e4de;
+  border-color: #e9e1d7;
   box-shadow: 0 10px 24px rgba(45, 43, 40, 0.06);
   border-radius: 22px;
 }
 
 :root[data-theme="light"] .chatMessage-user .chatBubble {
-  background: linear-gradient(180deg, rgba(247, 243, 237, 0.98), rgba(240, 237, 231, 0.98));
+  background: linear-gradient(180deg, rgba(250, 247, 243, 0.98), rgba(240, 233, 223, 0.98));
   color: rgba(45, 43, 40, 0.94);
   border-color: rgba(224, 213, 203, 0.96);
   box-shadow: 0 8px 18px rgba(45, 43, 40, 0.04);
@@ -800,7 +800,7 @@
     box-shadow: 0 24px 54px rgba(15, 23, 42, 0.16), 0 0 0 1px inset rgba(255, 255, 255, 0.6);
   }
 
-  /* Hide close button when in desktop view for light theme OS mode */
+  /* Hide close button in desktop light theme mode. */
   :root[data-theme="light"] .settingsOverlay .settingsModal .modalCloseButton {
     display: none !important;
   }
@@ -904,6 +904,15 @@
   background: rgba(249, 250, 248, 0.96);
   border-color: rgba(226, 232, 240, 0.92);
   box-shadow: none;
+}
+
+:root[data-theme="light"] .settingsToggleRow input[type="checkbox"] {
+  accent-color: #d97757;
+}
+
+:root[data-theme="light"] .settingsToggleRow:has(input[type="checkbox"]:checked) {
+  border-color: rgba(217, 119, 87, 0.55);
+  background: rgba(217, 119, 87, 0.08);
 }
 
 :root[data-theme="light"] .settingsInlineNotice {
