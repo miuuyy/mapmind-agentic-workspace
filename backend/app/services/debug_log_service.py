@@ -182,8 +182,8 @@ class DebugLogService:
             path=request.path,
             status_code=request.status_code,
             duration_ms=request.duration_ms,
-            request_excerpt=_sanitize_debug_text(request.request_excerpt),
-            response_excerpt=_sanitize_debug_text(request.response_excerpt),
+            request_excerpt=_sanitize_debug_text(request.request_excerpt, preserve_private_text=True),
+            response_excerpt=_sanitize_debug_text(request.response_excerpt, preserve_private_text=True),
             stack=_clip_text(request.stack, limit=8000),
         )
         self._append(entry)
@@ -201,7 +201,7 @@ class DebugLogService:
         request_payload: object | None = None,
         response_payload: object | None = None,
         stack: str | None = None,
-        preserve_private_payload: bool = False,
+        preserve_private_payload: bool = True,
     ) -> DebugLogEntry:
         payload_limit = 120000 if preserve_private_payload else 4000
         entry = DebugLogEntry(

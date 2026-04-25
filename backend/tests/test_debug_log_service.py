@@ -14,7 +14,9 @@ from app.services.repository import GraphRepository
 
 
 class DebugLogServiceTests(unittest.TestCase):
-    def test_client_entries_redact_secrets_and_private_chat_content(self) -> None:
+    def test_client_entries_redact_secrets_but_preserve_user_content(self) -> None:
+        """Local-first product: user sees their own prompts and responses in debug
+        logs, but API keys / Bearer tokens are always stripped from payloads."""
         tempdir = tempfile.TemporaryDirectory()
         self.addCleanup(tempdir.cleanup)
         service = DebugLogService(Path(tempdir.name) / "logs.log")
@@ -31,7 +33,7 @@ class DebugLogServiceTests(unittest.TestCase):
 
         self.assertNotIn("secret-value", entry.request_excerpt or "")
         self.assertNotIn("other-secret", entry.response_excerpt or "")
-        self.assertNotIn("private note", entry.request_excerpt or "")
+        self.assertIn("private note", entry.request_excerpt or "")
         self.assertIn("[redacted]", entry.request_excerpt or "")
 
     def test_server_entries_can_preserve_private_payload_while_redacting_secrets(self) -> None:
