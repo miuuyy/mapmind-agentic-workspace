@@ -88,13 +88,13 @@ Instead of manually arranging a huge roadmap, you let AI draft the graph. Then y
 <table>
   <tr>
     <td width="33%">
-      <img alt="Clew topic view" src=".github/readme-assets/asset12.png">
+      <img alt="Clew topic view" src=".github/readme-assets/asset12-v2.png">
     </td>
     <td width="33%">
-      <img alt="Clew proposal flow" src=".github/readme-assets/asset13.png">
+      <img alt="Clew proposal flow" src=".github/readme-assets/asset13-v2.png">
     </td>
     <td width="33%">
-      <img alt="Clew path highlight" src=".github/readme-assets/asset14.png">
+      <img alt="Clew path highlight" src=".github/readme-assets/asset14-v2.png">
     </td>
   </tr>
 </table>
