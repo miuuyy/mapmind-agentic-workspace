@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mapmind-backend"
+name = "clew-backend"
 version = "0.2.0"
 description = "Backend for the Clew graph-first learning workspace"
 requires-python = ">=3.11"

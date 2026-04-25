@@ -21,7 +21,7 @@ These guarantees matter more than convenience hacks.
 The repository is compact, but the responsibilities are intentionally split.
 
 ```text
-mapmind-agentic-workspace/
+Clew/
 ├── backend/         FastAPI app, domain model, repository, providers, tests
 ├── frontend/        React workspace, graph canvas, dialogs, settings, logs
 ├── contracts/       JSON transport files used by graph flows

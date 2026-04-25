@@ -21,6 +21,7 @@ backend/data/*.json
 backend/data/workspaces/
 backend/knowledge_graph_backend.egg-info/
 backend/mapmind_backend.egg-info/
+backend/clew_backend.egg-info/
 *.egg-info/
 output/
 frontend/node_modules/
@@ -28,6 +29,7 @@ frontend/dist/
 frontend/test-results/
 backend/workspace.db
 backend/mapmind.db
+backend/clew.db
 backend/*.db
 backend/*.db-*
 backend/uvicorn.log
