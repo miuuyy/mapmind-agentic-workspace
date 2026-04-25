@@ -3,37 +3,29 @@
 <p>
   <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-111111?style=flat-square"></a>
   <a href="https://github.com/miuuyy/Clew/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/miuuyy/Clew/ci.yml?branch=main&style=flat-square&label=build"></a>
-  <a href="https://clew.my/how-to-use"><img alt="Docs" src="https://img.shields.io/badge/docs-live-111111?style=flat-square"></a>
-  <a href="https://clew.my"><img alt="Demo" src="https://img.shields.io/badge/demo-live-111111?style=flat-square"></a>
-  <a href="https://github.com/miuuyy/Clew/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/miuuyy/Clew?style=flat-square&label=stars&color=111111"></a>
   <img alt="Generative Roadmap" src="https://img.shields.io/badge/generative-roadmap-111111?style=flat-square">
   <img alt="Agentic Workspace" src="https://img.shields.io/badge/agentic-workspace-111111?style=flat-square">
   <img alt="Knowledge Graph" src="https://img.shields.io/badge/knowledge-graph-111111?style=flat-square">
-  <img alt="AI powered" src="https://img.shields.io/badge/AI-powered-111111?style=flat-square">
   <img alt="Obsidian integration" src="https://img.shields.io/badge/Obsidian-integration-111111?style=flat-square">
-  <img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-111111?style=flat-square">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-111111?style=flat-square">
 </p>
 
-**Clew gives you a thread through anything you're learning.**
-
-It is the thing I wanted when I was trying to understand which parts of a huge school/math/programming curriculum actually mattered for machine learning. Not another note app. Not another chat tab. A clear, visual path through a subject, shaped around your goal.
-
-The quick builder benchmark is: **roadmap.sh, but personalized and adaptive**.
-
-You can ask AI to turn a messy topic dump, an Obsidian vault, or a goal like "get me ready for transformers" into a real dependency graph. Good models can add serious breadth in one pass. You still review what changes before it lands, because the graph is your workspace, not a place where AI silently rewrites the map.
+**Generate a learning map. Click any topic. Follow the thread back to its foundations.**
 
 ![Clew walkthrough](.github/readme-assets/walkthrough.gif)
 
-This repository is the local, hackable edition of Clew. If you want the fastest first look, start at [clew.my](https://clew.my). If you want provider control, local state, MCP, and graph import/export, run this repo.
+Clew is a local, AI-assisted workspace for studying through dependency graphs. Start from a goal, a rough topic dump, or an Obsidian vault; Clew turns it into a map of topics, prerequisites, resources, artifacts, and progress.
+
+The graph is the workspace. AI can draft, expand, audit, and reshape it, but changes stay visible, reviewable, and reversible.
+
+Try the hosted version at [clew.my](https://clew.my), or run this repo locally when you want provider control, local state, Obsidian import/export, and MCP context.
 
 ## Quick Look
 
-- `The product idea`: a clear path to anything you want to learn
-- `The builder shorthand`: roadmap.sh, but personalized and adaptive
-- `The AI role`: generate, expand, audit, and reshape the learning graph
-- `The trust boundary`: AI proposes; you review; snapshots let you roll back
-- `The local edition`: SQLite, your provider keys, Obsidian import/export, MCP server
+- `Core idea`: a visible thread through hard subjects
+- `Main move`: click a topic and see the path that leads to it
+- `Graph generation`: build a map from a goal, notes, topic list, or Obsidian vault
+- `AI boundary`: AI proposes structure; you review and apply changes
+- `Local edition`: SQLite, provider keys, Gemini/OpenAI support, import/export, MCP
 
 ## Quick Start
 
@@ -46,41 +38,48 @@ cp .env.example .env
 
 Set one provider key in `.env`:
 
-- `KG_GEMINI_API_KEY=...`
-- `KG_OPENAI_API_KEY=...`
+```bash
+KG_GEMINI_API_KEY=...
+# or
+KG_OPENAI_API_KEY=...
+```
 
 Then open:
 
 - frontend: `http://127.0.0.1:5178`
 - backend: `http://127.0.0.1:8787`
 
-## Why It Exists
+## Why Clew Exists
 
-Learning a big field is mostly a structure problem.
+Learning a big subject is not just about collecting resources. The hard part is structure.
 
-If you want machine learning, you do not need every math topic equally. You need to see which ideas unlock the path, which ones can wait, where the foundations are, and what the next useful edge is. A static public roadmap helps, but it cannot know your current graph, your goal, your notes, or the branch you are actually taking.
+A chat answer can tell you what to read. Tools like [roadmap.sh](https://roadmap.sh) show a common route. But when your goal is specific, you need to see what actually unlocks what: which foundations matter now, which topics can wait, where you are blocked, and how far you are from the thing you want to build.
 
-Clew uses AI because building that graph manually is too expensive. The model does the heavy structural drafting. The product keeps the draft visible, editable, reviewable, and reversible.
+Clew makes that structure visible.
+
+Instead of manually arranging a huge roadmap, you let AI draft the graph. Then you study through it: click topics, inspect prerequisite paths, attach resources, pass quizzes, mark progress, and keep the whole learning process tied to the map.
 
 ## Features
 
-- `Personal adaptive roadmaps`: generate a learning graph from a goal, a messy topic list, or existing notes.
-- `Graph-first workspace`: topics, dependencies, zones, resources, artifacts, manual layout, and progress live on the same surface.
-- `AI proposals instead of silent edits`: ingest, expand, audit, review, apply, and roll back through snapshots.
-- `Obsidian bridge`: import a vault into a graph, or export a graph back into an Obsidian-ready folder.
-- `Obsidian-to-Clew import skill`: a packaged skill for Claude Code and Codex that audits an Obsidian vault, flags what blocks a clean import, and shapes the vault into a validated Clew package.
-- `MCP context bridge`: let an external assistant read your Clew graphs and progress without copy-paste.
+- `Click-to-path navigation`: select any topic and reveal the prerequisite chain behind it.
+- `Generative roadmaps`: create a dependency graph from a goal, topic dump, notes, or vault.
+- `Graph-first workspace`: topics, dependencies, zones, resources, artifacts, layout, and progress live on one surface.
+- `Reviewable AI changes`: ingest, expand, audit, reshape, apply, and roll back through snapshots.
 - `Study loop`: topic sessions, assistant help, inline quizzes, closure quizzes, and manual completion when strict gating is disabled.
+- `Obsidian bridge`: import a vault into Clew or export a graph back into an Obsidian-ready folder.
+- `Obsidian-to-Clew import skill`: packaged for Claude Code and Codex to audit a vault, flag blockers, and shape it into a valid Clew package.
+- `MCP context bridge`: let Claude, Cursor, or another MCP client read your Clew graphs and progress without copy-paste.
 - `Local control`: SQLite workspace, provider keys, Gemini/OpenAI support, OpenAI-compatible endpoint option, memory/persona/thinking settings.
 
 ## Example Use Cases
 
-- Turn a giant math syllabus into the parts that matter for ML.
-- Skip ahead in a school subject by following only the prerequisite chain that actually leads to your target (exam topic, course goal, olympiad).
-- Build a Python or cybersecurity path with visible prerequisites instead of a vague checklist.
-- Import an Obsidian vault and see whether your notes actually form a usable learning structure.
-- Ask Claude/Cursor about your current learning path through MCP without pasting graph state.
-- Export a finished path back to Obsidian as a readable vault.
+- Turn "I want to build a machine learning project" into the math, programming, and ML path that actually matters.
+- Click a hard topic and see the foundations you are missing.
+- Build a Python, cybersecurity, systems, math, or exam roadmap with visible prerequisites.
+- Convert a messy topic dump into a graph you can actually study through.
+- Import an Obsidian vault and check whether your notes form a usable learning structure.
+- Ask an external assistant about your current learning path through MCP.
+- Export a finished path back to Obsidian as readable notes.
 
 ## Visuals
 
@@ -109,8 +108,8 @@ Clew uses AI because building that graph manually is too expensive. The model do
 - [Why special](docs/site_faq/why-special.md)
 - [Obsidian and MCP integrations](docs/site_faq/integrations.md)
 - [Latest release notes](docs/RELEASE_0_2_0.md)
-- [Connect to Claude Desktop / Claude Code / Cursor (MCP)](docs/MCP_SETUP.md)
-- [Obsidian-to-Clew import skill (Claude Code / Codex)](.claude/skills/obsidian-to-clew-import/SKILL.md)
+- [Connect to Claude Desktop / Claude Code / Cursor through MCP](docs/MCP_SETUP.md)
+- [Obsidian-to-Clew import skill](.claude/skills/obsidian-to-clew-import/SKILL.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Engineering docs index](docs/README.md)
 
@@ -121,9 +120,10 @@ Clew uses AI because building that graph manually is too expensive. The model do
 | `frontend/` | React workspace UI, graph canvas, themes, settings, dialogs, debug surfaces |
 | `backend/` | FastAPI app, repository, domain model, provider layer, planner, MCP server, tests |
 | `contracts/` | JSON contracts and transport surfaces used by graph mutation flows |
-| `docs/` | engineering docs, ADRs, release notes, and site FAQ source |
-| `scripts/` | local development helpers such as boot, stop, and reset |
-| `.claude/skills/obsidian-to-clew-import/`, `.agents/skills/obsidian-to-clew-import/` | packaged agent skill that shapes an Obsidian vault into a validated Clew import package (Claude Code and Codex) |
+| `docs/` | Engineering docs, ADRs, release notes, and site FAQ source |
+| `scripts/` | Local development helpers such as boot, stop, and reset |
+| `.claude/skills/obsidian-to-clew-import/` | Claude Code skill for shaping an Obsidian vault into a Clew import package |
+| `.agents/skills/obsidian-to-clew-import/` | Codex-compatible copy of the Obsidian-to-Clew import skill |
 
 ## Development Checks
 
@@ -140,7 +140,7 @@ Useful helpers:
 ./scripts/reset_db.sh
 ```
 
-## Open Source Surfaces
+## Open Source
 
 - [Contributing guide](CONTRIBUTING.md)
 - [Code of conduct](CODE_OF_CONDUCT.md)
