@@ -107,7 +107,7 @@ Instead of manually arranging a huge roadmap, you let AI draft the graph. Then y
 - [How to use](docs/site_faq/how-to-use.md)
 - [Why special](docs/site_faq/why-special.md)
 - [Obsidian and MCP integrations](docs/site_faq/integrations.md)
-- [Latest release notes](docs/RELEASE_0_2_0.md)
+- [Latest release](https://github.com/miuuyy/Clew/releases/latest)
 - [Connect to Claude Desktop / Claude Code / Cursor through MCP](docs/MCP_SETUP.md)
 - [Obsidian-to-Clew import skill](.claude/skills/obsidian-to-clew-import/SKILL.md)
 - [Architecture](docs/ARCHITECTURE.md)
