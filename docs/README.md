@@ -15,7 +15,7 @@ Product-facing website/FAQ source lives in [`site_faq/`](site_faq/README.md). It
 5. [Usage Guide](USAGE_GUIDE.md)
 6. [Obsidian Bridge](OBSIDIAN.md)
 7. [MCP Setup](MCP_SETUP.md)
-8. [0.2.0 Release Notes](RELEASE_0_2_0.md)
+8. [Latest release](https://github.com/miuuyy/Clew/releases/latest)
 9. [Architecture Decision Records](adr/README.md)
 10. [Site FAQ source](site_faq/README.md)
 
@@ -28,7 +28,7 @@ Product-facing website/FAQ source lives in [`site_faq/`](site_faq/README.md). It
 - [Usage Guide](USAGE_GUIDE.md): source-material guidance for generating high-quality ingest input
 - [Obsidian Bridge](OBSIDIAN.md): import an Obsidian vault into Clew or export a graph back into Markdown
 - [MCP Setup](MCP_SETUP.md): connect Clew Study Assist to Claude Desktop, Claude Code, or Cursor via the built-in MCP server
-- [0.2.0 Release Notes](RELEASE_0_2_0.md): product and code changes added in the 0.2.0 branch
+- [Latest release](https://github.com/miuuyy/Clew/releases/latest): release notes live on GitHub
 - [ADR index](adr/README.md): long-lived decisions, including why external bridges must preserve the graph boundary
 - [Site FAQ source](site_faq/README.md): product-facing pages used by the hosted docs/site surface
 
