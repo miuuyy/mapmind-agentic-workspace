@@ -741,7 +741,6 @@
 }
 
 :root[data-theme="light"] .settingsContentHeader::after,
-:root[data-theme="light"] .settingsFooterBar,
 :root[data-theme="light"] .card::after {
   display: none !important;
   background: none !important;
