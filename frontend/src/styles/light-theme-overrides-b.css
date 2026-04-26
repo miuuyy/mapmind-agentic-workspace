@@ -917,7 +917,6 @@
 }
 
 :root[data-theme="light"] .settingsContentHeader::after,
-:root[data-theme="light"] .settingsFooterBar,
 :root[data-theme="light"] .card::after,
 :root[data-theme="light"] .quizModalHeader::after {
   display: none !important;
