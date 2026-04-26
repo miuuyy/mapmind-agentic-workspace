@@ -111,17 +111,130 @@ const GREEK_SYMBOLS: Record<string, string> = {
   gamma: "γ",
   delta: "δ",
   epsilon: "ε",
+  zeta: "ζ",
+  eta: "η",
   theta: "θ",
+  iota: "ι",
+  kappa: "κ",
   lambda: "λ",
   mu: "μ",
+  nu: "ν",
+  xi: "ξ",
   pi: "π",
+  rho: "ρ",
   sigma: "σ",
+  tau: "τ",
+  upsilon: "υ",
   phi: "φ",
+  chi: "χ",
+  psi: "ψ",
   omega: "ω",
+  Alpha: "Α",
+  Beta: "Β",
+  Gamma: "Γ",
+  Delta: "Δ",
+  Epsilon: "Ε",
+  Theta: "Θ",
+  Lambda: "Λ",
+  Pi: "Π",
+  Sigma: "Σ",
+  Phi: "Φ",
+  Psi: "Ψ",
+  Omega: "Ω",
 };
 
-const GREEK_WORD_RE = /\b(?:alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|phi|omega)\b/gi;
-const MATHISH_TOKEN_RE = /([A-Za-z]+(?:_\{[^}]+\}|_[A-Za-z0-9+\-*/=()]+|\^\{[^}]+\}|\^[A-Za-z0-9+\-*/=()]+)+)|((?<!\w)[A-Za-z0-9.]+\s*\/\s*[A-Za-z0-9.]+(?!\w))|(\b(?:alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|phi|omega)\b)/gi;
+const LATEX_COMMAND_SYMBOLS: Record<string, string> = {
+  sum: "∑",
+  prod: "∏",
+  int: "∫",
+  oint: "∮",
+  partial: "∂",
+  nabla: "∇",
+  infty: "∞",
+  pm: "±",
+  mp: "∓",
+  cdot: "·",
+  cdots: "⋯",
+  ldots: "…",
+  times: "×",
+  div: "÷",
+  ast: "∗",
+  star: "⋆",
+  circ: "∘",
+  bullet: "•",
+  to: "→",
+  rightarrow: "→",
+  leftarrow: "←",
+  Rightarrow: "⇒",
+  Leftarrow: "⇐",
+  leftrightarrow: "↔",
+  Leftrightarrow: "⇔",
+  mapsto: "↦",
+  approx: "≈",
+  neq: "≠",
+  equiv: "≡",
+  leq: "≤",
+  geq: "≥",
+  ll: "≪",
+  gg: "≫",
+  subset: "⊂",
+  supset: "⊃",
+  subseteq: "⊆",
+  supseteq: "⊇",
+  in: "∈",
+  notin: "∉",
+  ni: "∋",
+  cup: "∪",
+  cap: "∩",
+  emptyset: "∅",
+  forall: "∀",
+  exists: "∃",
+  neg: "¬",
+  land: "∧",
+  lor: "∨",
+  Re: "ℜ",
+  Im: "ℑ",
+  hbar: "ℏ",
+  ell: "ℓ",
+  aleph: "ℵ",
+  degree: "°",
+  prime: "′",
+  dprime: "″",
+};
+
+const GREEK_WORD_RE = /\b(?:alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega)\b/gi;
+const MATHISH_TOKEN_RE = /([A-Za-z]+(?:_\{[^}]+\}|_[A-Za-z0-9+\-*/=()]+|\^\{[^}]+\}|\^[A-Za-z0-9+\-*/=()]+)+)|((?<!\w)[A-Za-z0-9.]+\s*\/\s*[A-Za-z0-9.]+(?!\w))|(\b(?:alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega)\b)/gi;
+
+function preprocessLatex(value: string): string {
+  if (!value) return value;
+  let out = value;
+  // \frac{a}{b} -> a/b so renderFractionToken can pick it up
+  out = out.replace(/\\(?:d?frac|tfrac|cfrac)\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, (_, a, b) => `${a.trim()}/${b.trim()}`);
+  // \sqrt{x} -> √(x)
+  out = out.replace(/\\sqrt\s*\{([^{}]+)\}/g, (_, inner) => `√(${inner})`);
+  // \sqrt[n]{x} -> ⁿ√(x)
+  out = out.replace(/\\sqrt\s*\[([^\]]+)\]\s*\{([^{}]+)\}/g, (_, n, inner) => `${n}√(${inner})`);
+  // \text{...} -> just the inner text
+  out = out.replace(/\\(?:text|mathrm|mathbf|mathit|operatorname)\s*\{([^{}]+)\}/g, (_, inner) => inner);
+  // \left( \right) and similar — strip the \left / \right
+  out = out.replace(/\\left\s*([(\[{|])/g, "$1");
+  out = out.replace(/\\right\s*([)\]}|])/g, "$1");
+  // bare LaTeX commands -> unicode symbols
+  out = out.replace(/\\([A-Za-z]+)/g, (token, name: string) => {
+    const symbol = LATEX_COMMAND_SYMBOLS[name];
+    if (symbol) return symbol;
+    // Greek lookup
+    const lower = name.toLowerCase();
+    if (GREEK_SYMBOLS[name]) return GREEK_SYMBOLS[name];
+    if (GREEK_SYMBOLS[lower]) return GREEK_SYMBOLS[lower];
+    return token;
+  });
+  // strip math delimiters: $$...$$ and $...$ just become inline text — existing
+  // mathish tokens (x_1, x^2, a/b, greek words) still get picked up by MATHISH_TOKEN_RE
+  out = out.replace(/\$\$([\s\S]+?)\$\$/g, (_, inner) => inner);
+  out = out.replace(/\$([^$\n]+?)\$/g, (_, inner) => inner);
+  return out;
+}
 
 function replaceGreekWords(value: string): string {
   return value.replace(GREEK_WORD_RE, (token) => GREEK_SYMBOLS[token.toLowerCase()] ?? token);
@@ -207,7 +320,7 @@ function renderMathishText(text: string, keyPrefix: string): React.ReactNode[] {
 }
 
 export function renderDisplayText(value: string): React.ReactNode {
-  const normalized = sanitizeDisplayText(value) || value;
+  const normalized = preprocessLatex(sanitizeDisplayText(value) || value);
   const lines = normalized.split("\n");
   return lines.map((line, lineIndex) => {
     const parts = line.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*)/g).filter(Boolean);
