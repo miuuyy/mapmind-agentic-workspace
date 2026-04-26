@@ -1536,6 +1536,18 @@
   color: var(--dt-light-muted) !important;
 }
 
+/* Light-theme disabled save button needs to stay visible — base rule
+   collapses opacity to 0.42 on a transparent background, which on cream
+   surface reads as no button at all. Make it muted but readable. */
+:root[data-theme="light"] .settingsFooterBar .assistantSendButton:disabled,
+:root[data-theme="light"] .settingsFooterBar .assistantSendButton:disabled:hover {
+  background: rgba(195, 90, 44, 0.5) !important;
+  border: 1px solid rgba(195, 90, 44, 0.6) !important;
+  color: rgba(255, 250, 246, 0.96) !important;
+  opacity: 0.95 !important;
+  box-shadow: none !important;
+}
+
 /* Closure quiz: visible hierarchy between question card and answer cards. */
 :root[data-theme="light"] .quizQuestion {
   background: #fbf8f3 !important;
