@@ -1548,38 +1548,3 @@
   box-shadow: none !important;
 }
 
-/* Closure quiz: visible hierarchy between question card and answer cards. */
-:root[data-theme="light"] .quizQuestion {
-  background: #fbf8f3 !important;
-  border: 1px solid rgba(233, 225, 215, 0.94) !important;
-  border-radius: 18px !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .quizPrompt {
-  font-size: 15px !important;
-  font-weight: 600 !important;
-  color: #b85d3f !important;
-  letter-spacing: -0.1px !important;
-}
-
-:root[data-theme="light"] .quizChoice,
-:root[data-theme="light"] .inlineQuizChoice {
-  background: rgba(255, 255, 255, 0.96) !important;
-  border: 1px solid rgba(45, 43, 40, 0.1) !important;
-  color: rgba(45, 43, 40, 0.86) !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme="light"] .quizChoice:hover,
-:root[data-theme="light"] .inlineQuizChoice:hover:not(:disabled) {
-  background: #ffffff !important;
-  border-color: rgba(217, 119, 87, 0.42) !important;
-}
-
-:root[data-theme="light"] .quizChoiceSelected,
-:root[data-theme="light"] .quizChoiceSelected:hover {
-  background: rgba(217, 119, 87, 0.1) !important;
-  border-color: #d97757 !important;
-  color: #6f2c11 !important;
-}
