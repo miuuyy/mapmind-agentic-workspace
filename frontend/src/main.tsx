@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { readInitialThemeMode } from "./lib/appStatePersistence";
 import { ensureThemeStylesheet } from "./lib/themeStyles";
+import "katex/dist/katex.min.css";
 import "./styles.css";
 
 ensureThemeStylesheet(readInitialThemeMode());

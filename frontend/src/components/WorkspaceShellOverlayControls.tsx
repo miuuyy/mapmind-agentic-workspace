@@ -47,10 +47,6 @@ export function GraphStatItems({
         <strong>{graphSummary.completedPercent}%</strong>
         {copy.graphStats.complete}
       </span>
-      <span className="pageStat">
-        <strong>{graphSummary.completedCount}</strong>
-        {copy.graphStats.closed}
-      </span>
       {graphSummary.reviewCount > 0 ? (
         <span className="pageStat pageStatWarn">
           <strong>{graphSummary.reviewCount}</strong>

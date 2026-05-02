@@ -1,4 +1,5 @@
 import React from "react";
+import katex from "katex";
 
 import type { TopicAnchorPoint } from "../components/GraphCanvas";
 import { recordApiDebugLog } from "./debugLogs";
@@ -105,222 +106,154 @@ function sanitizeDisplayText(value: string): string {
   return lines.join("\n").trim();
 }
 
-const GREEK_SYMBOLS: Record<string, string> = {
-  alpha: "α",
-  beta: "β",
-  gamma: "γ",
-  delta: "δ",
-  epsilon: "ε",
-  zeta: "ζ",
-  eta: "η",
-  theta: "θ",
-  iota: "ι",
-  kappa: "κ",
-  lambda: "λ",
-  mu: "μ",
-  nu: "ν",
-  xi: "ξ",
-  pi: "π",
-  rho: "ρ",
-  sigma: "σ",
-  tau: "τ",
-  upsilon: "υ",
-  phi: "φ",
-  chi: "χ",
-  psi: "ψ",
-  omega: "ω",
-  Alpha: "Α",
-  Beta: "Β",
-  Gamma: "Γ",
-  Delta: "Δ",
-  Epsilon: "Ε",
-  Theta: "Θ",
-  Lambda: "Λ",
-  Pi: "Π",
-  Sigma: "Σ",
-  Phi: "Φ",
-  Psi: "Ψ",
-  Omega: "Ω",
-};
+const GREEK_WORD_SOURCE = String.raw`(?:alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega)`;
+const GREEK_CHAR_SOURCE = String.raw`α-ωΑ-Ω`;
+const GREEK_WORD_RE = new RegExp(String.raw`(?<!\\)\b${GREEK_WORD_SOURCE}\b`, "gi");
+const CYRILLIC_RE = /[А-Яа-яІіЇїЄєҐґ]/;
+const LATEX_FUNCTION_SOURCE = String.raw`(?:arctg|arctan|arcsin|arccos|tg|tan|cot|cos|sin|ln|log|sec|csc)`;
+const BARE_LATEX_FUNCTION_RE = new RegExp(String.raw`(?<!\\)\b(${LATEX_FUNCTION_SOURCE})\b\s*`, "g");
+const COMPACT_LATEX_FUNCTION_RE = new RegExp(String.raw`(?<!\\)\b(${LATEX_FUNCTION_SOURCE})(${GREEK_WORD_SOURCE}|\\[A-Za-z]+|[A-Za-z]|[${GREEK_CHAR_SOURCE}])\b`, "gi");
+const MATH_ATOM_SOURCE = String.raw`(?:\\(?:tan|cot|cos|sin|ln|log|arctan|arcsin|arccos|sec|csc)\s*)?(?:\\[A-Za-z]+|[A-Za-z]|[${GREEK_CHAR_SOURCE}]|\d+(?:\.\d+)?)(?:_\{[^{}]+\}|_[A-Za-z0-9]+|\^\{[^{}]+\}|\^[A-Za-z0-9]+)?`;
+const MATH_SLASH_TOKEN_RE = new RegExp(String.raw`(?<![\w/])${MATH_ATOM_SOURCE}\s*/\s*${MATH_ATOM_SOURCE}(?![\w/])`);
+const LATEX_DELIMITED_MATH_RE = /(\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\]|\$\$[\s\S]+?\$\$|\$[^$\n]+?\$)/g;
+const INLINE_LATEX_MATH_RE = new RegExp(
+  String.raw`(?:[A-Za-z][A-Za-z0-9']*\s*)?\(?[A-Za-z]\)?\s*\([^)]*\)\s*=\s*[A-Za-z0-9\\{}()[\]\s+\-*/^_=.'∞√]+` +
+    "|" +
+    String.raw`\\(?:frac|dfrac|tfrac|cfrac|sqrt|tan|tg|cot|cos|sin|ln|log|arctan|arctg|arcsin|arccos|sec|csc)\b[A-Za-z0-9\\{}()[\]\s+\-*/^_=.'∞√]*` +
+    "|" +
+    MATH_SLASH_TOKEN_RE.source,
+  "g",
+);
+const SIMPLE_SLASH_EXPRESSION_RE = new RegExp(`^\\s*(${MATH_SLASH_TOKEN_RE.source})\\s*$`);
 
-const LATEX_COMMAND_SYMBOLS: Record<string, string> = {
-  sum: "∑",
-  prod: "∏",
-  int: "∫",
-  oint: "∮",
-  partial: "∂",
-  nabla: "∇",
-  infty: "∞",
-  pm: "±",
-  mp: "∓",
-  cdot: "·",
-  cdots: "⋯",
-  ldots: "…",
-  times: "×",
-  div: "÷",
-  ast: "∗",
-  star: "⋆",
-  circ: "∘",
-  bullet: "•",
-  to: "→",
-  rightarrow: "→",
-  leftarrow: "←",
-  Rightarrow: "⇒",
-  Leftarrow: "⇐",
-  leftrightarrow: "↔",
-  Leftrightarrow: "⇔",
-  mapsto: "↦",
-  approx: "≈",
-  neq: "≠",
-  equiv: "≡",
-  leq: "≤",
-  geq: "≥",
-  ll: "≪",
-  gg: "≫",
-  subset: "⊂",
-  supset: "⊃",
-  subseteq: "⊆",
-  supseteq: "⊇",
-  in: "∈",
-  notin: "∉",
-  ni: "∋",
-  cup: "∪",
-  cap: "∩",
-  emptyset: "∅",
-  forall: "∀",
-  exists: "∃",
-  neg: "¬",
-  land: "∧",
-  lor: "∨",
-  Re: "ℜ",
-  Im: "ℑ",
-  hbar: "ℏ",
-  ell: "ℓ",
-  aleph: "ℵ",
-  degree: "°",
-  prime: "′",
-  dprime: "″",
-};
-
-const GREEK_WORD_RE = /\b(?:alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega)\b/gi;
-const MATHISH_TOKEN_RE = /([A-Za-z]+(?:_\{[^}]+\}|_[A-Za-z0-9+\-*/=()]+|\^\{[^}]+\}|\^[A-Za-z0-9+\-*/=()]+)+)|((?<!\w)[A-Za-z0-9.]+\s*\/\s*[A-Za-z0-9.]+(?!\w))|(\b(?:alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega)\b)/gi;
-
-function preprocessLatex(value: string): string {
-  if (!value) return value;
-  let out = value;
-  // \frac{a}{b} -> a/b so renderFractionToken can pick it up
-  out = out.replace(/\\(?:d?frac|tfrac|cfrac)\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, (_, a, b) => `${a.trim()}/${b.trim()}`);
-  // \sqrt{x} -> √(x)
-  out = out.replace(/\\sqrt\s*\{([^{}]+)\}/g, (_, inner) => `√(${inner})`);
-  // \sqrt[n]{x} -> ⁿ√(x)
-  out = out.replace(/\\sqrt\s*\[([^\]]+)\]\s*\{([^{}]+)\}/g, (_, n, inner) => `${n}√(${inner})`);
-  // \text{...} -> just the inner text
-  out = out.replace(/\\(?:text|mathrm|mathbf|mathit|operatorname)\s*\{([^{}]+)\}/g, (_, inner) => inner);
-  // \left( \right) and similar — strip the \left / \right
-  out = out.replace(/\\left\s*([(\[{|])/g, "$1");
-  out = out.replace(/\\right\s*([)\]}|])/g, "$1");
-  // bare LaTeX commands -> unicode symbols
-  out = out.replace(/\\([A-Za-z]+)/g, (token, name: string) => {
-    const symbol = LATEX_COMMAND_SYMBOLS[name];
-    if (symbol) return symbol;
-    // Greek lookup
-    const lower = name.toLowerCase();
-    if (GREEK_SYMBOLS[name]) return GREEK_SYMBOLS[name];
-    if (GREEK_SYMBOLS[lower]) return GREEK_SYMBOLS[lower];
-    return token;
-  });
-  // strip math delimiters: $$...$$ and $...$ just become inline text — existing
-  // mathish tokens (x_1, x^2, a/b, greek words) still get picked up by MATHISH_TOKEN_RE
-  out = out.replace(/\$\$([\s\S]+?)\$\$/g, (_, inner) => inner);
-  out = out.replace(/\$([^$\n]+?)\$/g, (_, inner) => inner);
-  return out;
-}
-
-function replaceGreekWords(value: string): string {
-  return value.replace(GREEK_WORD_RE, (token) => GREEK_SYMBOLS[token.toLowerCase()] ?? token);
-}
-
-function renderScriptedToken(token: string, key: string): React.ReactNode {
-  const baseMatch = token.match(/^[A-Za-z]+/);
-  if (!baseMatch) return token;
-  const base = replaceGreekWords(baseMatch[0]);
-  const suffix = token.slice(baseMatch[0].length);
-  const scriptPattern = /(_\{([^}]+)\}|_([A-Za-z0-9+\-*/=()]+)|\^\{([^}]+)\}|\^([A-Za-z0-9+\-*/=()]+))/g;
-  const scripts: React.ReactNode[] = [];
-  let match: RegExpExecArray | null;
-  let scriptIndex = 0;
-  while ((match = scriptPattern.exec(suffix)) !== null) {
-    const isSub = match[0].startsWith("_");
-    const content = replaceGreekWords((match[2] ?? match[3] ?? match[4] ?? match[5] ?? "").trim());
-    if (!content) continue;
-    scripts.push(
-      isSub ? (
-        <sub key={`${key}-sub-${scriptIndex}`} className="richTextSub">
-          {content}
-        </sub>
-      ) : (
-        <sup key={`${key}-sup-${scriptIndex}`} className="richTextSup">
-          {content}
-        </sup>
-      ),
-    );
-    scriptIndex += 1;
+function normalizeKatexExpression(value: string): string {
+  const trimmed = normalizeKatexExpressionSyntax(value.trim());
+  const slashMatch = trimmed.match(SIMPLE_SLASH_EXPRESSION_RE);
+  if (slashMatch) {
+    const [numerator, denominator] = slashMatch[1].split(/\s*\/\s*/, 2);
+    return String.raw`\frac{${normalizeKatexAtom(numerator)}}{${normalizeKatexAtom(denominator)}}`;
   }
+  return trimmed
+    .replace(/\\tg\b/g, "\\tan")
+    .replace(/\\arctg\b/g, "\\arctan")
+    .replace(/√\(([^()]+)\)/g, "\\sqrt{$1}")
+    .replace(/∞/g, "\\infty")
+    .replace(MATH_SLASH_TOKEN_RE, (token) => {
+      const [numerator, denominator] = token.split(/\s*\/\s*/, 2);
+      return String.raw`\frac{${normalizeKatexAtom(numerator)}}{${normalizeKatexAtom(denominator)}}`;
+    })
+    .replace(/\^\(([^()]+)\)/g, "^{$1}")
+    .replace(/_\(([^()]+)\)/g, "_{$1}")
+    .replace(/\\left\s*/g, "\\left")
+    .replace(/\\right\s*/g, "\\right");
+}
+
+function normalizeKatexAtom(value: string): string {
+  return normalizeKatexExpressionSyntax(value.trim());
+}
+
+function normalizeKatexExpressionSyntax(value: string): string {
+  return normalizeKatexFunctions(value).replace(GREEK_WORD_RE, (token) => `\\${token.toLowerCase()}`);
+}
+
+function normalizeKatexFunctions(value: string): string {
+  const withCompactCalls = value.replace(COMPACT_LATEX_FUNCTION_RE, (_, name: string, argument: string) => {
+    const normalizedName = name.toLowerCase();
+    const command = normalizedName === "tg" ? "tan" : normalizedName === "arctg" ? "arctan" : normalizedName;
+    return `\\${command} ${argument}`;
+  });
+  return withCompactCalls.replace(BARE_LATEX_FUNCTION_RE, (_, name: string) => {
+    if (name === "tg") return "\\tan ";
+    if (name === "arctg") return "\\arctan ";
+    return `\\${name} `;
+  });
+}
+
+function stripMathDelimiters(value: string): string {
+  if ((value.startsWith("$$") && value.endsWith("$$")) || (value.startsWith("$") && value.endsWith("$"))) {
+    return value.replace(/^\$\$?|\$\$?$/g, "");
+  }
+  if ((value.startsWith("\\(") && value.endsWith("\\)")) || (value.startsWith("\\[") && value.endsWith("\\]"))) {
+    return value.slice(2, -2);
+  }
+  return value;
+}
+
+function shouldRenderWholePartAsMath(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed || CYRILLIC_RE.test(trimmed)) return false;
+  if (!/(\\[A-Za-z]+|[=^_]|√|∞)/.test(trimmed) && !SIMPLE_SLASH_EXPRESSION_RE.test(trimmed)) return false;
+  return new RegExp(String.raw`^[A-Za-z0-9${GREEK_CHAR_SOURCE}\\{}()[\]\s+\-*/^_=.,'∞√]+$`).test(trimmed);
+}
+
+function renderKatexExpression(expression: string, key: string): React.ReactNode {
+  const normalized = normalizeKatexExpression(expression);
+  const html = katex.renderToString(normalized, {
+    displayMode: false,
+    errorColor: "#fca5a5",
+    output: "html",
+    strict: "ignore",
+    throwOnError: false,
+    trust: false,
+  });
   return (
-    <span key={key} className="richMathToken">
-      <span>{base}</span>
-      {scripts}
-    </span>
+    <span
+      key={key}
+      className="richKatex"
+      aria-label={normalized}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
   );
 }
 
-function renderFractionToken(token: string, key: string): React.ReactNode {
-  const match = token.match(/^\s*([A-Za-z0-9.]+)\s*\/\s*([A-Za-z0-9.]+)\s*$/);
-  if (!match) return token;
-  return (
-    <span key={key} className="richFraction" aria-label={`${match[1]} over ${match[2]}`}>
-      <span className="richFractionNumerator">{replaceGreekWords(match[1])}</span>
-      <span className="richFractionBar" aria-hidden="true" />
-      <span className="richFractionDenominator">{replaceGreekWords(match[2])}</span>
-    </span>
-  );
-}
+function renderUndelimitedMathText(text: string, keyPrefix: string): React.ReactNode[] {
+  if (!text) return [];
+  if (shouldRenderWholePartAsMath(text)) {
+    const leading = text.match(/^\s*/)?.[0] ?? "";
+    const trailing = text.match(/\s*$/)?.[0] ?? "";
+    const trimmed = text.trim();
+    return [
+      leading,
+      renderKatexExpression(trimmed, `${keyPrefix}-math-whole`),
+      trailing,
+    ].filter((node) => node !== "");
+  }
 
-function renderMathishText(text: string, keyPrefix: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   let cursor = 0;
+  for (const match of text.matchAll(INLINE_LATEX_MATH_RE)) {
+    const expression = match[0];
+    const index = match.index ?? 0;
+    const trimmed = expression.trim();
+    if (!trimmed || index < cursor) continue;
+    if (index > cursor) nodes.push(text.slice(cursor, index));
+    nodes.push(renderKatexExpression(trimmed, `${keyPrefix}-math-${index}`));
+    cursor = index + expression.length;
+  }
+  if (cursor < text.length) nodes.push(text.slice(cursor));
+  return nodes.length > 0 ? nodes : [text];
+}
 
-  for (const match of text.matchAll(MATHISH_TOKEN_RE)) {
+function renderInlineMathText(text: string, keyPrefix: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let cursor = 0;
+  for (const match of text.matchAll(LATEX_DELIMITED_MATH_RE)) {
     const token = match[0];
     const index = match.index ?? 0;
     if (index > cursor) {
-      nodes.push(text.slice(cursor, index));
+      nodes.push(...renderUndelimitedMathText(text.slice(cursor, index), `${keyPrefix}-plain-${cursor}`));
     }
-
-    if (token.includes("_") || token.includes("^")) {
-      nodes.push(renderScriptedToken(token, `${keyPrefix}-script-${index}`));
-    } else if (token.includes("/")) {
-      nodes.push(renderFractionToken(token, `${keyPrefix}-fraction-${index}`));
-    } else {
-      nodes.push(
-        <span key={`${keyPrefix}-greek-${index}`} className="richMathToken">
-          {replaceGreekWords(token)}
-        </span>,
-      );
-    }
-
+    nodes.push(renderKatexExpression(stripMathDelimiters(token), `${keyPrefix}-delimited-${index}`));
     cursor = index + token.length;
   }
-
   if (cursor < text.length) {
-    nodes.push(text.slice(cursor));
+    nodes.push(...renderUndelimitedMathText(text.slice(cursor), `${keyPrefix}-plain-${cursor}`));
   }
-
   return nodes.length > 0 ? nodes : [text];
 }
 
 export function renderDisplayText(value: string): React.ReactNode {
-  const normalized = preprocessLatex(sanitizeDisplayText(value) || value);
+  const normalized = sanitizeDisplayText(value) || value;
   const lines = normalized.split("\n");
   return lines.map((line, lineIndex) => {
     const parts = line.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*)/g).filter(Boolean);
@@ -330,18 +263,18 @@ export function renderDisplayText(value: string): React.ReactNode {
           if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
             return (
               <strong key={`part-${lineIndex}-${partIndex}`} className="chatEmphasis">
-                {renderMathishText(part.slice(2, -2), `strong-${lineIndex}-${partIndex}`)}
+                {renderInlineMathText(part.slice(2, -2), `strong-${lineIndex}-${partIndex}`)}
               </strong>
             );
           }
           if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
             return (
               <strong key={`part-${lineIndex}-${partIndex}`} className="chatEmphasis">
-                {renderMathishText(part.slice(1, -1), `em-${lineIndex}-${partIndex}`)}
+                {renderInlineMathText(part.slice(1, -1), `em-${lineIndex}-${partIndex}`)}
               </strong>
             );
           }
-          return <React.Fragment key={`part-${lineIndex}-${partIndex}`}>{renderMathishText(part, `plain-${lineIndex}-${partIndex}`)}</React.Fragment>;
+          return <React.Fragment key={`part-${lineIndex}-${partIndex}`}>{renderInlineMathText(part, `plain-${lineIndex}-${partIndex}`)}</React.Fragment>;
         })}
         {lineIndex < lines.length - 1 ? <br /> : null}
       </React.Fragment>

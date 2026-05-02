@@ -444,54 +444,33 @@ input[type="number"] {
   letter-spacing: -0.01em;
 }
 
-.richMathToken {
+.richKatex {
   display: inline-flex;
-  align-items: baseline;
-  gap: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  vertical-align: -0.08em;
+  color: inherit;
 }
 
-.richTextSup,
-.richTextSub {
-  font-size: 0.78em;
-  line-height: 0;
-  position: relative;
-  vertical-align: baseline;
+.richKatex .katex {
+  color: inherit;
+  font-size: 1.04em;
+  line-height: 1.2;
 }
 
-.richTextSup {
-  top: -0.45em;
+.quizPrompt .richKatex,
+.quizChoiceText .richKatex,
+.inlineQuizQuestion .richKatex,
+.inlineQuizChoice .richKatex {
+  scrollbar-width: none;
 }
 
-.richTextSub {
-  top: 0.2em;
-}
-
-.richFraction {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  vertical-align: middle;
-  margin: 0 0.08em;
-  min-width: 1.1em;
-}
-
-.richFractionNumerator,
-.richFractionDenominator {
-  display: block;
-  font-size: 0.76em;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.richFractionBar {
-  width: 100%;
-  min-width: 1em;
-  height: 1px;
-  margin: 0.1em 0 0.08em;
-  background: currentColor;
-  border-radius: 999px;
-  opacity: 0.78;
+.quizPrompt .richKatex::-webkit-scrollbar,
+.quizChoiceText .richKatex::-webkit-scrollbar,
+.inlineQuizQuestion .richKatex::-webkit-scrollbar,
+.inlineQuizChoice .richKatex::-webkit-scrollbar {
+  display: none;
 }
 
 .chatMetaRow {

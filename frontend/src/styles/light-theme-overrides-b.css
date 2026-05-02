@@ -2453,6 +2453,25 @@ button.btn.btnDanger,
   color: #fffaf6 !important;
 }
 
+/* Quiz modal text must stay readable on the light cream surface. */
+:root[data-theme="light"] .quizQuestion {
+  background: rgba(255, 252, 248, 0.98) !important;
+  border: 1px solid rgba(216, 210, 198, 0.92) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .quizPrompt,
+:root[data-theme="light"] .quizChoice,
+:root[data-theme="light"] .quizChoiceText,
+:root[data-theme="light"] .quizReviewLine {
+  color: rgba(45, 43, 40, 0.96) !important;
+}
+
+:root[data-theme="light"] .quizChoice {
+  background: rgba(252, 251, 248, 0.98) !important;
+  border-color: rgba(216, 210, 198, 0.92) !important;
+}
+
 /* Unified number weight across compact stats. */
 :root[data-theme="light"] .pageStat strong,
 :root[data-theme="light"] .pageStatWarn strong,

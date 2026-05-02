@@ -33,6 +33,15 @@ class RepositoryGraphTests(unittest.TestCase):
         self.assertEqual(created.language, "uk")
         self.assertEqual(created.metadata["description"], "First-year topics")
 
+    def test_repository_cache_refreshes_after_external_snapshot_write(self) -> None:
+        self.repository.current()
+        second_repository = GraphRepository(self.repository._db_path)  # noqa: SLF001
+        second_repository.create_graph(CreateGraphRequest(title="External Graph", subject="math"))
+
+        graph = self.repository.graph("external-graph")
+
+        self.assertEqual(graph.title, "External Graph")
+
     def test_delete_last_graph_leaves_empty_workspace(self) -> None:
         workspace = self.repository.delete_graph("mathematics-demo")
 

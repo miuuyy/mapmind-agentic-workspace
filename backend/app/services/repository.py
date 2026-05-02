@@ -69,6 +69,13 @@ class GraphRepository:
         self._cached_envelope = None
         self._graph_index = None
 
+    def _latest_snapshot_id(self) -> int | None:
+        with self._connect() as conn:
+            row = conn.execute("SELECT id FROM graph_snapshots ORDER BY id DESC LIMIT 1").fetchone()
+        if row is None:
+            return None
+        return int(row["id"])
+
     def _insert_snapshot(
         self,
         conn: sqlite3.Connection,
@@ -89,7 +96,12 @@ class GraphRepository:
         return snapshot_id
 
     def current(self) -> WorkspaceEnvelope:
-        if self._cached_envelope is None:
+        latest_snapshot_id = self._latest_snapshot_id()
+        if (
+            self._cached_envelope is None
+            or latest_snapshot_id is None
+            or self._cached_envelope.snapshot.id != latest_snapshot_id
+        ):
             with self._connect() as conn:
                 envelope = load_current_workspace(conn)
             self._cached_envelope = envelope
@@ -97,8 +109,7 @@ class GraphRepository:
         return self._cached_envelope
 
     def graph(self, graph_id: str) -> StudyGraph:
-        if self._cached_envelope is None:
-            self.current()
+        self.current()
         assert self._graph_index is not None
         graph = self._graph_index.get(graph_id)
         if graph is None:

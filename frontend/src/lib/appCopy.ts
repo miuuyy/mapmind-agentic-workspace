@@ -82,7 +82,6 @@ export const APP_COPY = {
     newGraph: "+ New",
     topics: "Topics",
     complete: "Complete",
-    closed: "Closed",
     review: "Review",
     saveLayout: "Save layout",
     editGraphLayout: "Edit graph layout",

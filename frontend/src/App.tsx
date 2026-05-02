@@ -572,7 +572,7 @@ export default function App(): React.JSX.Element {
   const selectedArtifacts = useMemo(() => selectedTopic?.artifacts ?? [], [selectedTopic]);
   const selectedClosureStatus = useMemo(() => computeClosureStatus(activeGraph, selectedTopicId), [activeGraph, selectedTopicId]);
   const activeAssessmentCards = useMemo(
-    () => (assessment?.cards.length ? assessment.cards : fallbackAssessment.cards).filter((card) => card.label !== "Roadmap"),
+    () => (assessment?.cards.length ? assessment.cards : fallbackAssessment.cards).filter((card) => !["Roadmap", "Closure"].includes(card.label)),
     [assessment?.cards, fallbackAssessment.cards],
   );
   const sessionUser = sessionInfo?.user ?? null;

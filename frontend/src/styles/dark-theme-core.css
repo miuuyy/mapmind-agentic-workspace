@@ -143,11 +143,13 @@
   -webkit-backdrop-filter: none !important;
 }
 
-:root[data-theme="dark"] .quizModalHeader,
 :root[data-theme="dark"] .topicAssetModal .quizModalHeader,
-:root[data-theme="dark"] .quizModalBody,
 :root[data-theme="dark"] .topicAssetModalBody {
   background: rgba(11, 11, 12, 0.982) !important;
+}
+
+:root[data-theme="dark"] .quizModalBody {
+  background: transparent !important;
 }
 
 :root[data-theme="dark"] .topicAssetModal .cardTitle {
